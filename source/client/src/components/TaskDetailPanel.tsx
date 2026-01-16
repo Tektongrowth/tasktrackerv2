@@ -399,12 +399,12 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
         {/* Assigned Role */}
         <div className="space-y-2">
           <Label>Assigned Role</Label>
-          <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+          <Select value={selectedRoleId || 'none'} onValueChange={(v) => setSelectedRoleId(v === 'none' ? '' : v)}>
             <SelectTrigger>
               <SelectValue placeholder="Select a role..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No role</SelectItem>
+              <SelectItem value="none">No role</SelectItem>
               {allRoles?.map((role) => (
                 <SelectItem key={role.id} value={role.id}>
                   <div className="flex items-center gap-2">
