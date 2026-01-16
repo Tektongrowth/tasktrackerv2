@@ -1,0 +1,117 @@
+TASKTRACKER PRO - COMMERCIAL LICENSE AGREEMENT
+
+Version 1.0
+Effective Date: Upon Purchase
+
+This Commercial License Agreement ("Agreement") is entered into between you 
+("Licensee") and the TaskTracker Pro creator ("Licensor") upon your purchase 
+of the TaskTracker Pro software ("Software").
+
+1. GRANT OF LICENSE
+
+1.1 License Grant. Subject to the terms of this Agreement, Licensor grants 
+Licensee a non-exclusive, non-transferable, perpetual license to:
+
+   a) Install and use the Software on servers owned or controlled by Licensee
+   b) Modify the Software source code for Licensee's own use
+   c) Deploy the Software for Licensee's business operations
+   d) Create derivative works based on the Software for internal use
+
+1.2 Single Instance License. This license permits deployment of ONE (1) 
+production instance of the Software. Additional instances require additional 
+licenses.
+
+2. RESTRICTIONS
+
+2.1 Licensee SHALL NOT:
+
+   a) Redistribute, resell, lease, license, sublicense, or otherwise transfer 
+      the Software or any rights therein to any third party
+   
+   b) Share, publish, or make available the Software source code, 
+      documentation, or any portion thereof to any third party
+   
+   c) Use the Software to provide a hosted or SaaS service to third parties 
+      where the Software functionality is the primary service offering
+   
+   d) Remove, alter, or obscure any proprietary notices in the Software
+   
+   e) Use the Software for any unlawful purpose or in violation of any 
+      applicable laws
+
+2.2 Client Access. Licensee MAY provide access to the deployed Software 
+instance to Licensee's clients, employees, and contractors for the purpose 
+of using the task management functionality.
+
+3. INTELLECTUAL PROPERTY
+
+3.1 Ownership. Licensor retains all right, title, and interest in and to the 
+Software, including all intellectual property rights therein.
+
+3.2 Modifications. Any modifications or derivative works created by Licensee 
+shall be owned by Licensee, provided that such works incorporate the 
+underlying Software which remains owned by Licensor.
+
+4. SUPPORT AND UPDATES
+
+4.1 No Support Included. This license does not include technical support, 
+maintenance, or updates unless separately purchased.
+
+4.2 Documentation. Licensee receives the included documentation and setup 
+guides at the time of purchase.
+
+5. WARRANTY DISCLAIMER
+
+5.1 AS-IS BASIS. THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY 
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+5.2 NO GUARANTEE. LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL BE 
+ERROR-FREE, UNINTERRUPTED, OR MEET LICENSEE'S REQUIREMENTS.
+
+6. LIMITATION OF LIABILITY
+
+6.1 IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, 
+SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO 
+LOSS OF PROFITS, DATA, USE, OR GOODWILL, ARISING OUT OF OR IN CONNECTION 
+WITH THIS AGREEMENT OR THE USE OF THE SOFTWARE.
+
+6.2 LICENSOR'S TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT PAID BY LICENSEE 
+FOR THE SOFTWARE LICENSE.
+
+7. TERMINATION
+
+7.1 Termination for Breach. Licensor may terminate this Agreement immediately 
+upon written notice if Licensee breaches any term of this Agreement.
+
+7.2 Effect of Termination. Upon termination, Licensee must cease all use of 
+the Software and destroy all copies in Licensee's possession.
+
+7.3 Survival. Sections 2, 3, 5, 6, and 8 shall survive termination.
+
+8. GENERAL PROVISIONS
+
+8.1 Entire Agreement. This Agreement constitutes the entire agreement between 
+the parties regarding the Software and supersedes all prior agreements and 
+understandings.
+
+8.2 Amendment. This Agreement may only be amended in writing signed by both 
+parties.
+
+8.3 Severability. If any provision of this Agreement is held invalid, the 
+remaining provisions shall remain in full force and effect.
+
+8.4 Governing Law. This Agreement shall be governed by and construed in 
+accordance with applicable laws, without regard to conflict of law principles.
+
+8.5 Assignment. Licensee may not assign this Agreement without Licensor's 
+prior written consent.
+
+---
+
+BY PURCHASING AND USING THE SOFTWARE, LICENSEE ACKNOWLEDGES HAVING READ THIS 
+AGREEMENT AND AGREES TO BE BOUND BY ITS TERMS AND CONDITIONS.
+
+For questions about licensing, contact: [Your Contact Email]
+
+Copyright (c) 2024 TaskTracker Pro. All rights reserved.

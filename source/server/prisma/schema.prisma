@@ -1,0 +1,575 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  contractor
+}
+
+enum AccessLevel {
+  viewer // View only - no modifications
+  editor // Edit existing data, no creating new
+  project_manager // Create/edit all data, no admin pages
+  admin // Full access including admin pages
+}
+
+enum PlanType {
+  package_one
+  package_two
+  package_three
+  package_four
+  facebook_ads_addon
+  custom_website_addon
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  past_due
+}
+
+enum TaskStatus {
+  todo
+  in_review
+  completed
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum TemplateType {
+  onboarding
+  recurring
+  custom
+}
+
+enum TriggerType {
+  manual // Manually triggered
+  new_project // When a new project is created
+  subscription_change // When subscription status changes
+  schedule // Recurring schedule (cron-like)
+}
+
+model TemplateSet {
+  id           String      @id @default(uuid())
+  name         String
+  description  String?
+  triggerType  TriggerType @default(manual) @map("trigger_type")
+  triggerRules Json        @default("{}") @map("trigger_rules")
+  planTypes    PlanType[]  @map("plan_types")
+  active       Boolean     @default(true)
+  isSystem     Boolean     @default(false) @map("is_system")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  templates TaskTemplate[]
+
+  @@map("template_sets")
+}
+
+model User {
+  id                      String      @id @default(uuid())
+  email                   String      @unique
+  name                    String
+  avatarUrl               String?     @map("avatar_url")
+  googleId                String?     @unique @map("google_id")
+  role                    UserRole    @default(contractor)
+  accessLevel             AccessLevel @default(viewer) @map("access_level")
+  permissions             Json        @default("{}")
+  notificationPreferences Json        @default("{}") @map("notification_preferences")
+  active                  Boolean     @default(true)
+  archived                Boolean     @default(false)
+  archivedAt              DateTime?   @map("archived_at")
+  inviteToken             String?     @unique @map("invite_token")
+  hasSeenWelcome          Boolean     @default(false) @map("has_seen_welcome")
+  jobRoleId               String?     @map("job_role_id")
+  createdAt               DateTime    @default(now()) @map("created_at")
+  updatedAt               DateTime    @updatedAt @map("updated_at")
+
+  jobRole          Role?             @relation(fields: [jobRoleId], references: [id], onDelete: SetNull)
+  taskAssignments  TaskAssignee[]
+  timeEntries      TimeEntry[]
+  comments         TaskComment[]
+  projectAccess    ProjectAccess[]
+  mentions         CommentMention[]
+  auditLogs        AuditLog[]
+  guideCompletions GuideCompletion[]
+  chatsCreated     Chat[]            @relation("ChatCreator")
+  chatParticipants ChatParticipant[]
+  chatMessages     ChatMessage[]
+  chatReadReceipts ChatReadReceipt[]
+
+  @@index([jobRoleId])
+  @@map("users")
+}
+
+// Granular project access for contractors
+model ProjectAccess {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  projectId String   @map("project_id")
+  canView   Boolean  @default(true) @map("can_view")
+  canEdit   Boolean  @default(false) @map("can_edit")
+  canDelete Boolean  @default(false) @map("can_delete")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([userId])
+  @@index([projectId])
+  @@map("project_access")
+}
+
+model Client {
+  id               String   @id @default(uuid())
+  name             String
+  email            String?
+  phone            String?
+  stripeCustomerId String?  @unique @map("stripe_customer_id")
+  embedToken       String?  @unique @map("embed_token")
+  ghlLocationId    String?  @unique @map("ghl_location_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  projects        Project[]
+  accessTokens    ClientAccessToken[]
+  viewers         ClientViewer[]
+  taskSubmissions TaskSubmission[]
+
+  @@map("clients")
+}
+
+model Project {
+  id                   String             @id @default(uuid())
+  clientId             String             @map("client_id")
+  name                 String
+  planType             PlanType?          @map("plan_type")
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
+  subscriptionStatus   SubscriptionStatus @default(active) @map("subscription_status")
+  billingDate          DateTime?          @map("billing_date")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks           Task[]
+  timeEntries     TimeEntry[]
+  projectAccess   ProjectAccess[]
+  taskSubmissions TaskSubmission[]
+
+  @@index([clientId])
+  @@map("projects")
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  projectId   String       @map("project_id")
+  templateId  String?      @map("template_id")
+  title       String
+  description String?
+  status      TaskStatus   @default(todo)
+  priority    TaskPriority @default(medium)
+  dueDate     DateTime?    @map("due_date")
+  tags        String[]     @default([])
+  roleId      String?      @map("role_id")
+  archived    Boolean      @default(false)
+  archivedAt  DateTime?    @map("archived_at")
+  completedAt DateTime?    @map("completed_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template     TaskTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  assignedRole Role?           @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  assignees    TaskAssignee[]
+  timeEntries  TimeEntry[]
+  activities   TaskActivity[]
+  subtasks     Subtask[]
+  comments     TaskComment[]
+  submission   TaskSubmission?
+
+  @@index([projectId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([roleId])
+  @@map("tasks")
+}
+
+model TaskAssignee {
+  id         String   @id @default(uuid())
+  taskId     String   @map("task_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_assignees")
+}
+
+model TaskTemplate {
+  id                    String       @id @default(uuid())
+  title                 String
+  description           String?
+  templateType          TemplateType @map("template_type")
+  templateSetId         String?      @map("template_set_id")
+  planTypes             PlanType[]   @map("plan_types")
+  defaultAssigneeEmails String[]     @default([]) @map("default_assignee_emails")
+  defaultRoleId         String?      @map("default_role_id")
+  dueInDays             Int          @map("due_in_days")
+  tags                  String[]     @default([])
+  sortOrder             Int          @default(0) @map("sort_order")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+
+  tasks       Task[]
+  templateSet TemplateSet?      @relation(fields: [templateSetId], references: [id], onDelete: SetNull)
+  defaultRole Role?             @relation(fields: [defaultRoleId], references: [id], onDelete: SetNull)
+  subtasks    TemplateSubtask[]
+
+  @@index([templateSetId])
+  @@index([defaultRoleId])
+  @@map("task_templates")
+}
+
+model TemplateSubtask {
+  id         String   @id @default(uuid())
+  templateId String   @map("template_id")
+  title      String
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  template TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("template_subtasks")
+}
+
+model TimeEntry {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  taskId          String?   @map("task_id")
+  projectId       String?   @map("project_id")
+  title           String
+  description     String?
+  startTime       DateTime? @map("start_time")
+  endTime         DateTime? @map("end_time")
+  durationMinutes Int?      @map("duration_minutes")
+  isManual        Boolean   @default(false) @map("is_manual")
+  isRunning       Boolean   @default(false) @map("is_running")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task    Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([projectId])
+  @@map("time_entries")
+}
+
+model TaskActivity {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String?  @map("user_id")
+  action    String
+  details   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_activities")
+}
+
+model Subtask {
+  id          String    @id @default(uuid())
+  taskId      String    @map("task_id")
+  title       String
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("subtasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  task     Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mentions CommentMention[]
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model CommentMention {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  userId    String   @map("user_id")
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@map("comment_mentions")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tags")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  color       String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users     User[]
+  tasks     Task[]
+  templates TaskTemplate[]
+
+  @@map("roles")
+}
+
+model Settings {
+  id                   String   @id @default(uuid())
+  stripeWebhookSecret  String?  @map("stripe_webhook_secret")
+  emailNotifications   Boolean  @default(true) @map("email_notifications")
+  notificationSettings Json     @default("{}") @map("notification_settings")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model ClientAccessToken {
+  id        String    @id @default(uuid())
+  clientId  String    @map("client_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_access_tokens")
+}
+
+model ClientViewer {
+  id       String   @id @default(uuid())
+  clientId String   @map("client_id")
+  email    String
+  name     String?
+  addedAt  DateTime @default(now()) @map("added_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, email])
+  @@map("client_viewers")
+}
+
+// Global audit logging
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityIds  String[] @map("entity_ids")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Track scheduled job executions
+model ScheduledJobRun {
+  id          String    @id @default(uuid())
+  jobName     String    @map("job_name")
+  status      String
+  details     Json?
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@map("scheduled_job_runs")
+}
+
+// Database backup metadata
+model DatabaseBackup {
+  id        String   @id @default(uuid())
+  filename  String
+  sizeBytes Int      @map("size_bytes")
+  path      String
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+
+  @@map("database_backups")
+}
+
+// Client task submission requests
+model TaskSubmission {
+  id          String    @id @default(uuid())
+  clientId    String    @map("client_id")
+  projectId   String?   @map("project_id")
+  title       String
+  description String?
+  priority    String?
+  submittedBy String    @map("submitted_by")
+  status      String    @default("pending")
+  taskId      String?   @unique @map("task_id")
+  reviewedBy  String?   @map("reviewed_by")
+  reviewedAt  DateTime? @map("reviewed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  client  Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  task    Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([status])
+  @@map("task_submissions")
+}
+
+// Global app settings (theme, etc.)
+model AppSettings {
+  id             String   @id @default("default")
+  theme          Json     @default("{}")
+  emailTemplates Json     @default("{}") @map("email_templates")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  updatedBy      String?  @map("updated_by")
+
+  @@map("app_settings")
+}
+
+// User guide/walkthrough completion tracking
+model GuideCompletion {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  guideId     String   @map("guide_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, guideId])
+  @@index([userId])
+  @@map("guide_completions")
+}
+
+// Internal chat system
+model Chat {
+  id        String   @id @default(uuid())
+  name      String? // For group chats
+  isGroup   Boolean  @default(false) @map("is_group")
+  creatorId String   @map("creator_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  creator      User              @relation("ChatCreator", fields: [creatorId], references: [id])
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@map("chats")
+}
+
+model ChatParticipant {
+  id         String    @id @default(uuid())
+  chatId     String    @map("chat_id")
+  userId     String    @map("user_id")
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  lastReadAt DateTime? @map("last_read_at")
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@index([userId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  chatId    String   @map("chat_id")
+  senderId  String   @map("sender_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  chat         Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender       User              @relation(fields: [senderId], references: [id])
+  attachments  ChatAttachment[]
+  readReceipts ChatReadReceipt[]
+
+  @@index([chatId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatAttachment {
+  id         String   @id @default(uuid())
+  messageId  String   @map("message_id")
+  fileName   String   @map("file_name")
+  fileSize   Int      @map("file_size")
+  fileType   String   @map("file_type")
+  storageKey String   @map("storage_key")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("chat_attachments")
+}
+
+model ChatReadReceipt {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  readAt    DateTime @default(now()) @map("read_at")
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
+  @@map("chat_read_receipts")
+}
