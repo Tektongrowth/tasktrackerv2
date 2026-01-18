@@ -1287,12 +1287,12 @@ export function SettingsPage() {
                   <div className="space-y-2">
                     <Label>Job Role (optional)</Label>
                     <p className="text-xs text-muted-foreground">Assign a job role to automatically add this contractor to related tasks</p>
-                    <Select value={inviteJobRoleId || ''} onValueChange={(v) => setInviteJobRoleId(v || undefined)}>
+                    <Select value={inviteJobRoleId || 'none'} onValueChange={(v) => setInviteJobRoleId(v === 'none' ? undefined : v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a job role..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No role</SelectItem>
+                        <SelectItem value="none">No role</SelectItem>
                         {allRoles.map((role) => (
                           <SelectItem key={role.id} value={role.id}>
                             <div className="flex items-center gap-2">
