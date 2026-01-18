@@ -4,6 +4,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     credentials: 'include',
+    cache: 'no-store', // Prevent browser HTTP caching - let React Query handle caching
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
