@@ -12,7 +12,11 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
     const templateSets = await prisma.templateSet.findMany({
       include: {
         templates: {
-          orderBy: { sortOrder: 'asc' }
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            defaultRole: true,
+            subtasks: { orderBy: { sortOrder: 'asc' } }
+          }
         },
         _count: {
           select: { templates: true }
@@ -38,7 +42,11 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
       where: { id: id as string },
       include: {
         templates: {
-          orderBy: { sortOrder: 'asc' }
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            defaultRole: true,
+            subtasks: { orderBy: { sortOrder: 'asc' } }
+          }
         }
       }
     });
