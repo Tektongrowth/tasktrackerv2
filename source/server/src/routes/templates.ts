@@ -20,7 +20,8 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
       include: {
         subtasks: {
           orderBy: { sortOrder: 'asc' }
-        }
+        },
+        defaultRole: true
       },
       orderBy: [
         { templateType: 'asc' },
@@ -44,7 +45,8 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
       include: {
         subtasks: {
           orderBy: { sortOrder: 'asc' }
-        }
+        },
+        defaultRole: true
       }
     });
 
@@ -61,7 +63,7 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
 // Create template (admin only)
 router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { title, description, templateType, planTypes, defaultAssigneeEmails, dueInDays, tags, subtasks, templateSetId } = req.body;
+    const { title, description, templateType, planTypes, defaultAssigneeEmails, defaultRoleId, dueInDays, tags, subtasks, templateSetId } = req.body;
 
     const template = await prisma.taskTemplate.create({
       data: {
@@ -70,6 +72,7 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
         templateType,
         planTypes: planTypes || [],
         defaultAssigneeEmails: defaultAssigneeEmails || [],
+        defaultRoleId: defaultRoleId || null,
         dueInDays,
         tags: tags || [],
         templateSetId: templateSetId || null,
@@ -83,7 +86,8 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
       include: {
         subtasks: {
           orderBy: { sortOrder: 'asc' }
-        }
+        },
+        defaultRole: true
       }
     });
 
@@ -97,7 +101,7 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
 router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { title, description, templateType, planTypes, defaultAssigneeEmails, dueInDays, tags, subtasks, templateSetId } = req.body;
+    const { title, description, templateType, planTypes, defaultAssigneeEmails, defaultRoleId, dueInDays, tags, subtasks, templateSetId } = req.body;
 
     // If subtasks are provided, delete existing and create new
     if (subtasks !== undefined) {
@@ -124,6 +128,7 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
         ...(templateType && { templateType }),
         ...(planTypes && { planTypes }),
         ...(defaultAssigneeEmails !== undefined && { defaultAssigneeEmails }),
+        ...(defaultRoleId !== undefined && { defaultRoleId: defaultRoleId || null }),
         ...(dueInDays !== undefined && { dueInDays }),
         ...(tags && { tags }),
         ...(templateSetId !== undefined && { templateSetId: templateSetId || null })
@@ -131,7 +136,8 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
       include: {
         subtasks: {
           orderBy: { sortOrder: 'asc' }
-        }
+        },
+        defaultRole: true
       }
     });
 
