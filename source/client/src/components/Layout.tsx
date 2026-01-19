@@ -268,7 +268,7 @@ export function Layout() {
           className="fixed inset-0 pointer-events-none z-0"
           style={{
             ...backgroundStyle,
-            opacity: backgroundImage ? 0.15 : 1,
+            opacity: 1,
           }}
         />
       )}

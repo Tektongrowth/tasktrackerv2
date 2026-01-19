@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/client.js';
 import { isAuthenticated, isAdmin } from '../middleware/auth.js';
 import { validateName } from '../utils/validation.js';
-import { applyNewProjectTemplates } from '../services/templateService.js';
+import { applyNewProjectTemplates, upgradeProjectPlanType, offboardProject } from '../services/templateService.js';
 
 const router = Router();
 
@@ -138,6 +138,70 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
     });
 
     res.json(project);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Upgrade project plan type (applies new templates without duplicating existing ones)
+router.post('/:id/upgrade', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const { planType } = req.body;
+
+    // Validate plan type
+    const validPlanTypes = ['package_one', 'package_two', 'package_three', 'package_four', 'facebook_ads_addon', 'custom_website_addon'];
+    if (!planType || !validPlanTypes.includes(planType)) {
+      return res.status(400).json({ error: 'Invalid plan type' });
+    }
+
+    // Check project exists
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const result = await upgradeProjectPlanType(id, planType);
+
+    res.json({
+      success: true,
+      previousPlanType: project.planType,
+      newPlanType: planType,
+      tasksCreated: result.tasksCreated,
+      skippedDuplicates: result.skippedDuplicates,
+      templateSetsProcessed: result.templateSetsProcessed
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Offboard project (applies offboarding templates and sets status to canceled)
+router.post('/:id/offboard', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+
+    // Check project exists
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Check if already offboarded
+    if (project.subscriptionStatus === 'canceled') {
+      return res.status(400).json({ error: 'Project is already offboarded' });
+    }
+
+    const result = await offboardProject(id);
+
+    res.json({
+      success: true,
+      previousStatus: project.subscriptionStatus,
+      newStatus: 'canceled',
+      tasksCreated: result.tasksCreated,
+      skippedDuplicates: result.skippedDuplicates,
+      templateSetsProcessed: result.templateSetsProcessed
+    });
   } catch (error) {
     next(error);
   }

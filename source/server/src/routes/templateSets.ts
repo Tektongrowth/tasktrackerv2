@@ -70,7 +70,7 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
       throw new AppError('Name is required', 400);
     }
 
-    const validTriggerTypes = ['manual', 'new_project', 'subscription_change', 'schedule'];
+    const validTriggerTypes = ['manual', 'new_project', 'subscription_change', 'schedule', 'offboard'];
     if (triggerType && !validTriggerTypes.includes(triggerType)) {
       throw new AppError('Invalid trigger type', 400);
     }
@@ -109,7 +109,7 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
       throw new AppError('Cannot modify system template set name or trigger type', 400);
     }
 
-    const validTriggerTypes = ['manual', 'new_project', 'subscription_change', 'schedule'];
+    const validTriggerTypes = ['manual', 'new_project', 'subscription_change', 'schedule', 'offboard'];
     if (triggerType && !validTriggerTypes.includes(triggerType)) {
       throw new AppError('Invalid trigger type', 400);
     }

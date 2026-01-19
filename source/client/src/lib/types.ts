@@ -106,7 +106,7 @@ export interface TaskInput {
   assigneeIds?: string[];
 }
 
-export type TriggerType = 'manual' | 'new_project' | 'subscription_change' | 'schedule';
+export type TriggerType = 'manual' | 'new_project' | 'subscription_change' | 'schedule' | 'offboard';
 
 export interface TemplateSet {
   id: string;

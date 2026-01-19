@@ -171,6 +171,10 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       setNewSubtaskTitle('');
       setIsAddingSubtask(false);
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to create subtask', description: error.message, variant: 'destructive' });
+      setIsAddingSubtask(false);
+    },
   });
 
   const updateSubtask = useMutation({
@@ -180,6 +184,9 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to update subtask', description: error.message, variant: 'destructive' });
+    },
   });
 
   const deleteSubtask = useMutation({
@@ -188,6 +195,9 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to delete subtask', description: error.message, variant: 'destructive' });
+    },
   });
 
   // Comment mutations
@@ -195,7 +205,11 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     mutationFn: (content: string) => commentsApi.create(task.id, { content }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setNewComment('');
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to post comment', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -203,6 +217,9 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     mutationFn: (commentId: string) => commentsApi.delete(task.id, commentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to delete comment', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -215,6 +232,8 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     task.assignees?.map(a => a.userId) || []
   );
   const [dueDate, setDueDate] = useState(task.dueDate?.split('T')[0] || '');
+  const [editedTags, setEditedTags] = useState<string[]>(task.tags || []);
+  const [newTagInput, setNewTagInput] = useState('');
 
   // Track if component mounted to prevent auto-save on initial render
   const [mounted, setMounted] = useState(false);
@@ -233,6 +252,11 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       selectedAssigneeIds.length !== currentAssigneeIds.length ||
       selectedAssigneeIds.some(id => !currentAssigneeIds.includes(id));
 
+    const currentTags = task.tags || [];
+    const tagsChanged =
+      editedTags.length !== currentTags.length ||
+      editedTags.some(tag => !currentTags.includes(tag));
+
     const hasChanges =
       title !== task.title ||
       description !== (task.description || '') ||
@@ -240,6 +264,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       priority !== (task.priority || 'medium') ||
       selectedRoleId !== (task.roleId || '') ||
       assigneesChanged ||
+      tagsChanged ||
       dueDate !== (task.dueDate?.split('T')[0] || '');
 
     if (!hasChanges) return;
@@ -255,6 +280,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
           priority,
           roleId: selectedRoleId || null,
           assigneeIds: selectedAssigneeIds,
+          tags: editedTags,
           dueDate: dueDate || undefined,
         },
       },
@@ -264,7 +290,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
         },
       }
     );
-  }, [task, title, description, status, priority, selectedRoleId, selectedAssigneeIds, dueDate, updateTask, mounted]);
+  }, [task, title, description, status, priority, selectedRoleId, selectedAssigneeIds, editedTags, dueDate, updateTask, mounted]);
 
   // Auto-save on blur or after 1.5s of no typing
   useEffect(() => {
@@ -273,7 +299,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       doSave();
     }, 1500);
     return () => clearTimeout(timer);
-  }, [title, description, status, priority, selectedRoleId, selectedAssigneeIds, dueDate, doSave, mounted]);
+  }, [title, description, status, priority, selectedRoleId, selectedAssigneeIds, editedTags, dueDate, doSave, mounted]);
 
   const totalTimeMinutes = task.timeEntries?.reduce((sum, e) => sum + (e.durationMinutes || 0), 0) || 0;
 
@@ -537,11 +563,53 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
         <div className="space-y-2">
           <Label>Tags</Label>
           <div className="flex flex-wrap gap-2">
-            {task.tags.map((tag) => (
-              <Badge key={tag} className={getTagColor(tag)} variant="secondary">
+            {editedTags.map((tag) => (
+              <Badge key={tag} className={cn(getTagColor(tag), 'pr-1')} variant="secondary">
                 {tag}
+                <button
+                  type="button"
+                  onClick={() => setEditedTags(prev => prev.filter(t => t !== tag))}
+                  className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </Badge>
             ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add a tag..."
+              value={newTagInput}
+              onChange={(e) => setNewTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTagInput.trim()) {
+                  e.preventDefault();
+                  const tag = newTagInput.trim().toLowerCase();
+                  if (!editedTags.includes(tag)) {
+                    setEditedTags(prev => [...prev, tag]);
+                  }
+                  setNewTagInput('');
+                }
+              }}
+              className="h-8 text-sm"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8"
+              disabled={!newTagInput.trim()}
+              onClick={() => {
+                const tag = newTagInput.trim().toLowerCase();
+                if (tag && !editedTags.includes(tag)) {
+                  setEditedTags(prev => [...prev, tag]);
+                }
+                setNewTagInput('');
+              }}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add
+            </Button>
           </div>
         </div>
 

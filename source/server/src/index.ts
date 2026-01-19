@@ -129,8 +129,9 @@ app.use('/api/app-settings/theme', publicApiLimiter);
 app.use('/api', generalApiLimiter);
 
 // SECURITY: Limit request body size to prevent DoS
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// Increased to 10mb to allow base64-encoded images for branding
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration with PostgreSQL store
 const PgSession = connectPgSimple(session);

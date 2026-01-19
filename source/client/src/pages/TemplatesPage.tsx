@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, FolderPlus, Zap, Calendar, FolderOpen, Settings2, GripVertical, Play } from 'lucide-react';
+import { Plus, Pencil, Trash2, FolderPlus, Zap, Calendar, FolderOpen, Settings2, GripVertical, Play, LogOut } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import type { TaskTemplate, PlanType, TemplateSet, TriggerType, User, Project, Tag, Role } from '@/lib/types';
@@ -169,6 +169,7 @@ const TRIGGER_TYPES: { value: TriggerType; label: string; description: string; i
   { value: 'new_project', label: 'New Project', description: 'When a new project is created', icon: FolderOpen },
   { value: 'subscription_change', label: 'Subscription Change', description: 'When subscription status changes', icon: Zap },
   { value: 'schedule', label: 'Scheduled', description: 'Runs on a recurring schedule', icon: Calendar },
+  { value: 'offboard', label: 'Offboard', description: 'When a project is offboarded', icon: LogOut },
 ];
 
 export function TemplatesPage() {

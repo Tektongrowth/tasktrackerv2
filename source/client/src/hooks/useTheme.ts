@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ThemeSettings, defaultTheme, applyTheme } from '@/lib/theme';
+import { toast } from '@/components/ui/toaster';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.tektongrowth.com';
 
 async function fetchTheme(): Promise<ThemeSettings> {
   const res = await fetch(`${API_BASE}/api/app-settings/theme`, {
     credentials: 'include',
+    cache: 'no-store',
   });
   if (!res.ok) {
     return defaultTheme;
@@ -44,7 +46,7 @@ export function useTheme() {
   const { data: theme, isLoading } = useQuery({
     queryKey: ['theme'],
     queryFn: fetchTheme,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5, // 5 minutes - allow refetch on page reload
     retry: false,
   });
 
@@ -53,14 +55,22 @@ export function useTheme() {
     onSuccess: (newTheme) => {
       queryClient.setQueryData(['theme'], newTheme);
       applyTheme(newTheme);
+      toast({ title: 'Theme saved' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to save theme', description: error.message, variant: 'destructive' });
     },
   });
 
   const resetMutation = useMutation({
     mutationFn: resetTheme,
     onSuccess: (newTheme) => {
+      queryClient.invalidateQueries({ queryKey: ['theme'] });
       queryClient.setQueryData(['theme'], newTheme);
       applyTheme(newTheme);
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to reset theme', description: error.message, variant: 'destructive' });
     },
   });
 

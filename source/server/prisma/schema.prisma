@@ -58,6 +58,7 @@ enum TriggerType {
   new_project // When a new project is created
   subscription_change // When subscription status changes
   schedule // Recurring schedule (cron-like)
+  offboard // When a project is offboarded
 }
 
 model TemplateSet {

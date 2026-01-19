@@ -96,6 +96,29 @@ export const projects = {
     }),
   delete: (id: string) =>
     fetchApi<{ success: boolean }>(`/api/projects/${id}`, { method: 'DELETE' }),
+  upgrade: (id: string, planType: string) =>
+    fetchApi<{
+      success: boolean;
+      previousPlanType: string | null;
+      newPlanType: string;
+      tasksCreated: number;
+      skippedDuplicates: number;
+      templateSetsProcessed: number;
+    }>(`/api/projects/${id}/upgrade`, {
+      method: 'POST',
+      body: JSON.stringify({ planType }),
+    }),
+  offboard: (id: string) =>
+    fetchApi<{
+      success: boolean;
+      previousStatus: string;
+      newStatus: string;
+      tasksCreated: number;
+      skippedDuplicates: number;
+      templateSetsProcessed: number;
+    }>(`/api/projects/${id}/offboard`, {
+      method: 'POST',
+    }),
 };
 
 // Tasks

@@ -744,6 +744,15 @@ export function SettingsPage() {
   const [projectPlanType, setPlanType] = useState('package_one');
   const [projectStatus, setProjectStatus] = useState('active');
 
+  // Upgrade state
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [upgradingProject, setUpgradingProject] = useState<{ id: string; name: string; planType?: string } | null>(null);
+  const [upgradePlanType, setUpgradePlanType] = useState('');
+
+  // Offboard state
+  const [showOffboardDialog, setShowOffboardDialog] = useState(false);
+  const [offboardingProject, setOffboardingProject] = useState<{ id: string; name: string; clientName?: string } | null>(null);
+
   // Permissions state
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -1003,6 +1012,41 @@ export function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast({ title: 'Project deleted' });
+    },
+  });
+
+  const upgradeProject = useMutation({
+    mutationFn: ({ id, planType }: { id: string; planType: string }) => projectsApi.upgrade(id, planType),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setShowUpgradeDialog(false);
+      setUpgradingProject(null);
+      setUpgradePlanType('');
+      toast({
+        title: 'Package upgraded successfully',
+        description: `Created ${result.tasksCreated} new tasks (${result.skippedDuplicates} duplicates skipped)`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Upgrade failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const offboardProjectMutation = useMutation({
+    mutationFn: (id: string) => projectsApi.offboard(id),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setShowOffboardDialog(false);
+      setOffboardingProject(null);
+      toast({
+        title: 'Project offboarded',
+        description: `Created ${result.tasksCreated} offboarding tasks (${result.skippedDuplicates} duplicates skipped). Status changed to canceled.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Offboard failed', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -2274,6 +2318,31 @@ export function SettingsPage() {
                         {project.subscriptionStatus}
                       </Badge>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          setUpgradingProject({ id: project.id, name: project.name, planType: project.planType || undefined });
+                          setUpgradePlanType(project.planType || 'package_one');
+                          setShowUpgradeDialog(true);
+                        }}
+                      >
+                        Upgrade
+                      </Button>
+                      {project.subscriptionStatus === 'active' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs text-orange-600 border-orange-300 hover:bg-orange-50"
+                          onClick={() => {
+                            setOffboardingProject({ id: project.id, name: project.name, clientName: project.client?.name });
+                            setShowOffboardDialog(true);
+                          }}
+                        >
+                          Offboard
+                        </Button>
+                      )}
+                      <Button
                         variant="ghost"
                         size="icon"
                         className="hover:bg-transparent"
@@ -2300,6 +2369,94 @@ export function SettingsPage() {
               </p>
             )}
           </div>
+
+          {/* Upgrade Package Dialog */}
+          <Dialog open={showUpgradeDialog} onOpenChange={(open) => { setShowUpgradeDialog(open); if (!open) { setUpgradingProject(null); setUpgradePlanType(''); } }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upgrade Package</DialogTitle>
+                <DialogDescription>
+                  Upgrade {upgradingProject?.name} to a new package. Only templates that haven't been applied yet will be added.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Current package:</p>
+                  <p className="font-medium">{upgradingProject?.planType?.replace(/_/g, ' ') || 'None'}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>New Package</Label>
+                  <select
+                    value={upgradePlanType}
+                    onChange={(e) => setUpgradePlanType(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="package_one">Package One</option>
+                    <option value="package_two">Package Two</option>
+                    <option value="package_three">Package Three</option>
+                    <option value="package_four">Package Four</option>
+                    <option value="facebook_ads_addon">Facebook Ads Add-on</option>
+                    <option value="custom_website_addon">Custom Website Add-on</option>
+                  </select>
+                </div>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    Tasks from templates already applied to this project will be skipped to prevent duplicates.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => upgradingProject && upgradeProject.mutate({ id: upgradingProject.id, planType: upgradePlanType })}
+                  className="w-full"
+                  disabled={upgradeProject.isPending || !upgradePlanType}
+                >
+                  {upgradeProject.isPending ? 'Upgrading...' : 'Upgrade Package'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Offboard Project Dialog */}
+          <Dialog open={showOffboardDialog} onOpenChange={(open) => { setShowOffboardDialog(open); if (!open) { setOffboardingProject(null); } }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Offboard Project</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to offboard {offboardingProject?.name}?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Client:</p>
+                  <p className="font-medium">{offboardingProject?.clientName || 'Unknown'}</p>
+                </div>
+                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    This will:
+                  </p>
+                  <ul className="text-sm text-orange-800 list-disc list-inside mt-1 space-y-1">
+                    <li>Create offboarding tasks from your offboarding templates</li>
+                    <li>Change the project status to "canceled"</li>
+                  </ul>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => { setShowOffboardDialog(false); setOffboardingProject(null); }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => offboardingProject && offboardProjectMutation.mutate(offboardingProject.id)}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700"
+                    disabled={offboardProjectMutation.isPending}
+                  >
+                    {offboardProjectMutation.isPending ? 'Offboarding...' : 'Offboard Project'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="tags" className="space-y-4 mt-4">
