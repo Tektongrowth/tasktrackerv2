@@ -78,6 +78,7 @@ export function configurePassport() {
         name: user.name,
         avatarUrl: user.avatarUrl,
         role: user.role,
+        accessLevel: user.accessLevel,
         permissions: (user.permissions as Record<string, boolean>) || {}
       };
 
@@ -106,6 +107,7 @@ export function configurePassport() {
         name: user.name,
         avatarUrl: user.avatarUrl,
         role: user.role,
+        accessLevel: user.accessLevel,
         permissions: (user.permissions as Record<string, boolean>) || {}
       };
       done(null, expressUser);
@@ -158,6 +160,7 @@ declare global {
       name: string;
       avatarUrl: string | null;
       role: string;
+      accessLevel: string;
       permissions: Record<string, boolean>;
     }
   }
