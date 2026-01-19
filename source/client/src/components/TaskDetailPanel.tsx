@@ -184,12 +184,14 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     });
   };
 
-  const { data: task } = useQuery({
+  const { data: fetchedTask } = useQuery({
     queryKey: ['tasks', initialTask.id],
     queryFn: () => tasksApi.get(initialTask.id),
-    placeholderData: initialTask,
     staleTime: 0, // Always refetch to get latest activities
   });
+
+  // Use fetched task if available, otherwise fall back to initial task
+  const task = fetchedTask ?? initialTask;
 
   const { data: allUsers } = useQuery({
     queryKey: ['users'],
