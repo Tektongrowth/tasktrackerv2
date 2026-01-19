@@ -187,7 +187,8 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const { data: task } = useQuery({
     queryKey: ['tasks', initialTask.id],
     queryFn: () => tasksApi.get(initialTask.id),
-    initialData: initialTask,
+    placeholderData: initialTask,
+    staleTime: 0, // Always refetch to get latest activities
   });
 
   const { data: allUsers } = useQuery({
