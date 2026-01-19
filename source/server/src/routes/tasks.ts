@@ -36,6 +36,11 @@ async function hasProjectAccess(userId: string, projectId: string, permission: '
   return access ? access[permission] : false;
 }
 
+// Helper to check if user has elevated access (admin or project manager)
+function hasElevatedAccess(user: Express.User): boolean {
+  return user.role === 'admin' || user.accessLevel === 'project_manager';
+}
+
 // List tasks with filters
 router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -47,8 +52,8 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
       archived: includeArchived === 'true' ? undefined : false
     };
 
-    // Permission-based filtering for contractors
-    if (user.role !== 'admin') {
+    // Permission-based filtering for contractors (admins and project managers see all)
+    if (!hasElevatedAccess(user)) {
       // Get project access for this user
       const projectAccess = await getUserProjectAccess(user.id);
       const allowedProjectIds = projectAccess.map(pa => pa.projectId);
@@ -130,8 +135,8 @@ router.get('/archived', isAuthenticated, async (req: Request, res: Response, nex
   try {
     const user = req.user as Express.User;
 
-    // Only admin can view archived tasks
-    if (user.role !== 'admin') {
+    // Only admin/PM can view archived tasks
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -221,8 +226,8 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
       throw new AppError('Task not found', 404);
     }
 
-    // Check permission - admin always has access
-    if (user.role !== 'admin') {
+    // Check permission - admin/PM always has access
+    if (!hasElevatedAccess(user)) {
       // Check if user has project access or is assigned to the task
       const hasAccess = await hasProjectAccess(user.id, task.projectId, 'canView');
       const isAssigned = task.assignees.some(a => a.userId === user.id);
@@ -249,7 +254,7 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
     const validDescription = validateDescription(description);
 
     // Check permission to create tasks
-    if (user.role !== 'admin') {
+    if (!hasElevatedAccess(user)) {
       // Check if user has edit access to the project
       const hasAccess = await hasProjectAccess(user.id, projectId, 'canEdit');
       if (!hasAccess && !user.permissions?.editAllTasks) {
@@ -334,12 +339,12 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
 
     // Check permission
     const isAssigned = existingTask.assignees.some(a => a.userId === user.id);
-    let canEdit = user.role === 'admin' ||
+    let canEdit = hasElevatedAccess(user) ||
       user.permissions?.editAllTasks ||
       (user.permissions?.editOwnTasks !== false && isAssigned);
 
     // Also check project-level edit access
-    if (!canEdit && user.role !== 'admin') {
+    if (!canEdit && !hasElevatedAccess(user)) {
       canEdit = await hasProjectAccess(user.id, existingTask.projectId, 'canEdit');
     }
 
@@ -599,12 +604,12 @@ router.patch('/:id/status', isAuthenticated, async (req: Request, res: Response,
 
     // Check permission
     const isAssigned = existingTask.assignees.some(a => a.userId === user.id);
-    let canEdit = user.role === 'admin' ||
+    let canEdit = hasElevatedAccess(user) ||
       user.permissions?.editAllTasks ||
       (user.permissions?.editOwnTasks !== false && isAssigned);
 
     // Also check project-level edit access
-    if (!canEdit && user.role !== 'admin') {
+    if (!canEdit && !hasElevatedAccess(user)) {
       canEdit = await hasProjectAccess(user.id, existingTask.projectId, 'canEdit');
     }
 
@@ -696,8 +701,8 @@ router.delete('/:id', isAuthenticated, async (req: Request, res: Response, next:
     const id = req.params.id as string;
     const user = req.user as Express.User;
 
-    // Only admin can delete
-    if (user.role !== 'admin') {
+    // Only admin/PM can delete
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -714,8 +719,8 @@ router.post('/archive-completed', isAuthenticated, async (req: Request, res: Res
   try {
     const user = req.user as Express.User;
 
-    // Only admin can archive tasks
-    if (user.role !== 'admin') {
+    // Only admin/PM can archive tasks
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -742,8 +747,8 @@ router.post('/:id/archive', isAuthenticated, async (req: Request, res: Response,
     const id = req.params.id as string;
     const user = req.user as Express.User;
 
-    // Only admin can archive tasks
-    if (user.role !== 'admin') {
+    // Only admin/PM can archive tasks
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -767,8 +772,8 @@ router.post('/:id/unarchive', isAuthenticated, async (req: Request, res: Respons
     const id = req.params.id as string;
     const user = req.user as Express.User;
 
-    // Only admin can unarchive tasks
-    if (user.role !== 'admin') {
+    // Only admin/PM can unarchive tasks
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -794,7 +799,7 @@ router.post('/bulk/status', isAuthenticated, async (req: Request, res: Response,
     const user = req.user as Express.User;
     const { taskIds, status } = req.body;
 
-    if (user.role !== 'admin') {
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -849,7 +854,7 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
     const user = req.user as Express.User;
     const { taskIds, assigneeIds } = req.body;
 
-    if (user.role !== 'admin') {
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -917,7 +922,7 @@ router.post('/bulk/delete', isAuthenticated, async (req: Request, res: Response,
     const user = req.user as Express.User;
     const { taskIds } = req.body;
 
-    if (user.role !== 'admin') {
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -952,7 +957,7 @@ router.post('/bulk/archive', isAuthenticated, async (req: Request, res: Response
     const user = req.user as Express.User;
     const { taskIds } = req.body;
 
-    if (user.role !== 'admin') {
+    if (!hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -1339,8 +1344,8 @@ router.patch('/:taskId/comments/:commentId', isAuthenticated, async (req: Reques
       throw new AppError('Comment not found', 404);
     }
 
-    // Only comment author or admin can edit
-    if (existingComment.userId !== user.id && user.role !== 'admin') {
+    // Only comment author or admin/PM can edit
+    if (existingComment.userId !== user.id && !hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -1371,8 +1376,8 @@ router.delete('/:taskId/comments/:commentId', isAuthenticated, async (req: Reque
       throw new AppError('Comment not found', 404);
     }
 
-    // Only comment author or admin can delete
-    if (existingComment.userId !== user.id && user.role !== 'admin') {
+    // Only comment author or admin/PM can delete
+    if (existingComment.userId !== user.id && !hasElevatedAccess(user)) {
       throw new AppError('Permission denied', 403);
     }
 
