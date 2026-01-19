@@ -31,8 +31,47 @@ const getQuickDate = (days: number): string => {
   return date.toISOString().split('T')[0];
 };
 
+// Format activity action for display
+const formatActivityAction = (action: string, details?: Record<string, unknown>): string => {
+  switch (action) {
+    case 'created':
+      return 'created this task';
+    case 'status_changed':
+    case 'bulk_status_changed':
+      return `changed status to ${details?.to || 'unknown'}`;
+    case 'updated':
+      const changes = (details?.changes as string[]) || [];
+      if (changes.length === 0) return 'made changes';
+      return `updated ${changes.join(', ')}`;
+    case 'commented':
+      return 'added a comment';
+    case 'priority_changed':
+      return `changed priority to ${details?.to || 'unknown'}`;
+    case 'role_changed':
+      return `changed assigned role to ${details?.roleName || 'none'}`;
+    case 'due_date_changed':
+      return details?.to ? `set due date to ${details.to}` : 'removed due date';
+    case 'subtask_added':
+      return `added subtask "${details?.title || ''}"`;
+    case 'subtask_completed':
+      return `completed subtask "${details?.title || ''}"`;
+    case 'subtask_uncompleted':
+      return `uncompleted subtask "${details?.title || ''}"`;
+    case 'subtask_deleted':
+      return `deleted subtask "${details?.title || ''}"`;
+    case 'time_logged':
+      return `logged ${details?.minutes || 0} minutes`;
+    case 'assignee_added':
+      return `added ${details?.userName || 'someone'} as assignee`;
+    case 'assignee_removed':
+      return `removed ${details?.userName || 'someone'} from assignees`;
+    default:
+      return action.replace(/_/g, ' ');
+  }
+};
+
 export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isProjectManager } = useAuth();
   const queryClient = useQueryClient();
   const updateTask = useUpdateTask();
 
@@ -959,20 +998,26 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
           </div>
         </div>
 
-        {/* Activity Log */}
-        {task.activities && task.activities.length > 0 && (
+        {/* Activity Log - Only visible to PM and admin */}
+        {isProjectManager && task.activities && task.activities.length > 0 && (
           <div className="space-y-3 pt-4 border-t">
-            <Label className="text-muted-foreground">Recent Activity</Label>
+            <Label className="text-muted-foreground">Activity Log</Label>
             <div className="space-y-2">
-              {task.activities.slice(0, 10).map((activity) => (
+              {task.activities.slice(0, 20).map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-center gap-2 text-xs text-muted-foreground py-1"
+                  className="flex items-start gap-2 text-xs text-muted-foreground py-1"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                  <span className="capitalize">{activity.action.replace('_', ' ')}</span>
-                  <span className="text-slate-300">·</span>
-                  <span>{formatDate(activity.createdAt)}</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+                  <span>
+                    <span className="font-medium text-foreground">
+                      {activity.user?.name || 'System'}
+                    </span>
+                    {' '}{formatActivityAction(activity.action, activity.details)}
+                    <span className="text-slate-400 ml-1">
+                      · {formatDate(activity.createdAt)}
+                    </span>
+                  </span>
                 </div>
               ))}
             </div>

@@ -109,6 +109,7 @@ model User {
   chatParticipants ChatParticipant[]
   chatMessages     ChatMessage[]
   chatReadReceipts ChatReadReceipt[]
+  taskActivities   TaskActivity[]
 
   @@index([jobRoleId])
   @@map("users")
@@ -295,9 +296,11 @@ model TaskActivity {
   details   Json?
   createdAt DateTime @default(now()) @map("created_at")
 
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([taskId])
+  @@index([userId])
   @@map("task_activities")
 }
 

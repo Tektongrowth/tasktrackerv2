@@ -174,6 +174,7 @@ export interface TaskActivity {
   id: string;
   taskId: string;
   userId?: string;
+  user?: { id: string; name: string };
   action: string;
   details?: Record<string, unknown>;
   createdAt: string;

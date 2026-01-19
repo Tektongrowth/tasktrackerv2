@@ -195,6 +195,11 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
           orderBy: { createdAt: 'desc' }
         },
         activities: {
+          include: {
+            user: {
+              select: { id: true, name: true }
+            }
+          },
           orderBy: { createdAt: 'desc' },
           take: 50
         },
@@ -317,11 +322,11 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
   try {
     const id = req.params.id as string;
     const user = req.user as Express.User;
-    const { title, description, status, assigneeIds, dueDate, tags, roleId } = req.body;
+    const { title, description, status, priority, assigneeIds, dueDate, tags, roleId } = req.body;
 
     const existingTask = await prisma.task.findUnique({
       where: { id },
-      include: { assignees: true }
+      include: { assignees: true, assignedRole: true }
     });
     if (!existingTask) {
       throw new AppError('Task not found', 404);
@@ -356,6 +361,7 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
     if (tags !== undefined) updateData.tags = tags;
     if (roleId !== undefined) updateData.roleId = roleId || null;
+    if (priority !== undefined) updateData.priority = priority;
 
     // Handle assignee changes
     const existingAssigneeIds = existingTask.assignees.map(a => a.userId);
@@ -402,27 +408,124 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
               }
             }
           },
-          assignedRole: true
+          assignedRole: true,
+          activities: {
+            include: {
+              user: {
+                select: { id: true, name: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 50
+          },
+          subtasks: {
+            orderBy: { sortOrder: 'asc' }
+          },
+          comments: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, avatarUrl: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          }
         }
       });
     });
 
-    // Log activity
-    const changes: string[] = [];
-    if (title !== undefined && title !== existingTask.title) changes.push('title');
-    if (status !== undefined && status !== existingTask.status) changes.push(`status to ${status}`);
-    if (assigneeIds !== undefined && (addedAssigneeIds.length > 0 || removedAssigneeIds.length > 0)) {
-      changes.push('assignees');
-    }
-    if (dueDate !== undefined) changes.push('due date');
+    // Log granular activity changes
 
-    if (changes.length > 0) {
+    // Track title change
+    if (title !== undefined && title !== existingTask.title) {
       await prisma.taskActivity.create({
         data: {
           taskId: id,
           userId: user.id,
           action: 'updated',
-          details: { changes }
+          details: { changes: ['title'], from: existingTask.title, to: title }
+        }
+      });
+    }
+
+    // Track status change
+    if (status !== undefined && status !== existingTask.status) {
+      await prisma.taskActivity.create({
+        data: {
+          taskId: id,
+          userId: user.id,
+          action: 'status_changed',
+          details: { from: existingTask.status, to: status }
+        }
+      });
+    }
+
+    // Track priority change
+    if (priority !== undefined && priority !== existingTask.priority) {
+      await prisma.taskActivity.create({
+        data: {
+          taskId: id,
+          userId: user.id,
+          action: 'priority_changed',
+          details: { from: existingTask.priority, to: priority }
+        }
+      });
+    }
+
+    // Track due date change
+    if (dueDate !== undefined) {
+      const existingDueDate = existingTask.dueDate?.toISOString().split('T')[0] || null;
+      const newDueDate = dueDate ? new Date(dueDate).toISOString().split('T')[0] : null;
+      if (existingDueDate !== newDueDate) {
+        await prisma.taskActivity.create({
+          data: {
+            taskId: id,
+            userId: user.id,
+            action: 'due_date_changed',
+            details: { from: existingDueDate, to: newDueDate }
+          }
+        });
+      }
+    }
+
+    // Track role change
+    if (roleId !== undefined && roleId !== existingTask.roleId) {
+      const newRole = roleId ? await prisma.role.findUnique({ where: { id: roleId }, select: { name: true } }) : null;
+      await prisma.taskActivity.create({
+        data: {
+          taskId: id,
+          userId: user.id,
+          action: 'role_changed',
+          details: {
+            from: existingTask.roleId,
+            to: roleId,
+            fromRoleName: existingTask.assignedRole?.name || null,
+            roleName: newRole?.name || 'none'
+          }
+        }
+      });
+    }
+
+    // Track individual assignee changes
+    for (const addedId of addedAssigneeIds) {
+      const addedUser = await prisma.user.findUnique({ where: { id: addedId }, select: { name: true } });
+      await prisma.taskActivity.create({
+        data: {
+          taskId: id,
+          userId: user.id,
+          action: 'assignee_added',
+          details: { addedUserId: addedId, userName: addedUser?.name || 'Unknown' }
+        }
+      });
+    }
+
+    for (const removedId of removedAssigneeIds) {
+      const removedUser = await prisma.user.findUnique({ where: { id: removedId }, select: { name: true } });
+      await prisma.taskActivity.create({
+        data: {
+          taskId: id,
+          userId: user.id,
+          action: 'assignee_removed',
+          details: { removedUserId: removedId, userName: removedUser?.name || 'Unknown' }
         }
       });
     }
@@ -435,7 +538,45 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
       }
     }
 
-    res.json(task);
+    // Fetch task again with activities included (they were created after the transaction)
+    const finalTask = await prisma.task.findUnique({
+      where: { id },
+      include: {
+        project: {
+          include: { client: true }
+        },
+        assignees: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true }
+            }
+          }
+        },
+        assignedRole: true,
+        activities: {
+          include: {
+            user: {
+              select: { id: true, name: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 50
+        },
+        subtasks: {
+          orderBy: { sortOrder: 'asc' }
+        },
+        comments: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    res.json(finalTask);
   } catch (error) {
     next(error);
   }
@@ -505,7 +646,45 @@ router.patch('/:id/status', isAuthenticated, async (req: Request, res: Response,
       }
     });
 
-    res.json(task);
+    // Fetch task again with activities included
+    const finalTask = await prisma.task.findUnique({
+      where: { id },
+      include: {
+        project: {
+          include: { client: true }
+        },
+        assignees: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true }
+            }
+          }
+        },
+        assignedRole: true,
+        activities: {
+          include: {
+            user: {
+              select: { id: true, name: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 50
+        },
+        subtasks: {
+          orderBy: { sortOrder: 'asc' }
+        },
+        comments: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    res.json(finalTask);
   } catch (error) {
     next(error);
   }
@@ -885,6 +1064,16 @@ router.post('/:taskId/subtasks', isAuthenticated, async (req: Request, res: Resp
       }
     });
 
+    // Log activity
+    await prisma.taskActivity.create({
+      data: {
+        taskId,
+        userId: user.id,
+        action: 'subtask_added',
+        details: { subtaskId: subtask.id, title: subtask.title }
+      }
+    });
+
     res.status(201).json(subtask);
   } catch (error) {
     next(error);
@@ -937,6 +1126,18 @@ router.patch('/:taskId/subtasks/:subtaskId', isAuthenticated, async (req: Reques
       data: updateData
     });
 
+    // Log activity for completion changes
+    if (completed !== undefined && completed !== existingSubtask.completed) {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId: user.id,
+          action: completed ? 'subtask_completed' : 'subtask_uncompleted',
+          details: { subtaskId: subtask.id, title: subtask.title }
+        }
+      });
+    }
+
     res.json(subtask);
   } catch (error) {
     next(error);
@@ -976,6 +1177,16 @@ router.delete('/:taskId/subtasks/:subtaskId', isAuthenticated, async (req: Reque
     }
 
     await prisma.subtask.delete({ where: { id: subtaskId } });
+
+    // Log activity
+    await prisma.taskActivity.create({
+      data: {
+        taskId,
+        userId: user.id,
+        action: 'subtask_deleted',
+        details: { title: existingSubtask.title }
+      }
+    });
 
     res.json({ success: true });
   } catch (error) {

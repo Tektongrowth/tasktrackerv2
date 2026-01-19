@@ -91,6 +91,22 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
       }
     });
 
+    // Log activity if time was logged to a task
+    if (taskId) {
+      await prisma.taskActivity.create({
+        data: {
+          taskId,
+          userId: user.id,
+          action: 'time_logged',
+          details: {
+            minutes: durationMinutes,
+            description: description || title,
+            timeEntryId: entry.id
+          }
+        }
+      });
+    }
+
     res.status(201).json(entry);
   } catch (error) {
     next(error);
@@ -230,6 +246,23 @@ router.post('/:id/stop', isAuthenticated, async (req: Request, res: Response, ne
         }
       }
     });
+
+    // Log activity if time was logged to a task
+    const finalTaskId = taskId !== undefined ? taskId : entry.taskId;
+    if (finalTaskId) {
+      await prisma.taskActivity.create({
+        data: {
+          taskId: finalTaskId,
+          userId: user.id,
+          action: 'time_logged',
+          details: {
+            minutes: durationMinutes,
+            description: title || entry.title,
+            timeEntryId: updated.id
+          }
+        }
+      });
+    }
 
     res.json(updated);
   } catch (error) {
