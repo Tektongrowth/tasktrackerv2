@@ -246,6 +246,9 @@ export function TemplatesPage() {
   const [showSetDialog, setShowSetDialog] = useState(false);
   const [editingSet, setEditingSet] = useState<TemplateSet | null>(null);
 
+  // Filter state
+  const [filterPlanType, setFilterPlanType] = useState<PlanType | 'all'>('all');
+
   // Template form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -478,12 +481,32 @@ export function TemplatesPage() {
     );
   };
 
-  const onboardingTemplates = allTemplates.filter((t) => t.templateType === 'onboarding');
-  const recurringTemplates = allTemplates.filter((t) => t.templateType === 'recurring');
-  const customTemplates = allTemplates.filter((t) => t.templateType === 'custom');
+  // Apply plan type filter first, then split by template type
+  const filteredTemplates = filterPlanType === 'all'
+    ? allTemplates
+    : allTemplates.filter((t) => t.planTypes.includes(filterPlanType));
+
+  const onboardingTemplates = filteredTemplates.filter((t) => t.templateType === 'onboarding');
+  const recurringTemplates = filteredTemplates.filter((t) => t.templateType === 'recurring');
+  const customTemplates = filteredTemplates.filter((t) => t.templateType === 'custom');
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      {/* Plan Type Filter */}
+      <Select value={filterPlanType} onValueChange={(v) => setFilterPlanType(v as PlanType | 'all')}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by plan..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Plan Types</SelectItem>
+          {PLAN_TYPES.map((plan) => (
+            <SelectItem key={plan.value} value={plan.value}>
+              {plan.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       {/* New Template Set Button */}
       <Dialog open={showSetDialog} onOpenChange={(open) => {
         setShowSetDialog(open);
