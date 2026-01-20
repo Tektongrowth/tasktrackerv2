@@ -488,6 +488,24 @@ export interface NotificationPreferences {
   weeklyDigest: boolean;
 }
 
+export interface MentionNotification {
+  id: string;
+  readAt: string | null;
+  createdAt: string;
+  commentId: string;
+  commentContent: string;
+  mentionedBy: { id: string; name: string; avatarUrl: string | null };
+  task: {
+    id: string;
+    title: string;
+    project: {
+      id: string;
+      name: string;
+      client: { id: string; name: string } | null;
+    } | null;
+  };
+}
+
 export const notifications = {
   getPreferences: () =>
     fetchApi<NotificationPreferences>('/api/users/me/notifications'),
@@ -496,6 +514,15 @@ export const notifications = {
       method: 'PATCH',
       body: JSON.stringify({ preferences }),
     }),
+  getMentions: () => fetchApi<MentionNotification[]>('/api/notifications/mentions'),
+  getUnreadMentionCount: () => fetchApi<{ unreadCount: number }>('/api/notifications/mentions/unread-count'),
+  markMentionsAsRead: (mentionIds: string[]) =>
+    fetchApi<{ success: boolean }>('/api/notifications/mentions/read', {
+      method: 'POST',
+      body: JSON.stringify({ mentionIds }),
+    }),
+  markAllMentionsAsRead: () =>
+    fetchApi<{ success: boolean }>('/api/notifications/mentions/read-all', { method: 'POST' }),
 };
 
 // Settings (admin only)

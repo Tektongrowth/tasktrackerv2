@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   DndContext,
@@ -17,7 +18,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useTasks, useUpdateTaskStatus, useCreateTask } from '@/hooks/useTasks';
+import { useTasks, useTask, useUpdateTaskStatus, useCreateTask } from '@/hooks/useTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useFilters } from '@/hooks/useFilters';
 import { useRunningTimer, useStopTimer } from '@/hooks/useTimeEntries';
@@ -56,11 +57,12 @@ const columns: { id: TaskStatus; title: string; color: string }[] = [
 
 export function KanbanPage() {
   const { isAdmin, user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showMyTasks, setShowMyTasks] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeOverColumn, setActiveOverColumn] = useState<TaskStatus | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(searchParams.get('taskId'));
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Running timer
@@ -306,6 +308,15 @@ export function KanbanPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedTaskId, showCreateDialog, showProjectDialog]);
 
+  // Sync URL with selected task
+  useEffect(() => {
+    if (selectedTaskId) {
+      setSearchParams({ taskId: selectedTaskId });
+    } else {
+      setSearchParams({});
+    }
+  }, [selectedTaskId, setSearchParams]);
+
   // Apply client-side filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -393,7 +404,28 @@ export function KanbanPage() {
     }
   };
 
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId);
+  // Try to find the task in the loaded list first
+  const taskInList = tasks.find((t) => t.id === selectedTaskId);
+
+  // Fetch directly if task from URL is not in the current list (e.g., different project, archived)
+  const { data: fetchedTask, error: taskFetchError } = useTask(
+    selectedTaskId && !taskInList ? selectedTaskId : ''
+  );
+
+  // Use fetched task if not found in list, handle errors gracefully
+  const selectedTask = taskInList || fetchedTask;
+
+  // Clear selection if task couldn't be loaded (permission denied, not found)
+  useEffect(() => {
+    if (selectedTaskId && !taskInList && taskFetchError) {
+      toast({
+        title: 'Unable to load task',
+        description: 'The task may have been deleted or you may not have permission to view it.',
+        variant: 'destructive',
+      });
+      setSelectedTaskId(null);
+    }
+  }, [selectedTaskId, taskInList, taskFetchError]);
 
   return (
     <div className="h-full flex flex-col">

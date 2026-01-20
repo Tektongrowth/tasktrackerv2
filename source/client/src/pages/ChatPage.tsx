@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight } from 'lucide-react';
 import { Chat, ChatMessage, User } from '../lib/types';
-import { chats as chatsApi, users as usersApi } from '../lib/api';
+import { chats as chatsApi, users as usersApi, notifications as notificationsApi, type MentionNotification } from '../lib/api';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function ChatPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [chatList, setChatList] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(searchParams.get('id'));
@@ -21,6 +22,8 @@ export default function ChatPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
+  const [mentions, setMentions] = useState<MentionNotification[]>([]);
+  const [showMentions, setShowMentions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -145,6 +148,19 @@ export default function ChatPage() {
     }
     loadUsers();
   }, [user?.id]);
+
+  // Load task mentions
+  useEffect(() => {
+    async function loadMentions() {
+      try {
+        const mentionsList = await notificationsApi.getMentions();
+        setMentions(mentionsList);
+      } catch (error) {
+        console.error('Failed to load mentions:', error);
+      }
+    }
+    loadMentions();
+  }, []);
 
   // Load active chat
   useEffect(() => {
@@ -352,6 +368,24 @@ export default function ChatPage() {
     return name.includes(searchQuery.toLowerCase());
   });
 
+  const handleMentionClick = useCallback(async (mention: MentionNotification) => {
+    // Mark as read if not already
+    if (!mention.readAt) {
+      try {
+        await notificationsApi.markMentionsAsRead([mention.id]);
+        setMentions((prev) =>
+          prev.map((m) => (m.id === mention.id ? { ...m, readAt: new Date().toISOString() } : m))
+        );
+      } catch (error) {
+        console.error('Failed to mark mention as read:', error);
+      }
+    }
+    // Navigate to the task in the kanban view
+    navigate(`/kanban?taskId=${mention.task.id}`);
+  }, [navigate]);
+
+  const unreadMentionCount = mentions.filter((m) => !m.readAt).length;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -427,6 +461,82 @@ export default function ChatPage() {
                 </div>
               </button>
             ))
+          )}
+        </div>
+
+        {/* Task Mentions Section */}
+        <div className="border-t">
+          <button
+            onClick={() => setShowMentions(!showMentions)}
+            className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <AtSign className="w-4 h-4 text-primary" />
+              <span className="font-medium text-sm">Task Mentions</span>
+              {unreadMentionCount > 0 && (
+                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                  {unreadMentionCount}
+                </span>
+              )}
+            </div>
+            {showMentions ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+          {showMentions && (
+            <div className="max-h-60 overflow-y-auto">
+              {mentions.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  No mentions yet
+                </div>
+              ) : (
+                mentions.map((mention) => (
+                  <button
+                    key={mention.id}
+                    onClick={() => handleMentionClick(mention)}
+                    className={`w-full p-3 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left ${
+                      !mention.readAt ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}
+                  >
+                    {mention.mentionedBy.avatarUrl ? (
+                      <img
+                        src={mention.mentionedBy.avatarUrl}
+                        alt={mention.mentionedBy.name}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-primary font-medium text-xs">
+                          {mention.mentionedBy.name[0].toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="font-medium truncate">{mention.mentionedBy.name}</span>
+                        <span className="text-muted-foreground">mentioned you</span>
+                      </div>
+                      <p className="text-sm font-medium text-primary truncate mt-0.5">
+                        {mention.task.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {mention.commentContent.length > 60
+                          ? mention.commentContent.substring(0, 60) + '...'
+                          : mention.commentContent}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(mention.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                    {!mention.readAt && (
+                      <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
           )}
         </div>
 
