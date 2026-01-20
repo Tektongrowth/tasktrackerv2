@@ -81,6 +81,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
   // Comment state
   const [newComment, setNewComment] = useState('');
+  const [showAllComments, setShowAllComments] = useState(false);
 
   // Time tracking
   const { data: runningTimer } = useRunningTimer();
@@ -968,36 +969,68 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
           {/* Comments list */}
           <div className="space-y-3">
-            {task.comments?.map((comment) => (
-                <div key={comment.id} className="flex gap-3 group">
-                  <UserAvatar
-                    name={comment.user?.name || '?'}
-                    avatarUrl={comment.user?.avatarUrl}
-                    size="sm"
-                    className="shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{comment.user?.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(comment.createdAt)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                        onClick={() => deleteComment.mutate(comment.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+            {(() => {
+              const allComments = task.comments || [];
+              const totalComments = allComments.length;
+              const displayedComments = showAllComments
+                ? allComments
+                : allComments.slice(-5); // Show last 5 (most recent)
+
+              return (
+                <>
+                  {totalComments > 5 && !showAllComments && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowAllComments(true)}
+                    >
+                      View all {totalComments} comments
+                    </Button>
+                  )}
+                  {displayedComments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3 group">
+                      <UserAvatar
+                        name={comment.user?.name || '?'}
+                        avatarUrl={comment.user?.avatarUrl}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{comment.user?.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(comment.createdAt)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                            onClick={() => deleteComment.mutate(comment.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <p
+                          className="text-sm text-muted-foreground whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{ __html: sanitizeText(comment.content) }}
+                        />
+                      </div>
                     </div>
-                    <p
-                      className="text-sm text-muted-foreground whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: sanitizeText(comment.content) }}
-                    />
-                  </div>
-                </div>
-            ))}
+                  ))}
+                  {totalComments > 5 && showAllComments && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowAllComments(false)}
+                    >
+                      Show less
+                    </Button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
