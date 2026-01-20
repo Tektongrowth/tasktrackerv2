@@ -37,6 +37,26 @@ function sanitizePermissions(permissions: unknown): Record<string, boolean> | nu
   return Object.keys(sanitized).length > 0 ? sanitized : null;
 }
 
+// List users for mentions (any authenticated user)
+// Returns minimal user info needed for @mentions
+router.get('/mentionable', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // List all users (admin only)
 router.get('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {

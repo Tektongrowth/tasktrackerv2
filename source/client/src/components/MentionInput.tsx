@@ -4,7 +4,14 @@ import { users } from '@/lib/api';
 import { Textarea } from '@/components/ui/textarea';
 import { UserAvatar } from '@/components/UserAvatar';
 import { cn } from '@/lib/utils';
-import type { User } from '@/lib/types';
+
+// Simplified user type for mentions (only what we need)
+type MentionableUser = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+};
 
 interface MentionInputProps {
   value: string;
@@ -31,12 +38,12 @@ export function MentionInput({
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const { data: userList = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: users.list,
+    queryKey: ['users', 'mentionable'],
+    queryFn: users.listMentionable,
   });
 
   // Filter users based on mention query
-  const filteredUsers = userList.filter((user: User) => {
+  const filteredUsers = userList.filter((user: MentionableUser) => {
     if (!mentionQuery) return true;
     const query = mentionQuery.toLowerCase();
     return (
@@ -74,7 +81,7 @@ export function MentionInput({
     setMentionQuery('');
   };
 
-  const insertMention = useCallback((user: User) => {
+  const insertMention = useCallback((user: MentionableUser) => {
     if (mentionStart === null) return;
 
     const beforeMention = value.slice(0, mentionStart);
@@ -155,7 +162,7 @@ export function MentionInput({
           <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b bg-slate-50">
             Mention someone
           </div>
-          {filteredUsers.map((user: User, index: number) => (
+          {filteredUsers.map((user: MentionableUser, index: number) => (
             <div
               key={user.id}
               className={cn(
