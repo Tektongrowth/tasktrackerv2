@@ -375,7 +375,7 @@ export function Layout() {
         <div className="flex items-end justify-end gap-3 text-right px-6 py-4 mt-auto">
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-xs text-slate-300 italic tracking-wide">Task Tracker Pro</span>
-            <span className="text-[10px] text-slate-300">&copy; {new Date().getFullYear()} Your Company</span>
+            <span className="text-[10px] text-slate-300">&copy; {new Date().getFullYear()} Tekton Growth</span>
           </div>
           <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain opacity-30" />
         </div>
