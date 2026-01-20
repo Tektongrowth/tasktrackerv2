@@ -6,6 +6,8 @@ export function useTasks(params?: Record<string, string>) {
   return useQuery({
     queryKey: ['tasks', params],
     queryFn: () => tasks.list(params),
+    staleTime: 1000 * 10, // 10 seconds - tasks should be fresh
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
 }
 
