@@ -213,7 +213,7 @@ export function Layout() {
 
   // Get branding from theme
   const logoUrl = theme?.branding?.logoUrl || '/logo.png';
-  const backgroundImage = theme?.branding?.backgroundImage;
+  const backgroundImage = theme?.branding?.backgroundImage || '/background.jpg';
   const backgroundColor = theme?.branding?.backgroundColor;
 
   // Global keyboard shortcuts
