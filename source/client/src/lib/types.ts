@@ -194,7 +194,8 @@ export interface Subtask {
 export interface TaskComment {
   id: string;
   taskId: string;
-  userId: string;
+  userId?: string;
+  userName: string;
   content: string;
   user?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>;
   createdAt: string;

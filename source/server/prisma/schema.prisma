@@ -323,13 +323,14 @@ model Subtask {
 model TaskComment {
   id        String   @id @default(uuid())
   taskId    String   @map("task_id")
-  userId    String   @map("user_id")
+  userId    String?  @map("user_id")
+  userName  String   @map("user_name") @default("")
   content   String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   task     Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   mentions CommentMention[]
 
   @@index([taskId])

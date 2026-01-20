@@ -1272,6 +1272,7 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
       data: {
         taskId,
         userId: user.id,
+        userName: user.name,
         content
       },
       include: {

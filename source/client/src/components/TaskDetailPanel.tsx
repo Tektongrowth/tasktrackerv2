@@ -988,17 +988,19 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                       View all {totalComments} comments
                     </Button>
                   )}
-                  {displayedComments.map((comment) => (
+                  {displayedComments.map((comment) => {
+                    const displayName = comment.user?.name || comment.userName || 'Unknown User';
+                    return (
                     <div key={comment.id} className="flex gap-3 group">
                       <UserAvatar
-                        name={comment.user?.name || '?'}
+                        name={displayName}
                         avatarUrl={comment.user?.avatarUrl}
                         size="sm"
                         className="shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{comment.user?.name}</span>
+                          <span className="font-medium text-sm">{displayName}</span>
                           <span className="text-xs text-muted-foreground">
                             {formatDate(comment.createdAt)}
                           </span>
@@ -1017,7 +1019,8 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                         />
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   {totalComments > 5 && showAllComments && (
                     <Button
                       variant="ghost"
