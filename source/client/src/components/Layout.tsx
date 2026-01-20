@@ -43,9 +43,11 @@ const navItems = [
 ];
 
 function ProjectSidebar() {
+  const { user } = useAuth();
   const { data: allClients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: clients.list,
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const {
@@ -208,6 +210,7 @@ export function Layout() {
     queryKey: ['chat-unread-count'],
     queryFn: chatsApi.getUnreadCount,
     refetchInterval: 5000, // Refetch every 5 seconds for timely notifications
+    enabled: !!user, // Wait for auth before fetching
   });
   const unreadChatCount = unreadData?.unreadCount || 0;
 
@@ -216,6 +219,7 @@ export function Layout() {
     queryKey: ['mention-unread-count'],
     queryFn: notificationsApi.getUnreadMentionCount,
     refetchInterval: 5000,
+    enabled: !!user, // Wait for auth before fetching
   });
   const unreadMentionCount = mentionData?.unreadCount || 0;
 

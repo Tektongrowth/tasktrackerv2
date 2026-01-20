@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { tasks as tasksApi } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useFilters } from '@/hooks/useFilters';
 import { useUpdateTaskStatus } from '@/hooks/useTasks';
 import { useRunningTimer, useStopTimer } from '@/hooks/useTimeEntries';
@@ -66,6 +67,7 @@ function RunningTimer() {
 
 export function ListPage() {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const { selectedProjectId, selectedClientId } = useFilters();
   const updateTaskStatus = useUpdateTaskStatus();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -93,12 +95,13 @@ export function ListPage() {
   const { data: activeTasks = [] } = useQuery({
     queryKey: ['tasks', params],
     queryFn: () => tasksApi.list(Object.keys(params).length > 0 ? params : undefined),
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const { data: archivedTasks = [] } = useQuery({
     queryKey: ['tasks', 'archived'],
     queryFn: tasksApi.listArchived,
-    enabled: showArchived,
+    enabled: showArchived && !!user, // Wait for auth before fetching
   });
 
   // Show ONLY archived tasks when archive toggle is on

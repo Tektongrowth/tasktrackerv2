@@ -319,7 +319,10 @@ export const dashboard = {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return fetchApi<import('./types').TimeSummary>(`/api/dashboard/time-summary${query}`);
   },
-  incomplete: () => fetchApi<import('./types').IncompleteTasks>('/api/dashboard/incomplete'),
+  incomplete: (params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetchApi<import('./types').IncompleteTasks>(`/api/dashboard/incomplete${query}`);
+  },
   recentActivity: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return fetchApi<import('./types').RecentActivity[]>(`/api/dashboard/recent-activity${query}`);

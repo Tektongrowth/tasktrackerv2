@@ -218,6 +218,7 @@ router.get('/time-summary', isAuthenticated, async (req: Request, res: Response,
 router.get('/incomplete', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user as Express.User;
+    const { projectId, clientId } = req.query;
 
     // Only admins can see all incomplete tasks
     if (user.role !== 'admin') {
@@ -228,9 +229,18 @@ router.get('/incomplete', isAuthenticated, async (req: Request, res: Response, n
       });
     }
 
+    // Build base filter for project/client
+    const baseWhere: Prisma.TaskWhereInput = {};
+    if (projectId) {
+      baseWhere.projectId = projectId as string;
+    } else if (clientId) {
+      baseWhere.project = { clientId: clientId as string };
+    }
+
     const [unassignedTasks, noDueDateTasks] = await Promise.all([
       prisma.task.findMany({
         where: {
+          ...baseWhere,
           status: { not: 'completed' },
           assignees: { none: {} }
         },
@@ -248,6 +258,7 @@ router.get('/incomplete', isAuthenticated, async (req: Request, res: Response, n
       }),
       prisma.task.findMany({
         where: {
+          ...baseWhere,
           status: { not: 'completed' },
           dueDate: null
         },
@@ -273,12 +284,14 @@ router.get('/incomplete', isAuthenticated, async (req: Request, res: Response, n
     const [unassignedCount, noDueDateCount] = await Promise.all([
       prisma.task.count({
         where: {
+          ...baseWhere,
           status: { not: 'completed' },
           assignees: { none: {} }
         }
       }),
       prisma.task.count({
         where: {
+          ...baseWhere,
           status: { not: 'completed' },
           dueDate: null
         }

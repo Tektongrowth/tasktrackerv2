@@ -212,21 +212,25 @@ export function DashboardPage() {
   const { data: stats } = useQuery({
     queryKey: ['dashboard', 'stats', params],
     queryFn: () => dashboard.stats(Object.keys(params).length > 0 ? params : undefined),
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const { data: upcomingTasks = [] } = useQuery({
     queryKey: ['dashboard', 'upcoming', params],
     queryFn: () => dashboard.upcoming(Object.keys(params).length > 0 ? params : undefined),
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const { data: completedTasks = [] } = useQuery({
     queryKey: ['dashboard', 'completed', params],
     queryFn: () => dashboard.completed(Object.keys(params).length > 0 ? params : undefined),
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const { data: timeSummary } = useQuery({
     queryKey: ['dashboard', 'time-summary', params],
     queryFn: () => dashboard.timeSummary(Object.keys(params).length > 0 ? params : undefined),
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const { data: allUsers = [] } = useQuery({
@@ -236,14 +240,15 @@ export function DashboardPage() {
   });
 
   const { data: incompleteTasks } = useQuery({
-    queryKey: ['dashboard', 'incomplete'],
-    queryFn: dashboard.incomplete,
-    enabled: isAdmin,
+    queryKey: ['dashboard', 'incomplete', params],
+    queryFn: () => dashboard.incomplete(Object.keys(params).length > 0 ? params : undefined),
+    enabled: isAdmin && !!user, // Wait for auth before fetching
   });
 
   const { data: recentActivity = [] } = useQuery({
     queryKey: ['dashboard', 'recent-activity', params],
     queryFn: () => dashboard.recentActivity(Object.keys(params).length > 0 ? params : undefined),
+    enabled: !!user, // Wait for auth before fetching
   });
 
   const totalTasks = (stats?.tasks.todo || 0) + (stats?.tasks.inReview || 0) + (stats?.tasks.completed || 0);

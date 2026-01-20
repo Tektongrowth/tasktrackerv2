@@ -114,7 +114,10 @@ export function KanbanPage() {
   if (selectedProjectId) params.projectId = selectedProjectId;
   if (selectedClientId) params.clientId = selectedClientId;
 
-  const { data: activeTasks = [], isLoading: isLoadingTasks } = useTasks(Object.keys(params).length > 0 ? params : undefined);
+  const { data: activeTasks = [], isLoading: isLoadingTasks } = useTasks(
+    Object.keys(params).length > 0 ? params : undefined,
+    { enabled: !!user }
+  );
   const { data: archivedTasks = [] } = useQuery({
     queryKey: ['tasks', 'archived'],
     queryFn: tasksApi.listArchived,

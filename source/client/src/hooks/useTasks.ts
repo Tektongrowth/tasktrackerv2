@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasks } from '@/lib/api';
 import type { Task, TaskStatus, TaskInput } from '@/lib/types';
 
-export function useTasks(params?: Record<string, string>) {
+export function useTasks(params?: Record<string, string>, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['tasks', params],
     queryFn: () => tasks.list(params),
     staleTime: 1000 * 10, // 10 seconds - tasks should be fresh
     refetchOnMount: 'always', // Always refetch when component mounts
+    enabled: options?.enabled !== false, // Allow disabling the query
   });
 }
 
