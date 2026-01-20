@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, FolderPlus, Zap, Calendar, FolderOpen, Settings2, GripVertical, Play, LogOut, ExternalLink, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, FolderPlus, Zap, Calendar, FolderOpen, Settings2, GripVertical, Play, LogOut, ExternalLink, FileText, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import type { TaskTemplate, PlanType, TemplateSet, TriggerType, User, Project, Tag, Role } from '@/lib/types';
@@ -1201,6 +1201,13 @@ function TemplateList({
               <td className="px-4 py-3 overflow-hidden">
                 <div>
                   <div className="flex items-center gap-2">
+                    <span title={template.sopUrl ? "SOP Added" : "SOP Needed"}>
+                      {template.sopUrl ? (
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400 shrink-0" />
+                      )}
+                    </span>
                     <p className="font-medium text-sm truncate">{template.title}</p>
                     {template.sopUrl && (
                       <Button
