@@ -700,9 +700,10 @@ export function SettingsPage() {
   };
 
   // Edit user state
-  const [editingUser, setEditingUser] = useState<{ id: string; name: string; email: string; googleId?: string } | null>(null);
+  const [editingUser, setEditingUser] = useState<{ id: string; name: string; email: string; googleId?: string; jobRoleId?: string | null } | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editJobRoleId, setEditJobRoleId] = useState<string | undefined>(undefined);
 
   // Archived contractors toggle
   const [showArchived, setShowArchived] = useState(false);
@@ -1138,16 +1139,17 @@ export function SettingsPage() {
     });
   };
 
-  const openEditDialog = (user: { id: string; name: string; email: string; googleId?: string }) => {
+  const openEditDialog = (user: { id: string; name: string; email: string; googleId?: string; jobRoleId?: string | null }) => {
     setEditingUser(user);
     setEditName(user.name);
     setEditEmail(user.email);
+    setEditJobRoleId(user.jobRoleId || undefined);
   };
 
   const handleEditSave = () => {
     if (!editingUser) return;
     updateUser.mutate(
-      { id: editingUser.id, data: { name: editName, email: editEmail } },
+      { id: editingUser.id, data: { name: editName, email: editEmail, jobRoleId: editJobRoleId || null } },
       {
         onSuccess: () => {
           setEditingUser(null);
@@ -1637,6 +1639,29 @@ export function SettingsPage() {
                     onChange={(e) => setEditEmail(e.target.value)}
                     placeholder="contractor@example.com"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Job Role</Label>
+                  <p className="text-xs text-muted-foreground">Assign a job role to automatically add this contractor to related tasks</p>
+                  <Select value={editJobRoleId || 'none'} onValueChange={(v) => setEditJobRoleId(v === 'none' ? undefined : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a job role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No role</SelectItem>
+                      {allRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: role.color }}
+                            />
+                            <span>{role.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={handleEditSave} className="w-full" disabled={updateUser.isPending}>
                   {updateUser.isPending ? 'Saving...' : 'Save Changes'}
