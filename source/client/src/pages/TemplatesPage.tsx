@@ -15,10 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, FolderPlus, Zap, Calendar, FolderOpen, Settings2, GripVertical, Play, LogOut } from 'lucide-react';
+import { Plus, Pencil, Trash2, FolderPlus, Zap, Calendar, FolderOpen, Settings2, GripVertical, Play, LogOut, ExternalLink, FileText } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import type { TaskTemplate, PlanType, TemplateSet, TriggerType, User, Project, Tag, Role } from '@/lib/types';
+
+// Subtask data structure
+interface SubtaskData {
+  title: string;
+  sopUrl?: string;
+}
 
 // Sortable subtask item component
 function SortableSubtaskItem({
@@ -29,9 +35,9 @@ function SortableSubtaskItem({
   onDelete,
 }: {
   id: string;
-  value: string;
+  value: SubtaskData;
   index: number;
-  onChange: (value: string) => void;
+  onChange: (value: SubtaskData) => void;
   onDelete: () => void;
 }) {
   const {
@@ -53,33 +59,55 @@ function SortableSubtaskItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center gap-2 bg-background',
+        'flex flex-col gap-2 bg-background p-2 border rounded-md',
         isDragging && 'opacity-50 z-50'
       )}
     >
-      <button
-        type="button"
-        className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground touch-none"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={`Subtask ${index + 1}`}
-        className="flex-1"
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-destructive shrink-0"
-        onClick={onDelete}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <Input
+          value={value.title}
+          onChange={(e) => onChange({ ...value, title: e.target.value })}
+          placeholder={`Subtask ${index + 1}`}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive shrink-0"
+          onClick={onDelete}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex items-center gap-2 ml-7">
+        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Input
+          value={value.sopUrl || ''}
+          onChange={(e) => onChange({ ...value, sopUrl: e.target.value })}
+          placeholder="SOP URL (optional)"
+          className="flex-1 h-8 text-sm"
+        />
+        {value.sopUrl && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-[var(--theme-primary)]"
+            onClick={() => window.open(value.sopUrl, '_blank')}
+          >
+            <ExternalLink className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -89,8 +117,8 @@ function SubtasksEditor({
   subtasks,
   setSubtasks,
 }: {
-  subtasks: string[];
-  setSubtasks: (subtasks: string[]) => void;
+  subtasks: SubtaskData[];
+  setSubtasks: (subtasks: SubtaskData[]) => void;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -145,7 +173,7 @@ function SubtasksEditor({
           variant="outline"
           size="sm"
           className="w-full"
-          onClick={() => setSubtasks([...subtasks, ''])}
+          onClick={() => setSubtasks([...subtasks, { title: '' }])}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Subtask
@@ -227,7 +255,8 @@ export function TemplatesPage() {
   const [defaultAssigneeEmails, setDefaultAssigneeEmails] = useState<string[]>([]);
   const [dueInDays, setDueInDays] = useState('7');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [subtasks, setSubtasks] = useState<string[]>([]);
+  const [sopUrl, setSopUrl] = useState('');
+  const [subtasks, setSubtasks] = useState<SubtaskData[]>([]);
   const [selectedTemplateSetId, setSelectedTemplateSetId] = useState<string>('');
 
   // Template Set form state
@@ -335,6 +364,7 @@ export function TemplatesPage() {
     setDefaultAssigneeEmails([]);
     setDueInDays('7');
     setSelectedTags([]);
+    setSopUrl('');
     setSubtasks([]);
     setSelectedTemplateSetId('');
     setEditingTemplate(null);
@@ -360,7 +390,8 @@ export function TemplatesPage() {
     setDefaultAssigneeEmails(template.defaultAssigneeEmails || []);
     setDueInDays(template.dueInDays.toString());
     setSelectedTags(template.tags);
-    setSubtasks(template.subtasks?.map(s => s.title) || []);
+    setSopUrl(template.sopUrl || '');
+    setSubtasks(template.subtasks?.map(s => ({ title: s.title, sopUrl: s.sopUrl })) || []);
     setSelectedTemplateSetId(template.templateSetId || '');
     setShowTemplateDialog(true);
   };
@@ -391,7 +422,8 @@ export function TemplatesPage() {
       defaultAssigneeEmails: defaultAssigneeEmails.length > 0 ? defaultAssigneeEmails : undefined,
       dueInDays: parseInt(dueInDays),
       tags: selectedTags,
-      subtasks: subtasks.filter(s => s.trim()).map(title => ({ title })),
+      sopUrl: sopUrl || undefined,
+      subtasks: subtasks.filter(s => s.title.trim()).map(s => ({ title: s.title, sopUrl: s.sopUrl || undefined })),
       templateSetId: selectedTemplateSetId || undefined,
     };
 
@@ -755,6 +787,31 @@ export function TemplatesPage() {
                   ))
                 )}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>SOP URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={sopUrl}
+                  onChange={(e) => setSopUrl(e.target.value)}
+                  placeholder="https://docs.google.com/..."
+                  className="flex-1"
+                />
+                {sopUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(sopUrl, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Link to a Google Doc or other SOP document for this template
+              </p>
             </div>
 
             <SubtasksEditor subtasks={subtasks} setSubtasks={setSubtasks} />
@@ -1142,12 +1199,39 @@ function TemplateList({
               className="border-b last:border-b-0 hover:bg-slate-50 transition-colors"
             >
               <td className="px-4 py-3 overflow-hidden">
-                <div className="truncate">
-                  <p className="font-medium text-sm truncate">{template.title}</p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm truncate">{template.title}</p>
+                    {template.sopUrl && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[var(--theme-primary)] hover:text-[var(--theme-primary)] shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(template.sopUrl, '_blank');
+                        }}
+                        title="View SOP"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        SOP
+                      </Button>
+                    )}
+                  </div>
                   {template.description && (
                     <p className="text-xs text-muted-foreground truncate">
                       {template.description}
                     </p>
+                  )}
+                  {template.subtasks && template.subtasks.length > 0 && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {template.subtasks.length} subtask{template.subtasks.length !== 1 ? 's' : ''}
+                      {template.subtasks.some(s => s.sopUrl) && (
+                        <span className="ml-1 text-[var(--theme-primary)]">
+                          ({template.subtasks.filter(s => s.sopUrl).length} with SOP)
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </td>

@@ -235,6 +235,7 @@ model TaskTemplate {
   defaultRoleId         String?      @map("default_role_id")
   dueInDays             Int?         @map("due_in_days")
   tags                  String[]     @default([])
+  sopUrl                String?      @map("sop_url")
   sortOrder             Int          @default(0) @map("sort_order")
   createdAt             DateTime     @default(now()) @map("created_at")
   updatedAt             DateTime     @updatedAt @map("updated_at")
@@ -253,6 +254,7 @@ model TemplateSubtask {
   id         String   @id @default(uuid())
   templateId String   @map("template_id")
   title      String
+  sopUrl     String?  @map("sop_url")
   sortOrder  Int      @default(0) @map("sort_order")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")

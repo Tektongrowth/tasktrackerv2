@@ -127,6 +127,7 @@ export interface TemplateSubtask {
   id: string;
   templateId: string;
   title: string;
+  sopUrl?: string;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -145,6 +146,7 @@ export interface TaskTemplate {
   defaultRole?: Role;
   dueInDays: number;
   tags: string[];
+  sopUrl?: string;
   sortOrder: number;
   subtasks?: TemplateSubtask[];
   createdAt: string;

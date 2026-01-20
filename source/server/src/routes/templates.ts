@@ -63,7 +63,7 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
 // Create template (admin only)
 router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { title, description, templateType, planTypes, defaultAssigneeEmails, defaultRoleId, dueInDays, tags, subtasks, templateSetId } = req.body;
+    const { title, description, templateType, planTypes, defaultAssigneeEmails, defaultRoleId, dueInDays, tags, sopUrl, subtasks, templateSetId } = req.body;
 
     const template = await prisma.taskTemplate.create({
       data: {
@@ -75,10 +75,12 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
         defaultRoleId: defaultRoleId || null,
         dueInDays,
         tags: tags || [],
+        sopUrl: sopUrl || null,
         templateSetId: templateSetId || null,
         subtasks: subtasks?.length > 0 ? {
-          create: subtasks.map((s: { title: string }, index: number) => ({
+          create: subtasks.map((s: { title: string; sopUrl?: string }, index: number) => ({
             title: s.title,
+            sopUrl: s.sopUrl || null,
             sortOrder: index
           }))
         } : undefined
@@ -101,7 +103,7 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
 router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { title, description, templateType, planTypes, defaultAssigneeEmails, defaultRoleId, dueInDays, tags, subtasks, templateSetId } = req.body;
+    const { title, description, templateType, planTypes, defaultAssigneeEmails, defaultRoleId, dueInDays, tags, sopUrl, subtasks, templateSetId } = req.body;
 
     // If subtasks are provided, delete existing and create new
     if (subtasks !== undefined) {
@@ -111,9 +113,10 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
 
       if (subtasks.length > 0) {
         await prisma.templateSubtask.createMany({
-          data: subtasks.map((s: { title: string }, index: number) => ({
+          data: subtasks.map((s: { title: string; sopUrl?: string }, index: number) => ({
             templateId: id,
             title: s.title,
+            sopUrl: s.sopUrl || null,
             sortOrder: index
           }))
         });
@@ -131,6 +134,7 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
         ...(defaultRoleId !== undefined && { defaultRoleId: defaultRoleId || null }),
         ...(dueInDays !== undefined && { dueInDays }),
         ...(tags && { tags }),
+        ...(sopUrl !== undefined && { sopUrl: sopUrl || null }),
         ...(templateSetId !== undefined && { templateSetId: templateSetId || null })
       },
       include: {
