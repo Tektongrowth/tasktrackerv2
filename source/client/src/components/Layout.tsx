@@ -27,7 +27,7 @@ import {
   Inbox,
   MessageCircle,
 } from 'lucide-react';
-import { chats as chatsApi } from '@/lib/api';
+import { chats as chatsApi, notifications as notificationsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -211,6 +211,17 @@ export function Layout() {
   });
   const unreadChatCount = unreadData?.unreadCount || 0;
 
+  // Fetch unread mention count
+  const { data: mentionData } = useQuery({
+    queryKey: ['mention-unread-count'],
+    queryFn: notificationsApi.getUnreadMentionCount,
+    refetchInterval: 5000,
+  });
+  const unreadMentionCount = mentionData?.unreadCount || 0;
+
+  // Total unread for messages badge (chats + mentions)
+  const totalUnreadMessages = unreadChatCount + unreadMentionCount;
+
   // Get branding from theme
   const logoUrl = theme?.branding?.logoUrl || '/logo.png';
   const backgroundImage = theme?.branding?.backgroundImage || '/background.jpg';
@@ -296,7 +307,7 @@ export function Layout() {
             .filter(canShowNavItem)
             .map((item) => {
               const isActive = location.pathname === item.to;
-              const showBadge = item.to === '/chat' && unreadChatCount > 0;
+              const showBadge = item.to === '/chat' && totalUnreadMessages > 0;
               return (
                 <NavLink
                   key={item.to}
@@ -311,7 +322,7 @@ export function Layout() {
                   <item.icon className="h-5 w-5" />
                   {showBadge && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                      {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                      {totalUnreadMessages > 99 ? '99+' : totalUnreadMessages}
                     </span>
                   )}
                   <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--theme-sidebar)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
