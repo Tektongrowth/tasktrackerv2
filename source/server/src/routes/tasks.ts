@@ -119,6 +119,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
         }
       },
       orderBy: [
+        { sortOrder: 'asc' },
         { dueDate: 'asc' },
         { createdAt: 'desc' }
       ]

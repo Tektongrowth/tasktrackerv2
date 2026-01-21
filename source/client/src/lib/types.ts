@@ -76,6 +76,7 @@ export interface Task {
   tags: string[];
   roleId?: string | null;
   sopUrl?: string;
+  sortOrder?: number;
   assignedRole?: Role;
   completedAt?: string;
   project?: Project;

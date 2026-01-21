@@ -187,6 +187,7 @@ model Task {
   tags        String[]     @default([])
   roleId      String?      @map("role_id")
   sopUrl      String?      @map("sop_url")
+  sortOrder   Int          @default(0) @map("sort_order")
   archived    Boolean      @default(false)
   archivedAt  DateTime?    @map("archived_at")
   completedAt DateTime?    @map("completed_at")

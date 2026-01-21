@@ -1,5 +1,19 @@
 import { prisma } from '../db/client.js';
 
+/**
+ * Calculate task sortOrder based on template type priority.
+ * Ensures tasks are ordered: Onboarding (0-99) -> Custom (100-199) -> Recurring (200+)
+ */
+function calculateTaskSortOrder(templateType: string, templateSortOrder: number): number {
+  const typeOffsets: Record<string, number> = {
+    'onboarding': 0,
+    'custom': 100,
+    'recurring': 200
+  };
+  const offset = typeOffsets[templateType] ?? 100;
+  return offset + templateSortOrder;
+}
+
 interface ApplyTemplateSetResult {
   tasksCreated: number;
   taskIds: string[];
@@ -74,6 +88,7 @@ export async function applyTemplateSetToProject(
         tags: template.tags,
         roleId: template.defaultRoleId || null,
         sopUrl: template.sopUrl || null,
+        sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder),
         status: 'todo',
         priority: 'medium',
         assignees: assigneeIds.length > 0 ? {
@@ -233,6 +248,7 @@ export async function upgradeProjectPlanType(
           tags: template.tags,
           roleId: template.defaultRoleId || null,
           sopUrl: template.sopUrl || null,
+          sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder),
           status: 'todo',
           priority: 'medium',
           assignees: assigneeIds.length > 0 ? {
@@ -372,6 +388,7 @@ export async function offboardProject(
           tags: template.tags,
           roleId: template.defaultRoleId || null,
           sopUrl: template.sopUrl || null,
+          sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder),
           status: 'todo',
           priority: 'medium',
           assignees: assigneeIds.length > 0 ? {
