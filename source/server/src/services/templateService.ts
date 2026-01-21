@@ -1,10 +1,15 @@
 import { prisma } from '../db/client.js';
 
 /**
- * Calculate task sortOrder based on template type priority.
- * Ensures tasks are ordered: Onboarding (0-99) -> Custom (100-199) -> Recurring (200+)
+ * Calculate task sortOrder based on template set and type priority.
+ * Ensures tasks are ordered: P0 Initial (-100 to -1) -> Onboarding (0-99) -> Custom (100-199) -> Recurring (200+)
  */
-function calculateTaskSortOrder(templateType: string, templateSortOrder: number): number {
+function calculateTaskSortOrder(templateType: string, templateSortOrder: number, templateSetName?: string): number {
+  // P0 Initial Onboarding tasks always come first
+  if (templateSetName && templateSetName.toLowerCase().startsWith('p0')) {
+    return -100 + templateSortOrder;
+  }
+
   const typeOffsets: Record<string, number> = {
     'onboarding': 0,
     'custom': 100,
@@ -88,7 +93,7 @@ export async function applyTemplateSetToProject(
         tags: template.tags,
         roleId: template.defaultRoleId || null,
         sopUrl: template.sopUrl || null,
-        sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder),
+        sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder, templateSet.name),
         status: 'todo',
         priority: 'medium',
         assignees: assigneeIds.length > 0 ? {
@@ -248,7 +253,7 @@ export async function upgradeProjectPlanType(
           tags: template.tags,
           roleId: template.defaultRoleId || null,
           sopUrl: template.sopUrl || null,
-          sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder),
+          sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder, templateSet.name),
           status: 'todo',
           priority: 'medium',
           assignees: assigneeIds.length > 0 ? {
@@ -388,7 +393,7 @@ export async function offboardProject(
           tags: template.tags,
           roleId: template.defaultRoleId || null,
           sopUrl: template.sopUrl || null,
-          sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder),
+          sortOrder: calculateTaskSortOrder(template.templateType, template.sortOrder, templateSet.name),
           status: 'todo',
           priority: 'medium',
           assignees: assigneeIds.length > 0 ? {
