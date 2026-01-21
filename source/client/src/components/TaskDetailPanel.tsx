@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer } from 'lucide-react';
+import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink } from 'lucide-react';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
 import { cn, formatDate, formatDuration, getTagColor, sanitizeText } from '@/lib/utils';
@@ -430,6 +430,23 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
           />
         </div>
 
+        {/* SOP Link */}
+        {task.sopUrl && (
+          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+            <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+            <span className="text-sm font-medium text-blue-900">Standard Operating Procedure</span>
+            <a
+              href={task.sopUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              View SOP
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Status</Label>
@@ -717,6 +734,17 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 >
                   {subtask.title}
                 </span>
+                {subtask.sopUrl && (
+                  <a
+                    href={subtask.sopUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-6 w-6 flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                    title="View SOP"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                  </a>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

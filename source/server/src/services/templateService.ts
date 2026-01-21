@@ -73,6 +73,7 @@ export async function applyTemplateSetToProject(
         dueDate,
         tags: template.tags,
         roleId: template.defaultRoleId || null,
+        sopUrl: template.sopUrl || null,
         status: 'todo',
         priority: 'medium',
         assignees: assigneeIds.length > 0 ? {
@@ -87,6 +88,7 @@ export async function applyTemplateSetToProject(
         data: template.subtasks.map((ts, index) => ({
           taskId: task.id,
           title: ts.title,
+          sopUrl: ts.sopUrl || null,
           sortOrder: index,
           completed: false
         }))
@@ -230,6 +232,7 @@ export async function upgradeProjectPlanType(
           dueDate,
           tags: template.tags,
           roleId: template.defaultRoleId || null,
+          sopUrl: template.sopUrl || null,
           status: 'todo',
           priority: 'medium',
           assignees: assigneeIds.length > 0 ? {
@@ -244,6 +247,7 @@ export async function upgradeProjectPlanType(
           data: template.subtasks.map((ts, index) => ({
             taskId: task.id,
             title: ts.title,
+            sopUrl: ts.sopUrl || null,
             sortOrder: index,
             completed: false
           }))
@@ -367,6 +371,7 @@ export async function offboardProject(
           dueDate,
           tags: template.tags,
           roleId: template.defaultRoleId || null,
+          sopUrl: template.sopUrl || null,
           status: 'todo',
           priority: 'medium',
           assignees: assigneeIds.length > 0 ? {
@@ -381,6 +386,7 @@ export async function offboardProject(
           data: template.subtasks.map((ts, index) => ({
             taskId: task.id,
             title: ts.title,
+            sopUrl: ts.sopUrl || null,
             sortOrder: index,
             completed: false
           }))

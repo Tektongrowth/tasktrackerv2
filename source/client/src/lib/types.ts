@@ -75,6 +75,7 @@ export interface Task {
   dueDate?: string;
   tags: string[];
   roleId?: string | null;
+  sopUrl?: string;
   assignedRole?: Role;
   completedAt?: string;
   project?: Project;
@@ -186,6 +187,7 @@ export interface Subtask {
   id: string;
   taskId: string;
   title: string;
+  sopUrl?: string;
   completed: boolean;
   completedAt?: string;
   sortOrder: number;

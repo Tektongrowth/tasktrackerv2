@@ -186,6 +186,7 @@ model Task {
   dueDate     DateTime?    @map("due_date")
   tags        String[]     @default([])
   roleId      String?      @map("role_id")
+  sopUrl      String?      @map("sop_url")
   archived    Boolean      @default(false)
   archivedAt  DateTime?    @map("archived_at")
   completedAt DateTime?    @map("completed_at")
@@ -310,6 +311,7 @@ model Subtask {
   id          String    @id @default(uuid())
   taskId      String    @map("task_id")
   title       String
+  sopUrl      String?   @map("sop_url")
   completed   Boolean   @default(false)
   completedAt DateTime? @map("completed_at")
   sortOrder   Int       @default(0) @map("sort_order")
