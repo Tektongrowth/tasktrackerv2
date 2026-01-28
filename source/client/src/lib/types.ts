@@ -196,6 +196,16 @@ export interface Subtask {
   updatedAt: string;
 }
 
+export interface CommentAttachment {
+  id: string;
+  commentId: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  storageKey: string;
+  createdAt: string;
+}
+
 export interface TaskComment {
   id: string;
   taskId: string;
@@ -203,6 +213,7 @@ export interface TaskComment {
   userName: string;
   content: string;
   user?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>;
+  attachments?: CommentAttachment[];
   createdAt: string;
   updatedAt: string;
 }

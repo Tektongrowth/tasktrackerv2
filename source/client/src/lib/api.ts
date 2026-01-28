@@ -19,6 +19,24 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return res.json();
 }
 
+// Fetch for multipart form data (file uploads)
+async function fetchApiFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    credentials: 'include',
+    cache: 'no-store',
+    body: formData,
+    // Don't set Content-Type - browser will set it with boundary for multipart/form-data
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(error.error || 'Request failed');
+  }
+
+  return res.json();
+}
+
 // Auth
 export const auth = {
   me: () => fetchApi<{ user: import('./types').User }>('/auth/me'),
@@ -204,6 +222,12 @@ export const comments = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  createWithAttachment: (taskId: string, content: string, file: File) => {
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('file', file);
+    return fetchApiFormData<import('./types').TaskComment>(`/api/tasks/${taskId}/comments-with-attachment`, formData);
+  },
   update: (taskId: string, commentId: string, data: { content: string }) =>
     fetchApi<import('./types').TaskComment>(`/api/tasks/${taskId}/comments/${commentId}`, {
       method: 'PATCH',
@@ -211,6 +235,8 @@ export const comments = {
     }),
   delete: (taskId: string, commentId: string) =>
     fetchApi<{ success: boolean }>(`/api/tasks/${taskId}/comments/${commentId}`, { method: 'DELETE' }),
+  getAttachmentUrl: (taskId: string, commentId: string, attachmentId: string) =>
+    `${API_BASE}/api/tasks/${taskId}/comments/${commentId}/attachments/${attachmentId}`,
 };
 
 // Templates

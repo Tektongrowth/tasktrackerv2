@@ -1,4 +1,5 @@
 import { prisma } from '../db/client.js';
+import { PlanType } from '@prisma/client';
 
 /**
  * Calculate task sortOrder based on template set and type priority.
@@ -282,7 +283,7 @@ export async function upgradeProjectPlanType(
   // 4. Update project's planType
   await prisma.project.update({
     where: { id: projectId },
-    data: { planType: newPlanType }
+    data: { planType: newPlanType as PlanType }
   });
 
   return {

@@ -334,9 +334,10 @@ model TaskComment {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  task     Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user     User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  mentions CommentMention[]
+  task        Task                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  mentions    CommentMention[]
+  attachments CommentAttachment[]
 
   @@index([taskId])
   @@map("task_comments")
@@ -356,6 +357,21 @@ model CommentMention {
   @@unique([commentId, userId])
   @@index([userId])
   @@map("comment_mentions")
+}
+
+model CommentAttachment {
+  id         String   @id @default(uuid())
+  commentId  String   @map("comment_id")
+  fileName   String   @map("file_name")
+  fileSize   Int      @map("file_size")
+  fileType   String   @map("file_type")
+  storageKey String   @map("storage_key")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  comment TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@map("comment_attachments")
 }
 
 model Tag {

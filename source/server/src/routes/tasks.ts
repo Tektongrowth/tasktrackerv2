@@ -6,8 +6,45 @@ import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
+
+// Configure multer for comment attachment uploads
+const commentUploadDir = process.env.UPLOAD_DIR ? `${process.env.UPLOAD_DIR}/comments` : './uploads/comments';
+if (!fs.existsSync(commentUploadDir)) {
+  fs.mkdirSync(commentUploadDir, { recursive: true });
+}
+
+const commentStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, commentUploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const commentUpload = multer({
+  storage: commentStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    // Allow images and common document types
+    const allowedTypes = /jpeg|jpg|png|gif|webp|heic|heif|pdf/;
+    const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowedTypes.test(file.mimetype);
+    if (ext || mime) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Allowed: jpeg, jpg, png, gif, webp, heic, heif, pdf'));
+    }
+  }
+});
 
 // Helper to safely parse and validate dates
 function parseDate(dateStr: string | undefined | null): Date | null {
@@ -1048,6 +1085,7 @@ router.post('/:taskId/subtasks', isAuthenticated, async (req: Request, res: Resp
     // Check permission
     const isAssigned = task.assignees.some(a => a.userId === user.id);
     const canEdit = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
       user.permissions?.editAllTasks ||
       (user.permissions?.editOwnTasks !== false && isAssigned);
 
@@ -1106,6 +1144,7 @@ router.patch('/:taskId/subtasks/:subtaskId', isAuthenticated, async (req: Reques
     // Check permission
     const isAssigned = task.assignees.some(a => a.userId === user.id);
     const canEdit = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
       user.permissions?.editAllTasks ||
       (user.permissions?.editOwnTasks !== false && isAssigned);
 
@@ -1169,6 +1208,7 @@ router.delete('/:taskId/subtasks/:subtaskId', isAuthenticated, async (req: Reque
     // Check permission
     const isAssigned = task.assignees.some(a => a.userId === user.id);
     const canEdit = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
       user.permissions?.editAllTasks ||
       (user.permissions?.editOwnTasks !== false && isAssigned);
 
@@ -1220,6 +1260,7 @@ router.get('/:taskId/comments', isAuthenticated, async (req: Request, res: Respo
     // Check view permission
     const isAssigned = task.assignees.some(a => a.userId === user.id);
     const canView = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
       user.permissions?.viewAllTasks ||
       isAssigned;
 
@@ -1232,7 +1273,8 @@ router.get('/:taskId/comments', isAuthenticated, async (req: Request, res: Respo
       include: {
         user: {
           select: { id: true, name: true, email: true, avatarUrl: true }
-        }
+        },
+        attachments: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -1262,6 +1304,7 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
     // Check permission - anyone who can view the task can comment
     const isAssigned = task.assignees.some(a => a.userId === user.id);
     const canView = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
       user.permissions?.viewAllTasks ||
       isAssigned;
 
@@ -1279,7 +1322,8 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
       include: {
         user: {
           select: { id: true, name: true, email: true, avatarUrl: true }
-        }
+        },
+        attachments: true
       }
     });
 
@@ -1384,6 +1428,269 @@ router.delete('/:taskId/comments/:commentId', isAuthenticated, async (req: Reque
     }
 
     await prisma.taskComment.delete({ where: { id: commentId } });
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Upload attachment to a comment
+router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, commentUpload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const commentId = req.params.commentId as string;
+    const user = req.user as Express.User;
+
+    if (!req.file) {
+      throw new AppError('No file uploaded', 400);
+    }
+
+    // Verify task exists
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { assignees: { select: { userId: true } } }
+    });
+    if (!task) {
+      fs.unlinkSync(req.file.path);
+      throw new AppError('Task not found', 404);
+    }
+
+    // Verify comment exists and belongs to this task
+    const comment = await prisma.taskComment.findUnique({
+      where: { id: commentId }
+    });
+    if (!comment || comment.taskId !== taskId) {
+      fs.unlinkSync(req.file.path);
+      throw new AppError('Comment not found', 404);
+    }
+
+    // Only comment author or admin/PM can add attachments
+    if (comment.userId !== user.id && !hasElevatedAccess(user)) {
+      fs.unlinkSync(req.file.path);
+      throw new AppError('Permission denied', 403);
+    }
+
+    // Create attachment record
+    const attachment = await prisma.commentAttachment.create({
+      data: {
+        commentId,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        storageKey: req.file.filename
+      }
+    });
+
+    res.status(201).json(attachment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create comment with attachment (combined endpoint)
+router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const user = req.user as Express.User;
+    const content = req.body.content ? validateComment(req.body.content) : '';
+
+    // Verify task exists
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { assignees: { select: { userId: true } } }
+    });
+    if (!task) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      throw new AppError('Task not found', 404);
+    }
+
+    // Check permission - anyone who can view the task can comment
+    const isAssigned = task.assignees.some(a => a.userId === user.id);
+    const canView = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
+      user.permissions?.viewAllTasks ||
+      isAssigned;
+
+    if (!canView) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      throw new AppError('Permission denied', 403);
+    }
+
+    // Require either content or file
+    if (!content && !req.file) {
+      throw new AppError('Comment must have content or an attachment', 400);
+    }
+
+    // Create comment with optional attachment
+    const commentData: Prisma.TaskCommentCreateInput = {
+      task: { connect: { id: taskId } },
+      user: { connect: { id: user.id } },
+      userName: user.name,
+      content: content || (req.file ? `Shared a file: ${req.file.originalname}` : '')
+    };
+
+    if (req.file) {
+      commentData.attachments = {
+        create: {
+          fileName: req.file.originalname,
+          fileSize: req.file.size,
+          fileType: req.file.mimetype,
+          storageKey: req.file.filename
+        }
+      };
+    }
+
+    const comment = await prisma.taskComment.create({
+      data: commentData,
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true }
+        },
+        attachments: true
+      }
+    });
+
+    // Parse and handle @mentions
+    if (content) {
+      const mentions = parseMentions(content);
+      if (mentions.length > 0) {
+        const mentionedUserIds = await resolveMentions(mentions);
+        const usersToNotify = mentionedUserIds.filter(id => id !== user.id);
+
+        if (usersToNotify.length > 0) {
+          await createMentionRecords(comment.id, usersToNotify);
+
+          const mentionedUsers = await prisma.user.findMany({
+            where: { id: { in: usersToNotify } },
+            select: { id: true, email: true }
+          });
+
+          const contentPreview = content.substring(0, 100);
+          await Promise.allSettled(
+            mentionedUsers.map((mentionedUser) =>
+              sendMentionNotificationEmail(
+                mentionedUser.email,
+                user.name,
+                task.title,
+                task.id,
+                contentPreview
+              ).catch((err) => console.error(`Failed to send mention email to ${mentionedUser.email}:`, err))
+            )
+          );
+
+          await markMentionsNotified(comment.id);
+        }
+      }
+    }
+
+    // Log activity
+    await prisma.taskActivity.create({
+      data: {
+        taskId,
+        userId: user.id,
+        action: 'commented',
+        details: {
+          preview: content ? content.substring(0, 100) : 'Shared a file',
+          hasAttachment: !!req.file
+        }
+      }
+    });
+
+    res.status(201).json(comment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Serve comment attachment file
+router.get('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const commentId = req.params.commentId as string;
+    const attachmentId = req.params.attachmentId as string;
+    const user = req.user as Express.User;
+
+    // Verify task exists and user has access
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { assignees: { select: { userId: true } } }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    // Check view permission
+    const isAssigned = task.assignees.some(a => a.userId === user.id);
+    const canView = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
+      user.permissions?.viewAllTasks ||
+      isAssigned;
+
+    if (!canView) {
+      throw new AppError('Permission denied', 403);
+    }
+
+    // Get attachment
+    const attachment = await prisma.commentAttachment.findUnique({
+      where: { id: attachmentId },
+      include: { comment: true }
+    });
+
+    if (!attachment || attachment.comment.taskId !== taskId || attachment.commentId !== commentId) {
+      throw new AppError('Attachment not found', 404);
+    }
+
+    const filePath = path.join(commentUploadDir, attachment.storageKey);
+    if (!fs.existsSync(filePath)) {
+      throw new AppError('File not found', 404);
+    }
+
+    res.setHeader('Content-Type', attachment.fileType);
+    res.setHeader('Content-Disposition', `inline; filename="${attachment.fileName}"`);
+    res.sendFile(path.resolve(filePath));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete comment attachment
+router.delete('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const commentId = req.params.commentId as string;
+    const attachmentId = req.params.attachmentId as string;
+    const user = req.user as Express.User;
+
+    // Verify comment exists and belongs to this task
+    const comment = await prisma.taskComment.findUnique({
+      where: { id: commentId }
+    });
+    if (!comment || comment.taskId !== taskId) {
+      throw new AppError('Comment not found', 404);
+    }
+
+    // Only comment author or admin/PM can delete attachments
+    if (comment.userId !== user.id && !hasElevatedAccess(user)) {
+      throw new AppError('Permission denied', 403);
+    }
+
+    // Get attachment and verify it belongs to this comment
+    const attachment = await prisma.commentAttachment.findUnique({
+      where: { id: attachmentId }
+    });
+    if (!attachment || attachment.commentId !== commentId) {
+      throw new AppError('Attachment not found', 404);
+    }
+
+    // Delete file from disk
+    const filePath = path.join(commentUploadDir, attachment.storageKey);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Delete attachment record
+    await prisma.commentAttachment.delete({ where: { id: attachmentId } });
 
     res.json({ success: true });
   } catch (error) {

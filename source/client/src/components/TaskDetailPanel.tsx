@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink } from 'lucide-react';
+import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon } from 'lucide-react';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
 import { cn, formatDate, formatDuration, getTagColor, sanitizeText } from '@/lib/utils';
@@ -82,6 +82,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   // Comment state
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   // Time tracking
   const { data: runningTimer } = useRunningTimer();
@@ -245,11 +246,17 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
   // Comment mutations
   const createComment = useMutation({
-    mutationFn: (content: string) => commentsApi.create(task.id, { content }),
+    mutationFn: ({ content, file }: { content: string; file: File | null }) => {
+      if (file) {
+        return commentsApi.createWithAttachment(task.id, content, file);
+      }
+      return commentsApi.create(task.id, { content });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setNewComment('');
+      setAttachedFile(null);
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to post comment', description: error.message, variant: 'destructive' });
@@ -971,21 +978,68 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               value={newComment}
               onChange={setNewComment}
               onSubmit={() => {
-                if (newComment.trim()) {
-                  createComment.mutate(newComment.trim());
+                if (newComment.trim() || attachedFile) {
+                  createComment.mutate({ content: newComment.trim(), file: attachedFile });
                 }
               }}
               placeholder="Add a comment... Use @name to mention someone"
               className="text-sm"
               disabled={createComment.isPending}
             />
-            <div className="flex justify-end">
+            {/* Attached file preview */}
+            {attachedFile && (
+              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                {attachedFile.type.startsWith('image/') ? (
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Paperclip className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className="text-sm truncate flex-1">{attachedFile.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {(attachedFile.size / 1024).toFixed(0)} KB
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setAttachedFile(null)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        toast({ title: 'File too large', description: 'Maximum file size is 10MB', variant: 'destructive' });
+                        return;
+                      }
+                      setAttachedFile(file);
+                    }
+                    e.target.value = '';
+                  }}
+                  disabled={createComment.isPending}
+                />
+                <Button variant="outline" size="sm" asChild>
+                  <span>
+                    <Paperclip className="h-4 w-4 mr-2" />
+                    Attach Photo
+                  </span>
+                </Button>
+              </label>
               <Button
                 size="sm"
-                disabled={!newComment.trim() || createComment.isPending}
+                disabled={(!newComment.trim() && !attachedFile) || createComment.isPending}
                 onClick={() => {
-                  if (newComment.trim()) {
-                    createComment.mutate(newComment.trim());
+                  if (newComment.trim() || attachedFile) {
+                    createComment.mutate({ content: newComment.trim(), file: attachedFile });
                   }
                 }}
               >
@@ -1041,10 +1095,42 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                        <p
-                          className="text-sm text-muted-foreground whitespace-pre-wrap"
-                          dangerouslySetInnerHTML={{ __html: sanitizeText(comment.content) }}
-                        />
+                        {comment.content && (
+                          <p
+                            className="text-sm text-muted-foreground whitespace-pre-wrap"
+                            dangerouslySetInnerHTML={{ __html: sanitizeText(comment.content) }}
+                          />
+                        )}
+                        {/* Comment attachments */}
+                        {comment.attachments && comment.attachments.length > 0 && (
+                          <div className="mt-2 space-y-2">
+                            {comment.attachments.map((attachment) => (
+                              <a
+                                key={attachment.id}
+                                href={commentsApi.getAttachmentUrl(task.id, comment.id, attachment.id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                              >
+                                {attachment.fileType.startsWith('image/') ? (
+                                  <img
+                                    src={commentsApi.getAttachmentUrl(task.id, comment.id, attachment.id)}
+                                    alt={attachment.fileName}
+                                    className="max-w-xs max-h-48 rounded-md border hover:opacity-90 transition-opacity"
+                                  />
+                                ) : (
+                                  <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
+                                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm">{attachment.fileName}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({(attachment.fileSize / 1024).toFixed(0)} KB)
+                                    </span>
+                                  </div>
+                                )}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     );
