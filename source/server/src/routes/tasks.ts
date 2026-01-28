@@ -6,30 +6,15 @@ import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
+import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 
 const router = Router();
 
-// Configure multer for comment attachment uploads
-const commentUploadDir = process.env.UPLOAD_DIR ? `${process.env.UPLOAD_DIR}/comments` : './uploads/comments';
-if (!fs.existsSync(commentUploadDir)) {
-  fs.mkdirSync(commentUploadDir, { recursive: true });
-}
-
-const commentStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, commentUploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for comment attachment uploads (memory storage for R2 upload)
 const commentUpload = multer({
-  storage: commentStorage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
@@ -1446,13 +1431,16 @@ router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, comment
       throw new AppError('No file uploaded', 400);
     }
 
+    if (!isStorageConfigured()) {
+      throw new AppError('Cloud storage not configured', 500);
+    }
+
     // Verify task exists
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: { assignees: { select: { userId: true } } }
     });
     if (!task) {
-      fs.unlinkSync(req.file.path);
       throw new AppError('Task not found', 404);
     }
 
@@ -1461,15 +1449,17 @@ router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, comment
       where: { id: commentId }
     });
     if (!comment || comment.taskId !== taskId) {
-      fs.unlinkSync(req.file.path);
       throw new AppError('Comment not found', 404);
     }
 
     // Only comment author or admin/PM can add attachments
     if (comment.userId !== user.id && !hasElevatedAccess(user)) {
-      fs.unlinkSync(req.file.path);
       throw new AppError('Permission denied', 403);
     }
+
+    // Upload to R2
+    const storageKey = generateStorageKey('comments', req.file.originalname);
+    await uploadFile(storageKey, req.file.buffer, req.file.mimetype);
 
     // Create attachment record
     const attachment = await prisma.commentAttachment.create({
@@ -1478,7 +1468,7 @@ router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, comment
         fileName: req.file.originalname,
         fileSize: req.file.size,
         fileType: req.file.mimetype,
-        storageKey: req.file.filename
+        storageKey
       }
     });
 
@@ -1501,7 +1491,6 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
       include: { assignees: { select: { userId: true } } }
     });
     if (!task) {
-      if (req.file) fs.unlinkSync(req.file.path);
       throw new AppError('Task not found', 404);
     }
 
@@ -1513,13 +1502,24 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
       isAssigned;
 
     if (!canView) {
-      if (req.file) fs.unlinkSync(req.file.path);
       throw new AppError('Permission denied', 403);
     }
 
     // Require either content or file
     if (!content && !req.file) {
       throw new AppError('Comment must have content or an attachment', 400);
+    }
+
+    // Check storage is configured if uploading file
+    if (req.file && !isStorageConfigured()) {
+      throw new AppError('Cloud storage not configured', 500);
+    }
+
+    // Upload file to R2 if present
+    let storageKey: string | undefined;
+    if (req.file) {
+      storageKey = generateStorageKey('comments', req.file.originalname);
+      await uploadFile(storageKey, req.file.buffer, req.file.mimetype);
     }
 
     // Create comment with optional attachment
@@ -1530,13 +1530,13 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
       content: content || (req.file ? `Shared a file: ${req.file.originalname}` : '')
     };
 
-    if (req.file) {
+    if (req.file && storageKey) {
       commentData.attachments = {
         create: {
           fileName: req.file.originalname,
           fileSize: req.file.size,
           fileType: req.file.mimetype,
-          storageKey: req.file.filename
+          storageKey
         }
       };
     }
@@ -1603,7 +1603,7 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
   }
 });
 
-// Serve comment attachment file
+// Serve comment attachment file (redirect to signed R2 URL)
 router.get('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const taskId = req.params.taskId as string;
@@ -1641,14 +1641,9 @@ router.get('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthentic
       throw new AppError('Attachment not found', 404);
     }
 
-    const filePath = path.join(commentUploadDir, attachment.storageKey);
-    if (!fs.existsSync(filePath)) {
-      throw new AppError('File not found', 404);
-    }
-
-    res.setHeader('Content-Type', attachment.fileType);
-    res.setHeader('Content-Disposition', `inline; filename="${attachment.fileName}"`);
-    res.sendFile(path.resolve(filePath));
+    // Get signed URL from R2 and redirect
+    const signedUrl = await getSignedDownloadUrl(attachment.storageKey);
+    res.redirect(signedUrl);
   } catch (error) {
     next(error);
   }
@@ -1683,10 +1678,12 @@ router.delete('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthen
       throw new AppError('Attachment not found', 404);
     }
 
-    // Delete file from disk
-    const filePath = path.join(commentUploadDir, attachment.storageKey);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Delete file from R2
+    try {
+      await deleteFile(attachment.storageKey);
+    } catch (err) {
+      console.error('Failed to delete file from R2:', err);
+      // Continue to delete record even if R2 delete fails
     }
 
     // Delete attachment record

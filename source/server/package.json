@@ -13,6 +13,8 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.978.0",
+    "@aws-sdk/s3-request-presigner": "^3.978.0",
     "@prisma/client": "^5.22.0",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
