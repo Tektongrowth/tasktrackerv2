@@ -1606,6 +1606,52 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
   }
 });
 
+// Get signed URL for comment attachment (returns JSON)
+router.get('/:taskId/comments/:commentId/attachments/:attachmentId/url', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const commentId = req.params.commentId as string;
+    const attachmentId = req.params.attachmentId as string;
+    const user = req.user as Express.User;
+
+    // Verify task exists and user has access
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { assignees: { select: { userId: true } } }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    // Check view permission
+    const isAssigned = task.assignees.some(a => a.userId === user.id);
+    const canView = user.role === 'admin' ||
+      hasElevatedAccess(user) ||
+      user.permissions?.viewAllTasks ||
+      isAssigned;
+
+    if (!canView) {
+      throw new AppError('Permission denied', 403);
+    }
+
+    // Get attachment
+    const attachment = await prisma.commentAttachment.findUnique({
+      where: { id: attachmentId },
+      include: { comment: true }
+    });
+
+    if (!attachment || attachment.comment.taskId !== taskId || attachment.commentId !== commentId) {
+      throw new AppError('Attachment not found', 404);
+    }
+
+    // Get signed URL from R2
+    const signedUrl = await getSignedDownloadUrl(attachment.storageKey);
+    res.json({ url: signedUrl });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Serve comment attachment file (redirect to signed R2 URL)
 router.get('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {

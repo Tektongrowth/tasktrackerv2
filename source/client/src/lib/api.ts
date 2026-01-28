@@ -237,6 +237,8 @@ export const comments = {
     fetchApi<{ success: boolean }>(`/api/tasks/${taskId}/comments/${commentId}`, { method: 'DELETE' }),
   getAttachmentUrl: (taskId: string, commentId: string, attachmentId: string) =>
     `${API_BASE}/api/tasks/${taskId}/comments/${commentId}/attachments/${attachmentId}`,
+  getAttachmentSignedUrl: (taskId: string, commentId: string, attachmentId: string) =>
+    fetchApi<{ url: string }>(`/api/tasks/${taskId}/comments/${commentId}/attachments/${attachmentId}/url`),
 };
 
 // Templates

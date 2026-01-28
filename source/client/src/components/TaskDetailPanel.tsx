@@ -84,9 +84,7 @@ function CommentAttachmentDisplay({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const isImage = attachment.fileType.startsWith('image/');
-  const attachmentUrl = commentsApi.getAttachmentUrl(taskId, commentId, attachment.id);
 
   useEffect(() => {
     if (!isImage) {
@@ -94,46 +92,30 @@ function CommentAttachmentDisplay({
       return;
     }
 
-    // Fetch image with credentials and create blob URL
-    fetch(attachmentUrl, { credentials: 'include' })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load');
-        return res.blob();
-      })
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
+    // Get signed URL from API
+    commentsApi.getAttachmentSignedUrl(taskId, commentId, attachment.id)
+      .then(({ url }) => {
         setImageUrl(url);
-        setLightboxUrl(url);
         setLoading(false);
       })
       .catch(() => {
         setError(true);
         setLoading(false);
       });
-
-    return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-    };
-  }, [attachmentUrl, isImage]);
+  }, [taskId, commentId, attachment.id, isImage]);
 
   const handleClick = async () => {
-    if (lightboxUrl) {
+    if (imageUrl) {
       setShowLightbox(true);
     } else {
-      // Try to fetch the image for lightbox
+      // Try to get signed URL
       try {
-        const res = await fetch(attachmentUrl, { credentials: 'include' });
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          setLightboxUrl(url);
-          setShowLightbox(true);
-        } else {
-          // Fallback: open in new tab
-          window.open(attachmentUrl, '_blank');
-        }
+        const { url } = await commentsApi.getAttachmentSignedUrl(taskId, commentId, attachment.id);
+        setImageUrl(url);
+        setShowLightbox(true);
       } catch {
-        window.open(attachmentUrl, '_blank');
+        // Fallback: open redirect URL in new tab
+        window.open(commentsApi.getAttachmentUrl(taskId, commentId, attachment.id), '_blank');
       }
     }
   };
@@ -164,7 +146,7 @@ function CommentAttachmentDisplay({
           )}
         </div>
         {/* Lightbox modal */}
-        {showLightbox && lightboxUrl && (
+        {showLightbox && imageUrl && (
           <div
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
             onClick={() => setShowLightbox(false)}
@@ -176,7 +158,7 @@ function CommentAttachmentDisplay({
               <X className="h-8 w-8" />
             </button>
             <img
-              src={lightboxUrl}
+              src={imageUrl}
               alt={attachment.fileName}
               className="max-w-full max-h-full object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
@@ -189,7 +171,7 @@ function CommentAttachmentDisplay({
 
   return (
     <a
-      href={attachmentUrl}
+      href={commentsApi.getAttachmentUrl(taskId, commentId, attachment.id)}
       target="_blank"
       rel="noopener noreferrer"
       className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit"
