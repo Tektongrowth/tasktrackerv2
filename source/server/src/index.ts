@@ -36,6 +36,7 @@ import appSettingsRoutes from './routes/appSettings.js';
 import guideRoutes from './routes/guide.js';
 import chatRoutes from './routes/chats.js';
 import notificationRoutes from './routes/notifications.js';
+import supportRoutes from './routes/support.js';
 import { initializeScheduler } from './jobs/scheduler.js';
 
 config();
@@ -192,6 +193,7 @@ app.use('/api/app-settings', appSettingsRoutes);
 app.use('/api/guide', guideRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/support', supportRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // Serve static files in production

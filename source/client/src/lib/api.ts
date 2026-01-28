@@ -656,4 +656,24 @@ export const chats = {
   getAttachmentUrl: (storageKey: string) => `${API_BASE}/api/chats/attachments/${storageKey}`,
 };
 
+// Support
+export interface BugReportData {
+  action: string;
+  actual: string;
+  errorMessage?: string;
+  steps: string;
+  browser: string;
+  device: string;
+  urgency: 'blocking' | 'annoying' | 'minor';
+  screenshotUrl?: string;
+}
+
+export const support = {
+  submitBugReport: (data: BugReportData) =>
+    fetchApi<{ success: boolean; message: string }>('/api/support/bug-report', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
 export { API_BASE };

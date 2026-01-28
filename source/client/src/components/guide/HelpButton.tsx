@@ -21,6 +21,7 @@ import {
   Users,
   RotateCcw,
   Bell,
+  Bug,
 } from 'lucide-react';
 import { useGuide } from './useGuide';
 import { GuideId } from './types';
@@ -138,6 +139,14 @@ export function HelpButton() {
               </DropdownMenuItem>
             );
           })}
+
+          <DropdownMenuSeparator />
+
+          {/* Bug Report */}
+          <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help'); }}>
+            <Bug className="mr-2 h-4 w-4" />
+            <span className="flex-1">Report a Bug</span>
+          </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 

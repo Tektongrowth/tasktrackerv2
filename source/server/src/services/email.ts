@@ -561,3 +561,95 @@ export async function sendChatNotificationEmail(
     });
   }
 }
+
+export interface BugReport {
+  action: string;
+  expected: string;
+  actual: string;
+  errorMessage?: string;
+  steps: string;
+  reporterName: string;
+  reporterRole: string;
+  browser: string;
+  device: string;
+  urgency: 'blocking' | 'annoying' | 'minor';
+  screenshotUrl?: string;
+}
+
+export async function sendBugReportEmail(report: BugReport) {
+  if (!resend) {
+    console.log('Bug report email not sent - Resend not configured');
+    return;
+  }
+
+  const urgencyColors: Record<string, string> = {
+    blocking: '#e53e3e',
+    annoying: '#dd6b20',
+    minor: '#38a169'
+  };
+
+  const urgencyLabels: Record<string, string> = {
+    blocking: 'BLOCKING - Cannot do work',
+    annoying: 'ANNOYING - Can work around it',
+    minor: 'MINOR - Just noticed it'
+  };
+
+  const safeAction = escapeHtml(report.action);
+  const safeExpected = escapeHtml(report.expected);
+  const safeActual = escapeHtml(report.actual);
+  const safeError = escapeHtml(report.errorMessage);
+  const safeSteps = escapeHtml(report.steps);
+  const safeName = escapeHtml(report.reporterName);
+  const safeRole = escapeHtml(report.reporterRole);
+  const safeBrowser = escapeHtml(report.browser);
+  const safeDevice = escapeHtml(report.device);
+
+  try {
+    await sendWithRateLimit(
+      ADMIN_EMAIL,
+      `[Bug Report] ${report.urgency.toUpperCase()}: ${safeAction.substring(0, 50)}`,
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: ${urgencyColors[report.urgency]}; color: white; padding: 12px 20px; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0;">Bug Report</h2>
+            <p style="margin: 4px 0 0 0; font-size: 14px;">${urgencyLabels[report.urgency]}</p>
+          </div>
+
+          <div style="background: #f7fafc; padding: 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
+            <h3 style="color: #2d3748; margin-top: 0;">What were they trying to do?</h3>
+            <p style="color: #4a5568; background: white; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">${safeAction}</p>
+
+            <h3 style="color: #2d3748;">What happened instead?</h3>
+            <p style="color: #4a5568; background: white; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">${safeActual}</p>
+
+            ${safeError ? `
+              <h3 style="color: #2d3748;">Error Message</h3>
+              <p style="color: #e53e3e; background: #fff5f5; padding: 12px; border-radius: 4px; border: 1px solid #feb2b2; font-family: monospace;">${safeError}</p>
+            ` : ''}
+
+            <h3 style="color: #2d3748;">Steps to Reproduce</h3>
+            <p style="color: #4a5568; background: white; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap;">${safeSteps}</p>
+
+            ${report.screenshotUrl ? `
+              <h3 style="color: #2d3748;">Screenshot</h3>
+              <p><a href="${report.screenshotUrl}" style="color: #3182ce;">View Screenshot</a></p>
+            ` : ''}
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+
+            <h3 style="color: #2d3748;">Reporter Info</h3>
+            <table style="color: #4a5568; font-size: 14px;">
+              <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Name:</td><td>${safeName}</td></tr>
+              <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Role:</td><td>${safeRole}</td></tr>
+              <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Browser:</td><td>${safeBrowser}</td></tr>
+              <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Device:</td><td>${safeDevice}</td></tr>
+            </table>
+          </div>
+        </div>
+      `
+    );
+  } catch (error) {
+    console.error('Failed to send bug report email:', error);
+    throw error;
+  }
+}

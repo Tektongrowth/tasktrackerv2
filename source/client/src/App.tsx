@@ -14,6 +14,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { MySettingsPage } from './pages/MySettingsPage';
 import { TemplatesPage } from './pages/TemplatesPage';
 import { TaskSubmissionsPage } from './pages/TaskSubmissionsPage';
+import { HelpPage } from './pages/HelpPage';
 import ChatPage from './pages/ChatPage';
 import { ClientPortalLogin } from './pages/ClientPortalLogin';
 import { ClientPortalVerify } from './pages/ClientPortalVerify';
@@ -85,6 +86,7 @@ function App() {
           <Route path="templates" element={<TemplatesPage />} />
           <Route path="submissions" element={<TaskSubmissionsPage />} />
           <Route path="chat" element={<ChatPage />} />
+          <Route path="help" element={<HelpPage />} />
           <Route path="client-portal-preview" element={<ClientPortalPreview />} />
         </Route>
       </Routes>
