@@ -83,6 +83,7 @@ function CommentAttachmentDisplay({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
   const isImage = attachment.fileType.startsWith('image/');
   const attachmentUrl = commentsApi.getAttachmentUrl(taskId, commentId, attachment.id);
 
@@ -112,35 +113,52 @@ function CommentAttachmentDisplay({
     };
   }, [attachmentUrl, isImage]);
 
-  const handleClick = () => {
-    // Open in new tab with credentials
-    window.open(attachmentUrl, '_blank');
-  };
-
   if (isImage) {
     return (
-      <div
-        className="cursor-pointer"
-        onClick={handleClick}
-      >
-        {loading ? (
-          <div className="w-48 h-32 bg-muted rounded-md animate-pulse flex items-center justify-center">
-            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+      <>
+        <div
+          className="cursor-pointer"
+          onClick={() => setShowLightbox(true)}
+        >
+          {loading ? (
+            <div className="w-48 h-32 bg-muted rounded-md animate-pulse flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
+              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{attachment.fileName}</span>
+              <span className="text-xs text-muted-foreground">(click to view)</span>
+            </div>
+          ) : (
+            <img
+              src={imageUrl!}
+              alt={attachment.fileName}
+              className="max-w-xs max-h-48 rounded-md border hover:opacity-90 transition-opacity"
+            />
+          )}
+        </div>
+        {/* Lightbox modal */}
+        {showLightbox && imageUrl && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setShowLightbox(false)}
+          >
+            <button
+              className="absolute top-4 right-4 text-white hover:text-gray-300 z-50"
+              onClick={() => setShowLightbox(false)}
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <img
+              src={imageUrl}
+              alt={attachment.fileName}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
-        ) : error ? (
-          <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
-            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{attachment.fileName}</span>
-            <span className="text-xs text-muted-foreground">(click to view)</span>
-          </div>
-        ) : (
-          <img
-            src={imageUrl!}
-            alt={attachment.fileName}
-            className="max-w-xs max-h-48 rounded-md border hover:opacity-90 transition-opacity"
-          />
         )}
-      </div>
+      </>
     );
   }
 
