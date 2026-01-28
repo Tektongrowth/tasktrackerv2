@@ -238,7 +238,8 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
           include: {
             user: {
               select: { id: true, name: true, email: true, avatarUrl: true }
-            }
+            },
+            attachments: true
           },
           orderBy: { createdAt: 'desc' }
         }
@@ -597,7 +598,8 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
           include: {
             user: {
               select: { id: true, name: true, email: true, avatarUrl: true }
-            }
+            },
+            attachments: true
           },
           orderBy: { createdAt: 'desc' }
         }
@@ -705,7 +707,8 @@ router.patch('/:id/status', isAuthenticated, async (req: Request, res: Response,
           include: {
             user: {
               select: { id: true, name: true, email: true, avatarUrl: true }
-            }
+            },
+            attachments: true
           },
           orderBy: { createdAt: 'desc' }
         }
