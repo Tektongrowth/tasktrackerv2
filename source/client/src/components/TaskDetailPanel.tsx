@@ -70,6 +70,96 @@ const formatActivityAction = (action: string, details?: Record<string, unknown>)
   }
 };
 
+// Component to display comment attachments with proper authentication
+function CommentAttachmentDisplay({
+  attachment,
+  taskId,
+  commentId
+}: {
+  attachment: import('@/lib/types').CommentAttachment;
+  taskId: string;
+  commentId: string;
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const isImage = attachment.fileType.startsWith('image/');
+  const attachmentUrl = commentsApi.getAttachmentUrl(taskId, commentId, attachment.id);
+
+  useEffect(() => {
+    if (!isImage) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch image with credentials and create blob URL
+    fetch(attachmentUrl, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load');
+        return res.blob();
+      })
+      .then(blob => {
+        setImageUrl(URL.createObjectURL(blob));
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+
+    return () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [attachmentUrl, isImage]);
+
+  const handleClick = () => {
+    // Open in new tab with credentials
+    window.open(attachmentUrl, '_blank');
+  };
+
+  if (isImage) {
+    return (
+      <div
+        className="cursor-pointer"
+        onClick={handleClick}
+      >
+        {loading ? (
+          <div className="w-48 h-32 bg-muted rounded-md animate-pulse flex items-center justify-center">
+            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{attachment.fileName}</span>
+            <span className="text-xs text-muted-foreground">(click to view)</span>
+          </div>
+        ) : (
+          <img
+            src={imageUrl!}
+            alt={attachment.fileName}
+            className="max-w-xs max-h-48 rounded-md border hover:opacity-90 transition-opacity"
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={attachmentUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit"
+    >
+      <Paperclip className="h-4 w-4 text-muted-foreground" />
+      <span className="text-sm">{attachment.fileName}</span>
+      <span className="text-xs text-muted-foreground">
+        ({(attachment.fileSize / 1024).toFixed(0)} KB)
+      </span>
+    </a>
+  );
+}
+
 export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelProps) {
   const { isAdmin, isProjectManager } = useAuth();
   const queryClient = useQueryClient();
@@ -1105,29 +1195,12 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                         {comment.attachments && comment.attachments.length > 0 && (
                           <div className="mt-2 space-y-2">
                             {comment.attachments.map((attachment) => (
-                              <a
+                              <CommentAttachmentDisplay
                                 key={attachment.id}
-                                href={commentsApi.getAttachmentUrl(task.id, comment.id, attachment.id)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block"
-                              >
-                                {attachment.fileType.startsWith('image/') ? (
-                                  <img
-                                    src={commentsApi.getAttachmentUrl(task.id, comment.id, attachment.id)}
-                                    alt={attachment.fileName}
-                                    className="max-w-xs max-h-48 rounded-md border hover:opacity-90 transition-opacity"
-                                  />
-                                ) : (
-                                  <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
-                                    <Paperclip className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm">{attachment.fileName}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      ({(attachment.fileSize / 1024).toFixed(0)} KB)
-                                    </span>
-                                  </div>
-                                )}
-                              </a>
+                                attachment={attachment}
+                                taskId={task.id}
+                                commentId={comment.id}
+                              />
                             ))}
                           </div>
                         )}
