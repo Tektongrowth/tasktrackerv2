@@ -84,6 +84,7 @@ function CommentAttachmentDisplay({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const isImage = attachment.fileType.startsWith('image/');
   const attachmentUrl = commentsApi.getAttachmentUrl(taskId, commentId, attachment.id);
 
@@ -100,7 +101,9 @@ function CommentAttachmentDisplay({
         return res.blob();
       })
       .then(blob => {
-        setImageUrl(URL.createObjectURL(blob));
+        const url = URL.createObjectURL(blob);
+        setImageUrl(url);
+        setLightboxUrl(url);
         setLoading(false);
       })
       .catch(() => {
@@ -113,12 +116,34 @@ function CommentAttachmentDisplay({
     };
   }, [attachmentUrl, isImage]);
 
+  const handleClick = async () => {
+    if (lightboxUrl) {
+      setShowLightbox(true);
+    } else {
+      // Try to fetch the image for lightbox
+      try {
+        const res = await fetch(attachmentUrl, { credentials: 'include' });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          setLightboxUrl(url);
+          setShowLightbox(true);
+        } else {
+          // Fallback: open in new tab
+          window.open(attachmentUrl, '_blank');
+        }
+      } catch {
+        window.open(attachmentUrl, '_blank');
+      }
+    }
+  };
+
   if (isImage) {
     return (
       <>
         <div
           className="cursor-pointer"
-          onClick={() => setShowLightbox(true)}
+          onClick={handleClick}
         >
           {loading ? (
             <div className="w-48 h-32 bg-muted rounded-md animate-pulse flex items-center justify-center">
@@ -139,7 +164,7 @@ function CommentAttachmentDisplay({
           )}
         </div>
         {/* Lightbox modal */}
-        {showLightbox && imageUrl && (
+        {showLightbox && lightboxUrl && (
           <div
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
             onClick={() => setShowLightbox(false)}
@@ -151,7 +176,7 @@ function CommentAttachmentDisplay({
               <X className="h-8 w-8" />
             </button>
             <img
-              src={imageUrl}
+              src={lightboxUrl}
               alt={attachment.fileName}
               className="max-w-full max-h-full object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
