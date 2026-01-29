@@ -1341,7 +1341,12 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
     // Verify task exists
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      include: { assignees: { select: { userId: true } } }
+      include: {
+        assignees: { select: { userId: true } },
+        project: {
+          include: { client: { select: { name: true } } }
+        }
+      }
     });
     if (!task) {
       throw new AppError('Task not found', 404);
@@ -1406,7 +1411,9 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
         // Send Telegram notifications with reply instructions
         // Get sender's name for @mention (lowercase, no spaces)
         const senderMentionName = user.name.toLowerCase().replace(/\s+/g, '');
-        const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) mentioned you in "${escapeTelegramHtml(task.title)}":\n\n"${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
+        const clientName = task.project?.client?.name || 'Unknown Client';
+        const projectName = task.project?.name || 'Unknown Project';
+        const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) mentioned you in "${escapeTelegramHtml(task.title)}":\n\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}\n\n"${escapeTelegramHtml(content)}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
 
         // Check for attachments
         const attachment = comment.attachments?.[0];
@@ -1559,7 +1566,13 @@ router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (re
           select: { id: true, name: true, telegramChatId: true }
         },
         task: {
-          select: { id: true, title: true }
+          select: {
+            id: true,
+            title: true,
+            project: {
+              include: { client: { select: { name: true } } }
+            }
+          }
         }
       }
     });
@@ -1601,8 +1614,9 @@ router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (re
     // Don't notify if user is reacting to their own comment
     if (isNewReaction && comment.user && comment.user.id !== user.id && comment.user.telegramChatId) {
       const emojiIcon = EMOJI_DISPLAY[emoji] || emoji;
-      const commentPreview = comment.content.substring(0, 50);
-      const telegramMessage = `${emojiIcon} <b>${escapeTelegramHtml(user.name)}</b> reacted to your comment in "${escapeTelegramHtml(comment.task.title)}":\n\n"${escapeTelegramHtml(commentPreview)}${comment.content.length > 50 ? '...' : ''}"`;
+      const clientName = comment.task.project?.client?.name || 'Unknown Client';
+      const projectName = comment.task.project?.name || 'Unknown Project';
+      const telegramMessage = `${emojiIcon} <b>${escapeTelegramHtml(user.name)}</b> reacted to your comment in "${escapeTelegramHtml(comment.task.title)}":\n\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}\n\n"${escapeTelegramHtml(comment.content)}"`;
 
       sendTelegramMessage(comment.user.telegramChatId, telegramMessage);
     }
@@ -1691,7 +1705,12 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
     // Verify task exists
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      include: { assignees: { select: { userId: true } } }
+      include: {
+        assignees: { select: { userId: true } },
+        project: {
+          include: { client: { select: { name: true } } }
+        }
+      }
     });
     if (!task) {
       throw new AppError('Task not found', 404);
@@ -1784,7 +1803,9 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
 
           // Send Telegram notifications with reply instructions
           const senderMentionName = user.name.toLowerCase().replace(/\s+/g, '');
-          const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) mentioned you in "${escapeTelegramHtml(task.title)}":\n\n"${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
+          const clientName = task.project?.client?.name || 'Unknown Client';
+          const projectName = task.project?.name || 'Unknown Project';
+          const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) mentioned you in "${escapeTelegramHtml(task.title)}":\n\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}\n\n"${escapeTelegramHtml(content)}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
 
           // Check for attachments
           const attachment = comment.attachments?.[0];

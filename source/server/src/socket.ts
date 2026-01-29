@@ -148,10 +148,9 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
               if (p.user.telegramChatId) {
                 const senderName = message.sender.name || 'Someone';
                 const chatTitle = chat.name || 'Direct message';
-                const preview = content.substring(0, 100);
                 sendTelegramMessage(
                   p.user.telegramChatId,
-                  `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(preview)}${content.length > 100 ? '...' : ''}`
+                  `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(content)}`
                 );
               }
             }
