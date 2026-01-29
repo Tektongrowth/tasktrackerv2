@@ -1,8 +1,15 @@
 import crypto from 'crypto';
+import { prisma } from '../db/client.js';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME;
 const SECRET = process.env.SESSION_SECRET || 'development-secret';
+
+// Result type for sending messages - includes message ID for reply tracking
+export interface TelegramSendResult {
+  success: boolean;
+  messageId?: number;
+}
 
 // In-memory store for link tokens (userId -> { token, expires })
 // In production, you might want to use Redis or database
@@ -17,15 +24,16 @@ export function isTelegramConfigured(): boolean {
 
 /**
  * Send a message to a Telegram chat
+ * Returns message ID for reply tracking
  */
 export async function sendTelegramMessage(
   chatId: string,
   text: string,
   options?: { parseMode?: 'HTML' | 'Markdown' }
-): Promise<boolean> {
+): Promise<TelegramSendResult> {
   if (!TELEGRAM_BOT_TOKEN) {
     console.log('Telegram message not sent - bot not configured');
-    return false;
+    return { success: false };
   }
 
   try {
@@ -43,17 +51,24 @@ export async function sendTelegramMessage(
       }
     );
 
-    const result = await response.json() as { ok: boolean; description?: string };
+    const result = await response.json() as {
+      ok: boolean;
+      description?: string;
+      result?: { message_id: number };
+    };
 
     if (!result.ok) {
       console.error('Telegram API error:', result);
-      return false;
+      return { success: false };
     }
 
-    return true;
+    return {
+      success: true,
+      messageId: result.result?.message_id
+    };
   } catch (error) {
     console.error('Error sending Telegram message:', error);
-    return false;
+    return { success: false };
   }
 }
 
@@ -150,10 +165,10 @@ export async function sendTelegramPhoto(
   chatId: string,
   photoUrl: string,
   caption?: string
-): Promise<boolean> {
+): Promise<TelegramSendResult> {
   if (!TELEGRAM_BOT_TOKEN) {
     console.log('Telegram photo not sent - bot not configured');
-    return false;
+    return { success: false };
   }
 
   try {
@@ -171,17 +186,24 @@ export async function sendTelegramPhoto(
       }
     );
 
-    const result = await response.json() as { ok: boolean; description?: string };
+    const result = await response.json() as {
+      ok: boolean;
+      description?: string;
+      result?: { message_id: number };
+    };
 
     if (!result.ok) {
       console.error('Telegram sendPhoto error:', result);
-      return false;
+      return { success: false };
     }
 
-    return true;
+    return {
+      success: true,
+      messageId: result.result?.message_id
+    };
   } catch (error) {
     console.error('Error sending Telegram photo:', error);
-    return false;
+    return { success: false };
   }
 }
 
@@ -193,10 +215,10 @@ export async function sendTelegramDocument(
   documentUrl: string,
   fileName: string,
   caption?: string
-): Promise<boolean> {
+): Promise<TelegramSendResult> {
   if (!TELEGRAM_BOT_TOKEN) {
     console.log('Telegram document not sent - bot not configured');
-    return false;
+    return { success: false };
   }
 
   try {
@@ -214,16 +236,132 @@ export async function sendTelegramDocument(
       }
     );
 
-    const result = await response.json() as { ok: boolean; description?: string };
+    const result = await response.json() as {
+      ok: boolean;
+      description?: string;
+      result?: { message_id: number };
+    };
 
     if (!result.ok) {
       console.error('Telegram sendDocument error:', result);
-      return false;
+      return { success: false };
     }
 
-    return true;
+    return {
+      success: true,
+      messageId: result.result?.message_id
+    };
   } catch (error) {
     console.error('Error sending Telegram document:', error);
-    return false;
+    return { success: false };
+  }
+}
+
+/**
+ * Store a mapping between a Telegram message and a task for reply tracking
+ */
+export async function storeTelegramMessageMapping(
+  telegramMessageId: number,
+  taskId: string,
+  recipientId: string,
+  replyToUserId: string
+): Promise<void> {
+  try {
+    await prisma.telegramMessageMap.create({
+      data: {
+        telegramMessageId: String(telegramMessageId),
+        taskId,
+        recipientId,
+        replyToUserId,
+      },
+    });
+  } catch (error) {
+    console.error('Error storing Telegram message mapping:', error);
+  }
+}
+
+/**
+ * Get message mapping for a Telegram message ID
+ */
+export async function getTelegramMessageMapping(telegramMessageId: number) {
+  try {
+    return await prisma.telegramMessageMap.findUnique({
+      where: { telegramMessageId: String(telegramMessageId) },
+      include: {
+        task: {
+          include: {
+            project: { select: { name: true } }
+          }
+        },
+        replyToUser: { select: { id: true, name: true } },
+      },
+    });
+  } catch (error) {
+    console.error('Error getting Telegram message mapping:', error);
+    return null;
+  }
+}
+
+/**
+ * Parse @mentions from a Telegram message
+ * Returns array of matched user names (without the @ symbol)
+ */
+export function parseTelegramMentions(text: string): string[] {
+  // Match @username patterns - usernames can have letters, numbers, spaces
+  // We'll be lenient and match @followed by text until end or another @
+  const mentionRegex = /@([a-zA-Z][a-zA-Z0-9\s]*?)(?=\s@|\s*$|[.,!?])/g;
+  const mentions: string[] = [];
+  let match;
+
+  while ((match = mentionRegex.exec(text)) !== null) {
+    mentions.push(match[1].trim());
+  }
+
+  return mentions;
+}
+
+/**
+ * Find users by name (case-insensitive partial match)
+ * Used to resolve @mentions in Telegram replies
+ */
+export async function findUsersByName(names: string[]) {
+  if (names.length === 0) return [];
+
+  try {
+    // For each name, try to find a matching user
+    const users = await prisma.user.findMany({
+      where: {
+        OR: names.map(name => ({
+          name: { contains: name, mode: 'insensitive' as const }
+        })),
+        active: true,
+        archived: false,
+      },
+      select: { id: true, name: true },
+    });
+
+    return users;
+  } catch (error) {
+    console.error('Error finding users by name:', error);
+    return [];
+  }
+}
+
+/**
+ * Clean up old message mappings (older than 30 days)
+ * Call this periodically to prevent unbounded growth
+ */
+export async function cleanupOldMessageMappings(): Promise<void> {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    await prisma.telegramMessageMap.deleteMany({
+      where: {
+        createdAt: { lt: thirtyDaysAgo }
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning up old message mappings:', error);
   }
 }

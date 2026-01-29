@@ -111,7 +111,9 @@ model User {
   chatParticipants ChatParticipant[]
   chatMessages     ChatMessage[]
   chatReadReceipts ChatReadReceipt[]
-  taskActivities   TaskActivity[]
+  taskActivities           TaskActivity[]
+  telegramMessagesReceived TelegramMessageMap[] @relation("TelegramRecipient")
+  telegramMessagesFrom     TelegramMessageMap[] @relation("TelegramReplyTo")
 
   @@index([jobRoleId])
   @@map("users")
@@ -204,7 +206,8 @@ model Task {
   activities   TaskActivity[]
   subtasks     Subtask[]
   comments     TaskComment[]
-  submission   TaskSubmission?
+  submission       TaskSubmission?
+  telegramMessages TelegramMessageMap[]
 
   @@index([projectId])
   @@index([status])
@@ -602,4 +605,22 @@ model ChatReadReceipt {
 
   @@unique([messageId, userId])
   @@map("chat_read_receipts")
+}
+
+// Track Telegram messages for reply functionality
+model TelegramMessageMap {
+  id                String   @id @default(uuid())
+  telegramMessageId String   @unique @map("telegram_message_id")
+  taskId            String   @map("task_id")
+  recipientId       String   @map("recipient_id")
+  replyToUserId     String   @map("reply_to_user_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  recipient   User @relation("TelegramRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  replyToUser User @relation("TelegramReplyTo", fields: [replyToUserId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([recipientId])
+  @@map("telegram_message_map")
 }

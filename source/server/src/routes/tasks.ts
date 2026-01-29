@@ -4,7 +4,7 @@ import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
-import { sendTelegramMessage, sendTelegramPhoto, sendTelegramDocument, escapeTelegramHtml } from '../services/telegram.js';
+import { sendTelegramMessage, sendTelegramPhoto, sendTelegramDocument, escapeTelegramHtml, storeTelegramMessageMapping } from '../services/telegram.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
@@ -1367,33 +1367,48 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
           )
         );
 
-        // Send Telegram notifications
-        const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> mentioned you in "${escapeTelegramHtml(task.title)}":\n\n${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}`;
+        // Send Telegram notifications with reply instructions
+        // Get sender's name for @mention (lowercase, no spaces)
+        const senderMentionName = user.name.toLowerCase().replace(/\s+/g, '');
+        const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) mentioned you in "${escapeTelegramHtml(task.title)}":\n\n"${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
 
         // Check for attachments
         const attachment = comment.attachments?.[0];
+
+        // Send notifications and store mappings for reply tracking
+        const telegramUsersToNotify = mentionedUsers.filter((u) => u.telegramChatId);
 
         if (attachment) {
           const fileUrl = await getSignedDownloadUrl(attachment.storageKey);
           const isImage = attachment.fileType.startsWith('image/');
 
-          await Promise.allSettled(
-            mentionedUsers
-              .filter((u) => u.telegramChatId)
-              .map((mentionedUser) =>
-                isImage
-                  ? sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
-                  : sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption)
-              )
-          );
+          for (const mentionedUser of telegramUsersToNotify) {
+            const result = isImage
+              ? await sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
+              : await sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption);
+
+            if (result.success && result.messageId) {
+              await storeTelegramMessageMapping(
+                result.messageId,
+                task.id,
+                mentionedUser.id,
+                user.id
+              );
+            }
+          }
         } else {
-          await Promise.allSettled(
-            mentionedUsers
-              .filter((u) => u.telegramChatId)
-              .map((mentionedUser) =>
-                sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption)
-              )
-          );
+          for (const mentionedUser of telegramUsersToNotify) {
+            const result = await sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption);
+
+            if (result.success && result.messageId) {
+              await storeTelegramMessageMapping(
+                result.messageId,
+                task.id,
+                mentionedUser.id,
+                user.id
+              );
+            }
+          }
         }
 
         // Mark as notified
@@ -1633,33 +1648,47 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
             )
           );
 
-          // Send Telegram notifications
-          const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> mentioned you in "${escapeTelegramHtml(task.title)}":\n\n${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}`;
+          // Send Telegram notifications with reply instructions
+          const senderMentionName = user.name.toLowerCase().replace(/\s+/g, '');
+          const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) mentioned you in "${escapeTelegramHtml(task.title)}":\n\n"${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
 
           // Check for attachments
           const attachment = comment.attachments?.[0];
+
+          // Send notifications and store mappings for reply tracking
+          const telegramUsersToNotify = mentionedUsers.filter((u) => u.telegramChatId);
 
           if (attachment) {
             const fileUrl = await getSignedDownloadUrl(attachment.storageKey);
             const isImage = attachment.fileType.startsWith('image/');
 
-            await Promise.allSettled(
-              mentionedUsers
-                .filter((u) => u.telegramChatId)
-                .map((mentionedUser) =>
-                  isImage
-                    ? sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
-                    : sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption)
-                )
-            );
+            for (const mentionedUser of telegramUsersToNotify) {
+              const result = isImage
+                ? await sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
+                : await sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption);
+
+              if (result.success && result.messageId) {
+                await storeTelegramMessageMapping(
+                  result.messageId,
+                  task.id,
+                  mentionedUser.id,
+                  user.id
+                );
+              }
+            }
           } else {
-            await Promise.allSettled(
-              mentionedUsers
-                .filter((u) => u.telegramChatId)
-                .map((mentionedUser) =>
-                  sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption)
-                )
-            );
+            for (const mentionedUser of telegramUsersToNotify) {
+              const result = await sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption);
+
+              if (result.success && result.messageId) {
+                await storeTelegramMessageMapping(
+                  result.messageId,
+                  task.id,
+                  mentionedUser.id,
+                  user.id
+                );
+              }
+            }
           }
 
           await markMentionsNotified(comment.id);
