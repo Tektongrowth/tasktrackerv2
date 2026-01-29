@@ -829,6 +829,9 @@ export function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({ title: 'User updated' });
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to update user', description: error.message, variant: 'destructive' });
+    },
   });
 
   const archiveUser = useMutation({

@@ -139,7 +139,7 @@ router.post('/invite', isAuthenticated, isAdmin, async (req: Request, res: Respo
 router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { name, permissions, role, active, accessLevel, jobRoleId } = req.body;
+    const { name, email, permissions, role, active, accessLevel, jobRoleId } = req.body;
     const currentUser = req.user as Express.User;
 
     // Prevent admin from deactivating themselves
@@ -179,10 +179,22 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
     // Get current user to check if role is changing
     const existingUser = await prisma.user.findUnique({ where: { id } });
 
+    // Check for email uniqueness if email is being changed
+    if (email && typeof email === 'string') {
+      const emailTrimmed = email.trim().toLowerCase();
+      const existingWithEmail = await prisma.user.findFirst({
+        where: { email: emailTrimmed, id: { not: id } }
+      });
+      if (existingWithEmail) {
+        throw new AppError('A user with this email already exists', 400);
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: {
         ...(name && typeof name === 'string' && { name: name.trim() }),
+        ...(email && typeof email === 'string' && { email: email.trim().toLowerCase() }),
         ...(sanitizedPermissions && { permissions: sanitizedPermissions }),
         ...(role && { role }),
         ...(accessLevel && { accessLevel }),
