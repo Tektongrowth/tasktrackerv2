@@ -1167,11 +1167,14 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
           {/* Comments list */}
           <div className="space-y-3">
             {(() => {
-              const allComments = task.comments || [];
+              // Sort comments newest first - don't rely on backend sort order
+              const allComments = [...(task.comments || [])].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              );
               const totalComments = allComments.length;
               const displayedComments = showAllComments
                 ? allComments
-                : allComments.slice(0, 5); // Show first 5 (most recent, since sorted desc)
+                : allComments.slice(0, 5);
 
               return (
                 <>
