@@ -235,6 +235,11 @@ export const comments = {
     }),
   delete: (taskId: string, commentId: string) =>
     fetchApi<{ success: boolean }>(`/api/tasks/${taskId}/comments/${commentId}`, { method: 'DELETE' }),
+  toggleReaction: (taskId: string, commentId: string, emoji: import('./types').EmojiKey) =>
+    fetchApi<{ reactions: import('./types').Reaction[] }>(`/api/tasks/${taskId}/comments/${commentId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    }),
   getAttachmentUrl: (taskId: string, commentId: string, attachmentId: string) =>
     `${API_BASE}/api/tasks/${taskId}/comments/${commentId}/attachments/${attachmentId}`,
   getAttachmentSignedUrl: (taskId: string, commentId: string, attachmentId: string) =>
@@ -675,6 +680,11 @@ export const chats = {
     return res.json() as Promise<import('./types').ChatMessage>;
   },
   getAttachmentUrl: (storageKey: string) => `${API_BASE}/api/chats/attachments/${storageKey}`,
+  toggleReaction: (chatId: string, messageId: string, emoji: import('./types').EmojiKey) =>
+    fetchApi<{ reactions: import('./types').Reaction[] }>(`/api/chats/${chatId}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    }),
 };
 
 // Support

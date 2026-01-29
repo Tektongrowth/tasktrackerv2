@@ -206,6 +206,16 @@ export interface CommentAttachment {
   createdAt: string;
 }
 
+export type EmojiKey = 'thumbsup' | 'thumbsdown' | 'heart' | 'laugh' | 'surprised' | 'sad' | 'party';
+
+export interface Reaction {
+  id: string;
+  emoji: EmojiKey;
+  userId: string;
+  user?: Pick<User, 'id' | 'name'>;
+  createdAt: string;
+}
+
 export interface TaskComment {
   id: string;
   taskId: string;
@@ -214,6 +224,7 @@ export interface TaskComment {
   content: string;
   user?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>;
   attachments?: CommentAttachment[];
+  reactions?: Reaction[];
   createdAt: string;
   updatedAt: string;
 }
@@ -440,6 +451,7 @@ export interface ChatMessage {
   sender?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>;
   attachments?: ChatAttachment[];
   readReceipts?: ChatReadReceipt[];
+  reactions?: Reaction[];
   tempId?: string; // For optimistic updates
 }
 

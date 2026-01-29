@@ -1284,7 +1284,14 @@ router.get('/:taskId/comments', isAuthenticated, async (req: Request, res: Respo
         user: {
           select: { id: true, name: true, email: true, avatarUrl: true }
         },
-        attachments: true
+        attachments: true,
+        reactions: {
+          include: {
+            user: {
+              select: { id: true, name: true }
+            }
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -1484,6 +1491,73 @@ router.delete('/:taskId/comments/:commentId', isAuthenticated, async (req: Reque
     await prisma.taskComment.delete({ where: { id: commentId } });
 
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Valid emoji keys for reactions
+const VALID_EMOJIS = ['thumbsup', 'thumbsdown', 'heart', 'laugh', 'surprised', 'sad', 'party'];
+
+// Toggle reaction on a comment (add if not exists, remove if exists)
+router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const commentId = req.params.commentId as string;
+    const user = req.user as Express.User;
+    const { emoji } = req.body;
+
+    // Validate emoji
+    if (!emoji || !VALID_EMOJIS.includes(emoji)) {
+      throw new AppError('Invalid emoji. Must be one of: ' + VALID_EMOJIS.join(', '), 400);
+    }
+
+    // Verify comment exists and belongs to task
+    const comment = await prisma.taskComment.findUnique({
+      where: { id: commentId }
+    });
+    if (!comment || comment.taskId !== taskId) {
+      throw new AppError('Comment not found', 404);
+    }
+
+    // Check if reaction already exists
+    const existingReaction = await prisma.commentReaction.findUnique({
+      where: {
+        commentId_userId_emoji: {
+          commentId,
+          userId: user.id,
+          emoji
+        }
+      }
+    });
+
+    if (existingReaction) {
+      // Remove reaction
+      await prisma.commentReaction.delete({
+        where: { id: existingReaction.id }
+      });
+    } else {
+      // Add reaction
+      await prisma.commentReaction.create({
+        data: {
+          commentId,
+          userId: user.id,
+          emoji
+        }
+      });
+    }
+
+    // Return updated reactions for this comment
+    const reactions = await prisma.commentReaction.findMany({
+      where: { commentId },
+      include: {
+        user: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    res.json({ reactions });
   } catch (error) {
     next(error);
   }

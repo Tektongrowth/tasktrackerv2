@@ -217,6 +217,95 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
       socket.to(`chat:${chatId}`).emit('typing:stop', { chatId, userId });
     });
 
+    // Valid emoji keys for reactions
+    const VALID_EMOJIS = ['thumbsup', 'thumbsdown', 'heart', 'laugh', 'surprised', 'sad', 'party'];
+
+    // Handle reaction toggle
+    socket.on('reaction:toggle', async (data: { chatId: string; messageId: string; emoji: string }) => {
+      try {
+        const { chatId, messageId, emoji } = data;
+
+        // Validate emoji
+        if (!emoji || !VALID_EMOJIS.includes(emoji)) {
+          socket.emit('error', { message: 'Invalid emoji' });
+          return;
+        }
+
+        // Verify participation
+        const participant = await prisma.chatParticipant.findUnique({
+          where: {
+            chatId_userId: { chatId, userId }
+          }
+        });
+
+        if (!participant) {
+          socket.emit('error', { message: 'Not a participant of this chat' });
+          return;
+        }
+
+        // Verify message exists
+        const message = await prisma.chatMessage.findUnique({
+          where: { id: messageId }
+        });
+
+        if (!message || message.chatId !== chatId) {
+          socket.emit('error', { message: 'Message not found' });
+          return;
+        }
+
+        // Check if reaction exists
+        const existingReaction = await prisma.messageReaction.findUnique({
+          where: {
+            messageId_userId_emoji: {
+              messageId,
+              userId,
+              emoji
+            }
+          }
+        });
+
+        let action: 'added' | 'removed';
+
+        if (existingReaction) {
+          await prisma.messageReaction.delete({
+            where: { id: existingReaction.id }
+          });
+          action = 'removed';
+        } else {
+          await prisma.messageReaction.create({
+            data: {
+              messageId,
+              userId,
+              emoji
+            }
+          });
+          action = 'added';
+        }
+
+        // Get updated reactions
+        const reactions = await prisma.messageReaction.findMany({
+          where: { messageId },
+          include: {
+            user: {
+              select: { id: true, name: true }
+            }
+          }
+        });
+
+        // Broadcast to chat room
+        io.to(`chat:${chatId}`).emit('reaction:updated', {
+          messageId,
+          reactions,
+          action,
+          userId,
+          emoji
+        });
+      } catch (error) {
+        console.error('Error toggling reaction:', error);
+        socket.emit('error', { message: 'Failed to toggle reaction' });
+      }
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       console.log(`User ${userId} disconnected`);

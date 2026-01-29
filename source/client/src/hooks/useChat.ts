@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Chat, ChatMessage, ChatParticipant } from '../lib/types';
+import { Chat, ChatMessage, ChatParticipant, Reaction, EmojiKey } from '../lib/types';
 import { API_BASE, chats as chatsApi } from '../lib/api';
 import { useAuth } from './useAuth';
+
+interface ReactionUpdatedData {
+  messageId: string;
+  reactions: Reaction[];
+  action: 'added' | 'removed';
+  userId: string;
+  emoji: string;
+}
 
 interface UseChatOptions {
   onNewMessage?: (message: ChatMessage) => void;
@@ -13,6 +21,7 @@ interface UseChatOptions {
   onParticipantRemoved?: (data: { chatId: string; userId: string }) => void;
   onTypingStart?: (data: { chatId: string; userId: string }) => void;
   onTypingStop?: (data: { chatId: string; userId: string }) => void;
+  onReactionUpdated?: (data: ReactionUpdatedData) => void;
 }
 
 export function useChat(options: UseChatOptions = {}) {
@@ -84,6 +93,10 @@ export function useChat(options: UseChatOptions = {}) {
       optionsRef.current.onTypingStop?.(data);
     });
 
+    socket.on('reaction:updated', (data: ReactionUpdatedData) => {
+      optionsRef.current.onReactionUpdated?.(data);
+    });
+
     socket.on('error', (error: { message: string }) => {
       console.error('Socket error:', error.message);
     });
@@ -129,6 +142,11 @@ export function useChat(options: UseChatOptions = {}) {
     socketRef.current?.emit('typing:stop', chatId);
   }, []);
 
+  // Toggle reaction on a message
+  const toggleReaction = useCallback((chatId: string, messageId: string, emoji: EmojiKey) => {
+    socketRef.current?.emit('reaction:toggle', { chatId, messageId, emoji });
+  }, []);
+
   // Decrease unread count when chat is marked as read
   const decreaseUnreadCount = useCallback((count: number) => {
     setUnreadCount((prev) => Math.max(0, prev - count));
@@ -153,6 +171,7 @@ export function useChat(options: UseChatOptions = {}) {
     markAsRead,
     startTyping,
     stopTyping,
+    toggleReaction,
     decreaseUnreadCount,
     refreshUnreadCount,
   };

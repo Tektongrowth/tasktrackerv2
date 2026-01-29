@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight } from 'lucide-react';
-import { Chat, ChatMessage, User } from '../lib/types';
+import { Chat, ChatMessage, User, EmojiKey } from '../lib/types';
 import { chats as chatsApi, users as usersApi, notifications as notificationsApi, type MentionNotification } from '../lib/api';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
+import { ReactionPicker, ReactionDisplay } from '../components/reactions';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function ChatPage() {
@@ -36,6 +37,7 @@ export default function ChatPage() {
     markAsRead,
     startTyping,
     stopTyping,
+    toggleReaction,
     decreaseUnreadCount,
   } = useChat({
     onNewMessage: (message) => {
@@ -117,6 +119,15 @@ export default function ChatPage() {
         chatTypers.delete(data.userId);
         return { ...prev, [data.chatId]: chatTypers };
       });
+    },
+    onReactionUpdated: (data) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === data.messageId
+            ? { ...m, reactions: data.reactions }
+            : m
+        )
+      );
     },
   });
 
@@ -581,7 +592,7 @@ export default function ChatPage() {
                   key={message.id}
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%] ${isOwn ? 'order-2' : ''}`}>
+                  <div className={`max-w-[70%] group/message ${isOwn ? 'order-2' : ''}`}>
                     {!isOwn && (
                       <div className="flex items-center gap-2 mb-1">
                         {message.sender?.avatarUrl ? (
@@ -655,12 +666,19 @@ export default function ChatPage() {
                         </div>
                       )}
                     </div>
-                    <div className={`flex items-center gap-1 mt-1 text-xs text-muted-foreground ${isOwn ? 'justify-end' : ''}`}>
-                      <span>
+                    {/* Reaction picker - shows on hover */}
+                    <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
+                      <div className="opacity-0 group-hover/message:opacity-100 transition-opacity">
+                        <ReactionPicker
+                          onSelect={(emoji) => activeChatId && toggleReaction(activeChatId, message.id, emoji)}
+                          className="h-5 w-5"
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                       </span>
                       {isOwn && (
-                        <span className="ml-1">
+                        <span className="ml-1 text-xs text-muted-foreground">
                           {isRead ? (
                             <CheckCheck className="w-3 h-3 text-primary" />
                           ) : (
@@ -669,6 +687,15 @@ export default function ChatPage() {
                         </span>
                       )}
                     </div>
+                    {/* Message reactions */}
+                    {message.reactions && message.reactions.length > 0 && user && (
+                      <ReactionDisplay
+                        reactions={message.reactions}
+                        currentUserId={user.id}
+                        onToggle={(emoji) => activeChatId && toggleReaction(activeChatId, message.id, emoji)}
+                        className={`mt-1 ${isOwn ? 'justify-end' : ''}`}
+                      />
+                    )}
                   </div>
                 </div>
               );

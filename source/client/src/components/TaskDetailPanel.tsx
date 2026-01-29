@@ -15,8 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon } from 'lucide-react';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
+import { ReactionPicker, ReactionDisplay } from '@/components/reactions';
 import { cn, formatDate, formatDuration, getTagColor, sanitizeText } from '@/lib/utils';
-import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
+import type { Task, TaskPriority, TaskStatus, EmojiKey } from '@/lib/types';
 import { priorityConfig } from './TaskCard';
 
 interface TaskDetailPanelProps {
@@ -385,6 +386,17 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to delete comment', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const toggleReaction = useMutation({
+    mutationFn: ({ commentId, emoji }: { commentId: string; emoji: EmojiKey }) =>
+      commentsApi.toggleReaction(task.id, commentId, emoji),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to react', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -1204,16 +1216,22 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                           <span className="text-xs text-muted-foreground">
                             {formatDate(comment.createdAt)}
                           </span>
-                          {(currentUser?.id === comment.userId || isAdmin || isProjectManager) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                              onClick={() => deleteComment.mutate(comment.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ReactionPicker
+                              onSelect={(emoji) => toggleReaction.mutate({ commentId: comment.id, emoji })}
+                              disabled={toggleReaction.isPending}
+                            />
+                            {(currentUser?.id === comment.userId || isAdmin || isProjectManager) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5"
+                                onClick={() => deleteComment.mutate(comment.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         {comment.content && (
                           <p
@@ -1233,6 +1251,16 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                               />
                             ))}
                           </div>
+                        )}
+                        {/* Comment reactions */}
+                        {comment.reactions && comment.reactions.length > 0 && currentUser && (
+                          <ReactionDisplay
+                            reactions={comment.reactions}
+                            currentUserId={currentUser.id}
+                            onToggle={(emoji) => toggleReaction.mutate({ commentId: comment.id, emoji })}
+                            disabled={toggleReaction.isPending}
+                            className="mt-2"
+                          />
                         )}
                       </div>
                     </div>

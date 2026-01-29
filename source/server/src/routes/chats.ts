@@ -293,6 +293,13 @@ router.get('/:id/messages', isAuthenticated, async (req: Request, res: Response,
         attachments: true,
         readReceipts: {
           select: { userId: true, readAt: true }
+        },
+        reactions: {
+          include: {
+            user: {
+              select: { id: true, name: true }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' },
@@ -665,6 +672,101 @@ router.get('/attachments/:storageKey', isAuthenticated, async (req: Request, res
     res.setHeader('Content-Disposition', `${disposition}; filename="${attachment.fileName}"`);
     res.setHeader('Content-Type', attachment.fileType);
     res.sendFile(path.resolve(filePath));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Valid emoji keys for reactions
+const VALID_EMOJIS = ['thumbsup', 'thumbsdown', 'heart', 'laugh', 'surprised', 'sad', 'party'];
+
+// Toggle reaction on a message
+router.post('/:id/messages/:messageId/reactions', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user as Express.User;
+    const chatId = req.params.id as string;
+    const messageId = req.params.messageId as string;
+    const { emoji } = req.body;
+
+    // Validate emoji
+    if (!emoji || !VALID_EMOJIS.includes(emoji)) {
+      throw new AppError('Invalid emoji. Must be one of: ' + VALID_EMOJIS.join(', '), 400);
+    }
+
+    // Verify participation
+    const participant = await prisma.chatParticipant.findUnique({
+      where: {
+        chatId_userId: { chatId, userId: user.id }
+      }
+    });
+
+    if (!participant) {
+      throw new AppError('Not a participant of this chat', 403);
+    }
+
+    // Verify message exists and belongs to this chat
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId }
+    });
+
+    if (!message || message.chatId !== chatId) {
+      throw new AppError('Message not found', 404);
+    }
+
+    // Check if reaction already exists
+    const existingReaction = await prisma.messageReaction.findUnique({
+      where: {
+        messageId_userId_emoji: {
+          messageId,
+          userId: user.id,
+          emoji
+        }
+      }
+    });
+
+    let action: 'added' | 'removed';
+
+    if (existingReaction) {
+      // Remove reaction
+      await prisma.messageReaction.delete({
+        where: { id: existingReaction.id }
+      });
+      action = 'removed';
+    } else {
+      // Add reaction
+      await prisma.messageReaction.create({
+        data: {
+          messageId,
+          userId: user.id,
+          emoji
+        }
+      });
+      action = 'added';
+    }
+
+    // Get updated reactions for this message
+    const reactions = await prisma.messageReaction.findMany({
+      where: { messageId },
+      include: {
+        user: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    // Broadcast reaction update to chat room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`chat:${chatId}`).emit('reaction:updated', {
+        messageId,
+        reactions,
+        action,
+        userId: user.id,
+        emoji
+      });
+    }
+
+    res.json({ reactions });
   } catch (error) {
     next(error);
   }

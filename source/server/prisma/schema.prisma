@@ -114,6 +114,8 @@ model User {
   taskActivities           TaskActivity[]
   telegramMessagesReceived TelegramMessageMap[] @relation("TelegramRecipient")
   telegramMessagesFrom     TelegramMessageMap[] @relation("TelegramReplyTo")
+  commentReactions         CommentReaction[]    @relation("CommentReactions")
+  messageReactions         MessageReaction[]    @relation("MessageReactions")
 
   @@index([jobRoleId])
   @@map("users")
@@ -343,6 +345,7 @@ model TaskComment {
   user        User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
   mentions    CommentMention[]
   attachments CommentAttachment[]
+  reactions   CommentReaction[]
 
   @@index([taskId])
   @@map("task_comments")
@@ -377,6 +380,36 @@ model CommentAttachment {
 
   @@index([commentId])
   @@map("comment_attachments")
+}
+
+model CommentReaction {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  userId    String   @map("user_id")
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User        @relation("CommentReactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
+  @@map("comment_reactions")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation("MessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
 }
 
 model Tag {
@@ -575,6 +608,7 @@ model ChatMessage {
   sender       User              @relation(fields: [senderId], references: [id])
   attachments  ChatAttachment[]
   readReceipts ChatReadReceipt[]
+  reactions    MessageReaction[]
 
   @@index([chatId, createdAt])
   @@map("chat_messages")
