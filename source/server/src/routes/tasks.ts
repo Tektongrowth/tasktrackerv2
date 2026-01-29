@@ -4,7 +4,7 @@ import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
-import { sendTelegramMessage, sendTelegramPhoto, escapeTelegramHtml } from '../services/telegram.js';
+import { sendTelegramMessage, sendTelegramPhoto, sendTelegramDocument, escapeTelegramHtml } from '../services/telegram.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
@@ -1370,23 +1370,20 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
         // Send Telegram notifications
         const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> mentioned you in "${escapeTelegramHtml(task.title)}":\n\n${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}`;
 
-        // Check for image attachments
-        const imageAttachment = comment.attachments?.find(a =>
-          a.fileType.startsWith('image/')
-        );
+        // Check for attachments
+        const attachment = comment.attachments?.[0];
 
-        if (imageAttachment) {
-          // Get signed URL for the image
-          const imageUrl = await getSignedDownloadUrl(imageAttachment.storageKey);
+        if (attachment) {
+          const fileUrl = await getSignedDownloadUrl(attachment.storageKey);
+          const isImage = attachment.fileType.startsWith('image/');
+
           await Promise.allSettled(
             mentionedUsers
               .filter((u) => u.telegramChatId)
               .map((mentionedUser) =>
-                sendTelegramPhoto(
-                  mentionedUser.telegramChatId!,
-                  imageUrl,
-                  telegramCaption
-                )
+                isImage
+                  ? sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
+                  : sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption)
               )
           );
         } else {
@@ -1394,10 +1391,7 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
             mentionedUsers
               .filter((u) => u.telegramChatId)
               .map((mentionedUser) =>
-                sendTelegramMessage(
-                  mentionedUser.telegramChatId!,
-                  telegramCaption
-                )
+                sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption)
               )
           );
         }
@@ -1642,23 +1636,20 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
           // Send Telegram notifications
           const telegramCaption = `💬 <b>${escapeTelegramHtml(user.name)}</b> mentioned you in "${escapeTelegramHtml(task.title)}":\n\n${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}`;
 
-          // Check for image attachments
-          const imageAttachment = comment.attachments?.find(a =>
-            a.fileType.startsWith('image/')
-          );
+          // Check for attachments
+          const attachment = comment.attachments?.[0];
 
-          if (imageAttachment) {
-            // Get signed URL for the image
-            const imageUrl = await getSignedDownloadUrl(imageAttachment.storageKey);
+          if (attachment) {
+            const fileUrl = await getSignedDownloadUrl(attachment.storageKey);
+            const isImage = attachment.fileType.startsWith('image/');
+
             await Promise.allSettled(
               mentionedUsers
                 .filter((u) => u.telegramChatId)
                 .map((mentionedUser) =>
-                  sendTelegramPhoto(
-                    mentionedUser.telegramChatId!,
-                    imageUrl,
-                    telegramCaption
-                  )
+                  isImage
+                    ? sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
+                    : sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption)
                 )
             );
           } else {
@@ -1666,10 +1657,7 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
               mentionedUsers
                 .filter((u) => u.telegramChatId)
                 .map((mentionedUser) =>
-                  sendTelegramMessage(
-                    mentionedUser.telegramChatId!,
-                    telegramCaption
-                  )
+                  sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption)
                 )
             );
           }

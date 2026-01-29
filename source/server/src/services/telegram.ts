@@ -184,3 +184,46 @@ export async function sendTelegramPhoto(
     return false;
   }
 }
+
+/**
+ * Send a document to a Telegram chat
+ */
+export async function sendTelegramDocument(
+  chatId: string,
+  documentUrl: string,
+  fileName: string,
+  caption?: string
+): Promise<boolean> {
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.log('Telegram document not sent - bot not configured');
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          document: documentUrl,
+          caption: caption || undefined,
+          parse_mode: 'HTML',
+        }),
+      }
+    );
+
+    const result = await response.json() as { ok: boolean; description?: string };
+
+    if (!result.ok) {
+      console.error('Telegram sendDocument error:', result);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error sending Telegram document:', error);
+    return false;
+  }
+}
