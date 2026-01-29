@@ -1,8 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import Stripe from 'stripe';
 import { handleStripeWebhook } from '../services/stripe.js';
+import { handleTelegramWebhook } from './telegram.js';
 
 const router = Router();
+
+// Telegram webhook
+router.post('/telegram', handleTelegramWebhook);
 
 router.post('/stripe', async (req: Request, res: Response, next: NextFunction) => {
   const stripe = new Stripe(process.env.STRIPE_API_KEY || '');

@@ -37,7 +37,7 @@ import guideRoutes from './routes/guide.js';
 import chatRoutes from './routes/chats.js';
 import notificationRoutes from './routes/notifications.js';
 import supportRoutes from './routes/support.js';
-import telegramRoutes, { handleTelegramWebhook } from './routes/telegram.js';
+import telegramRoutes from './routes/telegram.js';
 import { initializeScheduler } from './jobs/scheduler.js';
 
 config();
@@ -197,7 +197,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/webhooks', webhookRoutes);
-app.post('/webhooks/telegram', handleTelegramWebhook);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
