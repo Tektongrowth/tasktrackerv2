@@ -1171,7 +1171,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               const totalComments = allComments.length;
               const displayedComments = showAllComments
                 ? allComments
-                : allComments.slice(-5); // Show last 5 (most recent)
+                : allComments.slice(0, 5); // Show first 5 (most recent, since sorted desc)
 
               return (
                 <>
