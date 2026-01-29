@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { support, BugReportData, FeatureRequestData } from '@/lib/api';
 import { toast } from '@/components/ui/toaster';
@@ -13,9 +14,25 @@ import { Bug, Lightbulb, Send, CheckCircle, BookOpen, MessageCircle, Bell, Reply
 import { cn } from '@/lib/utils';
 
 export function HelpPage() {
-  const [activeTab, setActiveTab] = useState<'guides' | 'bug' | 'feature'>('guides');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab = (tabParam === 'bug' || tabParam === 'feature' || tabParam === 'guides') ? tabParam : 'guides';
+  const [activeTab, setActiveTab] = useState<'guides' | 'bug' | 'feature'>(initialTab);
   const [bugSubmitted, setBugSubmitted] = useState(false);
   const [featureSubmitted, setFeatureSubmitted] = useState(false);
+
+  // Sync tab with URL when it changes
+  useEffect(() => {
+    if (tabParam && (tabParam === 'bug' || tabParam === 'feature' || tabParam === 'guides')) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (value: string) => {
+    const tab = value as 'guides' | 'bug' | 'feature';
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const [bugFormData, setBugFormData] = useState({
     action: '',
@@ -94,7 +111,7 @@ export function HelpPage() {
 
   return (
     <div className="container max-w-3xl mx-auto py-8 px-4">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'guides' | 'bug' | 'feature')}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="guides" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />

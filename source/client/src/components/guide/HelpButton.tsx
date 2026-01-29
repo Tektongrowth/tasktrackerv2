@@ -142,10 +142,22 @@ export function HelpButton() {
 
           <DropdownMenuSeparator />
 
+          {/* Telegram Guide */}
+          <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help?tab=guides'); }}>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            <span className="flex-1">Telegram Guide</span>
+          </DropdownMenuItem>
+
           {/* Bug Report */}
-          <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help'); }}>
+          <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help?tab=bug'); }}>
             <Bug className="mr-2 h-4 w-4" />
             <span className="flex-1">Report a Bug</span>
+          </DropdownMenuItem>
+
+          {/* Feature Request */}
+          <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help?tab=feature'); }}>
+            <Sparkles className="mr-2 h-4 w-4 text-purple-500" />
+            <span className="flex-1">Request a Feature</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
