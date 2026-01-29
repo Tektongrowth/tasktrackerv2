@@ -68,6 +68,7 @@ router.post('/complete/:guideId', isAuthenticated, async (req: Request, res: Res
       'kanban',
       'timeTracking',
       'settings',
+      'mySettings',
       'templates',
       'submissions',
       'clientPortal'

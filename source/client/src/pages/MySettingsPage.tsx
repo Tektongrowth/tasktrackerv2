@@ -329,7 +329,7 @@ export function MySettingsPage() {
 
         {/* Telegram Notifications Card */}
         {telegramStatus?.configured && (
-          <Card className="mt-6">
+          <Card className="mt-6" data-guide="telegram-section">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-[#0088cc]" />
