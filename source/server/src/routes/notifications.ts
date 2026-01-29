@@ -52,6 +52,15 @@ router.get('/mentions', isAuthenticated, async (req: Request, res: Response, nex
       task: mention.comment.task,
     }));
 
+    // Sort: unread first (readAt is null), then by createdAt descending
+    notifications.sort((a, b) => {
+      // Unread (null readAt) comes first
+      if (a.readAt === null && b.readAt !== null) return -1;
+      if (a.readAt !== null && b.readAt === null) return 1;
+      // Within same read/unread status, sort by createdAt descending
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
     res.json(notifications);
   } catch (error) {
     next(error);
