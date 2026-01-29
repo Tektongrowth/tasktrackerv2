@@ -186,7 +186,7 @@ function CommentAttachmentDisplay({
 }
 
 export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelProps) {
-  const { isAdmin, isProjectManager } = useAuth();
+  const { user: currentUser, isAdmin, isProjectManager } = useAuth();
   const queryClient = useQueryClient();
   const updateTask = useUpdateTask();
 
@@ -1204,14 +1204,16 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                           <span className="text-xs text-muted-foreground">
                             {formatDate(comment.createdAt)}
                           </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                            onClick={() => deleteComment.mutate(comment.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          {(currentUser?.id === comment.userId || isAdmin || isProjectManager) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                              onClick={() => deleteComment.mutate(comment.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                         {comment.content && (
                           <p
