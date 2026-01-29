@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight } from 'lucide-react';
-import { Chat, ChatMessage, User, EmojiKey } from '../lib/types';
+import { Chat, ChatMessage, User } from '../lib/types';
 import { chats as chatsApi, users as usersApi, notifications as notificationsApi, type MentionNotification } from '../lib/api';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';

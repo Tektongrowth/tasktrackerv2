@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Smile } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,8 +44,8 @@ export function ReactionPicker({ onSelect, disabled, className }: ReactionPicker
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
@@ -50,8 +54,8 @@ export function ReactionPicker({ onSelect, disabled, className }: ReactionPicker
         >
           <Smile className="h-4 w-4" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="start">
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-auto p-2" align="start">
         <div className="flex gap-1">
           {(Object.keys(EMOJI_MAP) as EmojiKey[]).map((key) => (
             <button
@@ -64,7 +68,7 @@ export function ReactionPicker({ onSelect, disabled, className }: ReactionPicker
             </button>
           ))}
         </div>
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
