@@ -142,3 +142,45 @@ export function escapeTelegramHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+/**
+ * Send a photo to a Telegram chat
+ */
+export async function sendTelegramPhoto(
+  chatId: string,
+  photoUrl: string,
+  caption?: string
+): Promise<boolean> {
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.log('Telegram photo not sent - bot not configured');
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: photoUrl,
+          caption: caption || undefined,
+          parse_mode: 'HTML',
+        }),
+      }
+    );
+
+    const result = await response.json() as { ok: boolean; description?: string };
+
+    if (!result.ok) {
+      console.error('Telegram sendPhoto error:', result);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error sending Telegram photo:', error);
+    return false;
+  }
+}
