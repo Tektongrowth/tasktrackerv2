@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notifications, NotificationPreferences } from '@/lib/api';
+import { notifications, NotificationPreferences, telegram } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toaster';
 import {
   Bell,
@@ -17,6 +18,9 @@ import {
   AtSign,
   Calendar,
   CalendarDays,
+  MessageCircle,
+  ExternalLink,
+  Unlink,
 } from 'lucide-react';
 
 interface NotificationSettingProps {
@@ -135,6 +139,40 @@ export function MySettingsPage() {
   const { data: preferences, isLoading, error } = useQuery({
     queryKey: ['notification-preferences'],
     queryFn: notifications.getPreferences,
+  });
+
+  // Telegram status query
+  const { data: telegramStatus, isLoading: telegramLoading } = useQuery({
+    queryKey: ['telegram-status'],
+    queryFn: telegram.getStatus,
+  });
+
+  // Get Telegram link
+  const getTelegramLink = useMutation({
+    mutationFn: telegram.getLink,
+    onSuccess: (data) => {
+      if (data.url) {
+        window.open(data.url, '_blank');
+        toast({ title: 'Opening Telegram...', description: 'Click Start in the Telegram app to connect.' });
+      } else if (data.connected) {
+        queryClient.invalidateQueries({ queryKey: ['telegram-status'] });
+      }
+    },
+    onError: () => {
+      toast({ title: 'Failed to get link', variant: 'destructive' });
+    },
+  });
+
+  // Disconnect Telegram
+  const disconnectTelegram = useMutation({
+    mutationFn: telegram.disconnect,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['telegram-status'] });
+      toast({ title: 'Telegram disconnected' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to disconnect', variant: 'destructive' });
+    },
   });
 
   // Debug log
@@ -288,6 +326,67 @@ export function MySettingsPage() {
             ) : null}
           </CardContent>
         </Card>
+
+        {/* Telegram Notifications Card */}
+        {telegramStatus?.configured && (
+          <Card className="mt-6">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-[#0088cc]" />
+                <CardTitle>Telegram Notifications</CardTitle>
+              </div>
+              <CardDescription>
+                Get instant push notifications on your phone via Telegram when someone mentions you, assigns you a task, or sends you a message.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {telegramLoading ? (
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              ) : telegramStatus.connected ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-green-700">Connected</p>
+                      <p className="text-sm text-muted-foreground">
+                        Linked to @{telegramStatus.botUsername}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => disconnectTelegram.mutate()}
+                    disabled={disconnectTelegram.isPending}
+                  >
+                    <Unlink className="h-4 w-4 mr-2" />
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Connect your Telegram account to receive notifications on your phone.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => getTelegramLink.mutate()}
+                    disabled={getTelegramLink.isPending}
+                    className="bg-[#0088cc] hover:bg-[#006699]"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Connect Telegram
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

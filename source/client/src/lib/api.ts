@@ -557,6 +557,27 @@ export const notifications = {
     fetchApi<{ success: boolean }>('/api/notifications/mentions/read-all', { method: 'POST' }),
 };
 
+// Telegram integration
+export interface TelegramStatus {
+  configured: boolean;
+  connected: boolean;
+  linkedAt?: string;
+  botUsername?: string;
+}
+
+export interface TelegramLinkResponse {
+  connected: boolean;
+  url?: string;
+  linkedAt?: string;
+  botUsername?: string;
+}
+
+export const telegram = {
+  getStatus: () => fetchApi<TelegramStatus>('/api/telegram/status'),
+  getLink: () => fetchApi<TelegramLinkResponse>('/api/telegram/link'),
+  disconnect: () => fetchApi<{ success: boolean }>('/api/telegram/link', { method: 'DELETE' }),
+};
+
 // Settings (admin only)
 export interface StripePriceMapping {
   envVar: string;

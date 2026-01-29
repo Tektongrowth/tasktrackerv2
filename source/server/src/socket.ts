@@ -2,6 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { prisma } from './db/client.js';
 import { sendChatNotificationEmail } from './services/email.js';
+import { sendTelegramMessage, escapeTelegramHtml } from './services/telegram.js';
 
 // Track connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map<string, Set<string>>();
@@ -113,7 +114,7 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
           include: {
             participants: {
               include: {
-                user: { select: { id: true, email: true, name: true } }
+                user: { select: { id: true, email: true, name: true, telegramChatId: true } }
               }
             }
           }
@@ -130,16 +131,29 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
             io.to(`user:${p.userId}`).emit('message:new', messageWithTempId);
           }
 
-          // Notify offline users via email
+          // Notify offline users via email and Telegram
           for (const p of chat.participants) {
-            if (p.userId !== userId && !isUserOnline(p.userId) && p.user.email) {
-              sendChatNotificationEmail(
-                p.user.email,
-                message.sender.name || 'Someone',
-                chat.name,
-                content.substring(0, 100),
-                chatId
-              );
+            if (p.userId !== userId && !isUserOnline(p.userId)) {
+              // Send email notification
+              if (p.user.email) {
+                sendChatNotificationEmail(
+                  p.user.email,
+                  message.sender.name || 'Someone',
+                  chat.name,
+                  content.substring(0, 100),
+                  chatId
+                );
+              }
+              // Send Telegram notification
+              if (p.user.telegramChatId) {
+                const senderName = message.sender.name || 'Someone';
+                const chatTitle = chat.name || 'Direct message';
+                const preview = content.substring(0, 100);
+                sendTelegramMessage(
+                  p.user.telegramChatId,
+                  `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(preview)}${content.length > 100 ? '...' : ''}`
+                );
+              }
             }
           }
         }

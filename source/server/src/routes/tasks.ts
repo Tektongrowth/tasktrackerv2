@@ -4,6 +4,7 @@ import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
+import { sendTelegramMessage, escapeTelegramHtml } from '../services/telegram.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
@@ -315,7 +316,7 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
         assignees: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatarUrl: true }
+              select: { id: true, name: true, email: true, avatarUrl: true, telegramChatId: true }
             }
           }
         },
@@ -333,10 +334,16 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
       }
     });
 
-    // Send email notification to assignees
+    // Send email and Telegram notifications to assignees
     for (const assignee of task.assignees) {
       if (assignee.user.email !== user.email) {
         await sendTaskAssignedEmail(assignee.user.email, task);
+      }
+      if (assignee.user.telegramChatId && assignee.user.id !== user.id) {
+        await sendTelegramMessage(
+          assignee.user.telegramChatId,
+          `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
+        );
       }
     }
 
@@ -433,7 +440,7 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
           assignees: {
             include: {
               user: {
-                select: { id: true, name: true, email: true, avatarUrl: true }
+                select: { id: true, name: true, email: true, avatarUrl: true, telegramChatId: true }
               }
             }
           },
@@ -565,6 +572,12 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
       if (assignee && assignee.user.email !== user.email) {
         await sendTaskAssignedEmail(assignee.user.email, task);
       }
+      if (assignee?.user.telegramChatId && assignee.user.id !== user.id) {
+        await sendTelegramMessage(
+          assignee.user.telegramChatId,
+          `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task!.title)}"\n\nProject: ${escapeTelegramHtml(task!.project.client.name)}`
+        );
+      }
     }
 
     // Fetch task again with activities included (they were created after the transaction)
@@ -577,7 +590,7 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
         assignees: {
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatarUrl: true }
+              select: { id: true, name: true, email: true, avatarUrl: true, telegramChatId: true }
             }
           }
         },
@@ -921,7 +934,8 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
     // Notify new assignees
     if (newAssigneeIds.length > 0) {
       const assignees = await prisma.user.findMany({
-        where: { id: { in: newAssigneeIds } }
+        where: { id: { in: newAssigneeIds } },
+        select: { id: true, email: true, telegramChatId: true }
       });
       const tasks = await prisma.task.findMany({
         where: { id: { in: taskIds } },
@@ -931,6 +945,14 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
         if (assignee.email !== user.email) {
           for (const task of tasks) {
             await sendTaskAssignedEmail(assignee.email, task);
+          }
+        }
+        if (assignee.telegramChatId && assignee.id !== user.id) {
+          for (const task of tasks) {
+            await sendTelegramMessage(
+              assignee.telegramChatId,
+              `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
+            );
           }
         }
       }
@@ -1329,7 +1351,7 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
         // Send email notifications in parallel (batched, not N+1)
         const mentionedUsers = await prisma.user.findMany({
           where: { id: { in: usersToNotify } },
-          select: { id: true, email: true }
+          select: { id: true, email: true, telegramChatId: true }
         });
 
         const contentPreview = content.substring(0, 100);
@@ -1343,6 +1365,18 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
               contentPreview
             ).catch((err) => console.error(`Failed to send mention email to ${mentionedUser.email}:`, err))
           )
+        );
+
+        // Send Telegram notifications
+        await Promise.allSettled(
+          mentionedUsers
+            .filter((u) => u.telegramChatId)
+            .map((mentionedUser) =>
+              sendTelegramMessage(
+                mentionedUser.telegramChatId!,
+                `💬 <b>${escapeTelegramHtml(user.name)}</b> mentioned you in "${escapeTelegramHtml(task.title)}":\n\n${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}`
+              )
+            )
         );
 
         // Mark as notified
@@ -1566,7 +1600,7 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
 
           const mentionedUsers = await prisma.user.findMany({
             where: { id: { in: usersToNotify } },
-            select: { id: true, email: true }
+            select: { id: true, email: true, telegramChatId: true }
           });
 
           const contentPreview = content.substring(0, 100);
@@ -1580,6 +1614,18 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
                 contentPreview
               ).catch((err) => console.error(`Failed to send mention email to ${mentionedUser.email}:`, err))
             )
+          );
+
+          // Send Telegram notifications
+          await Promise.allSettled(
+            mentionedUsers
+              .filter((u) => u.telegramChatId)
+              .map((mentionedUser) =>
+                sendTelegramMessage(
+                  mentionedUser.telegramChatId!,
+                  `💬 <b>${escapeTelegramHtml(user.name)}</b> mentioned you in "${escapeTelegramHtml(task.title)}":\n\n${escapeTelegramHtml(contentPreview)}${content.length > 100 ? '...' : ''}`
+                )
+              )
           );
 
           await markMentionsNotified(comment.id);
