@@ -1499,6 +1499,16 @@ router.delete('/:taskId/comments/:commentId', isAuthenticated, async (req: Reque
 // Valid emoji keys for reactions
 const VALID_EMOJIS = ['thumbsup', 'thumbsdown', 'heart', 'laugh', 'surprised', 'sad', 'party'];
 
+const EMOJI_DISPLAY: Record<string, string> = {
+  thumbsup: '👍',
+  thumbsdown: '👎',
+  heart: '❤️',
+  laugh: '😄',
+  surprised: '😮',
+  sad: '😢',
+  party: '🎉',
+};
+
 // Toggle reaction on a comment (add if not exists, remove if exists)
 router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -1512,9 +1522,17 @@ router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (re
       throw new AppError('Invalid emoji. Must be one of: ' + VALID_EMOJIS.join(', '), 400);
     }
 
-    // Verify comment exists and belongs to task
+    // Verify comment exists and belongs to task, get author info
     const comment = await prisma.taskComment.findUnique({
-      where: { id: commentId }
+      where: { id: commentId },
+      include: {
+        user: {
+          select: { id: true, name: true, telegramChatId: true }
+        },
+        task: {
+          select: { id: true, title: true }
+        }
+      }
     });
     if (!comment || comment.taskId !== taskId) {
       throw new AppError('Comment not found', 404);
@@ -1531,6 +1549,8 @@ router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (re
       }
     });
 
+    let isNewReaction = false;
+
     if (existingReaction) {
       // Remove reaction
       await prisma.commentReaction.delete({
@@ -1545,6 +1565,17 @@ router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (re
           emoji
         }
       });
+      isNewReaction = true;
+    }
+
+    // Notify comment author via Telegram (only for new reactions, not removals)
+    // Don't notify if user is reacting to their own comment
+    if (isNewReaction && comment.user && comment.user.id !== user.id && comment.user.telegramChatId) {
+      const emojiIcon = EMOJI_DISPLAY[emoji] || emoji;
+      const commentPreview = comment.content.substring(0, 50);
+      const telegramMessage = `${emojiIcon} <b>${escapeTelegramHtml(user.name)}</b> reacted to your comment in "${escapeTelegramHtml(comment.task.title)}":\n\n"${escapeTelegramHtml(commentPreview)}${comment.content.length > 50 ? '...' : ''}"`;
+
+      sendTelegramMessage(comment.user.telegramChatId, telegramMessage);
     }
 
     // Return updated reactions for this comment
