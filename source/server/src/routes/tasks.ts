@@ -240,7 +240,14 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
             user: {
               select: { id: true, name: true, email: true, avatarUrl: true }
             },
-            attachments: true
+            attachments: true,
+            reactions: {
+              include: {
+                user: {
+                  select: { id: true, name: true }
+                }
+              }
+            }
           },
           orderBy: { createdAt: 'desc' }
         }
@@ -461,6 +468,14 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
             include: {
               user: {
                 select: { id: true, name: true, email: true, avatarUrl: true }
+              },
+              attachments: true,
+              reactions: {
+                include: {
+                  user: {
+                    select: { id: true, name: true }
+                  }
+                }
               }
             },
             orderBy: { createdAt: 'desc' }
@@ -612,7 +627,14 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
             user: {
               select: { id: true, name: true, email: true, avatarUrl: true }
             },
-            attachments: true
+            attachments: true,
+            reactions: {
+              include: {
+                user: {
+                  select: { id: true, name: true }
+                }
+              }
+            }
           },
           orderBy: { createdAt: 'desc' }
         }
@@ -721,7 +743,14 @@ router.patch('/:id/status', isAuthenticated, async (req: Request, res: Response,
             user: {
               select: { id: true, name: true, email: true, avatarUrl: true }
             },
-            attachments: true
+            attachments: true,
+            reactions: {
+              include: {
+                user: {
+                  select: { id: true, name: true }
+                }
+              }
+            }
           },
           orderBy: { createdAt: 'desc' }
         }
