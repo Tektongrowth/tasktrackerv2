@@ -653,3 +653,74 @@ export async function sendBugReportEmail(report: BugReport) {
     throw error;
   }
 }
+
+export interface FeatureRequest {
+  title: string;
+  description: string;
+  useCase: string;
+  priority: 'nice_to_have' | 'would_help' | 'important';
+  reporterName: string;
+  reporterRole: string;
+}
+
+export async function sendFeatureRequestEmail(request: FeatureRequest) {
+  if (!resend) {
+    console.log('Feature request email not sent - Resend not configured');
+    return;
+  }
+
+  const priorityColors: Record<string, string> = {
+    nice_to_have: '#38a169',
+    would_help: '#dd6b20',
+    important: '#805ad5'
+  };
+
+  const priorityLabels: Record<string, string> = {
+    nice_to_have: 'Nice to Have',
+    would_help: 'Would Help My Workflow',
+    important: 'Important for My Work'
+  };
+
+  const safeTitle = escapeHtml(request.title);
+  const safeDescription = escapeHtml(request.description);
+  const safeUseCase = escapeHtml(request.useCase);
+  const safeName = escapeHtml(request.reporterName);
+  const safeRole = escapeHtml(request.reporterRole);
+
+  try {
+    await sendWithRateLimit(
+      ADMIN_EMAIL,
+      `[Feature Request] ${priorityLabels[request.priority]}: ${safeTitle.substring(0, 50)}`,
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: ${priorityColors[request.priority]}; color: white; padding: 12px 20px; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0;">Feature Request</h2>
+            <p style="margin: 4px 0 0 0; font-size: 14px;">${priorityLabels[request.priority]}</p>
+          </div>
+
+          <div style="background: #f7fafc; padding: 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
+            <h3 style="color: #2d3748; margin-top: 0;">Feature Title</h3>
+            <p style="color: #4a5568; background: white; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">${safeTitle}</p>
+
+            <h3 style="color: #2d3748;">Description</h3>
+            <p style="color: #4a5568; background: white; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap;">${safeDescription}</p>
+
+            <h3 style="color: #2d3748;">How would this help you?</h3>
+            <p style="color: #4a5568; background: white; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap;">${safeUseCase}</p>
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+
+            <h3 style="color: #2d3748;">Requested By</h3>
+            <table style="color: #4a5568; font-size: 14px;">
+              <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Name:</td><td>${safeName}</td></tr>
+              <tr><td style="padding: 4px 12px 4px 0; font-weight: bold;">Role:</td><td>${safeRole}</td></tr>
+            </table>
+          </div>
+        </div>
+      `
+    );
+  } catch (error) {
+    console.error('Failed to send feature request email:', error);
+    throw error;
+  }
+}

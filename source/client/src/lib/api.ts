@@ -689,9 +689,21 @@ export interface BugReportData {
   screenshotUrl?: string;
 }
 
+export interface FeatureRequestData {
+  title: string;
+  description: string;
+  useCase: string;
+  priority: 'nice_to_have' | 'would_help' | 'important';
+}
+
 export const support = {
   submitBugReport: (data: BugReportData) =>
     fetchApi<{ success: boolean; message: string }>('/api/support/bug-report', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  submitFeatureRequest: (data: FeatureRequestData) =>
+    fetchApi<{ success: boolean; message: string }>('/api/support/feature-request', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
