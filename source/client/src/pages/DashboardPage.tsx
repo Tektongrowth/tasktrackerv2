@@ -408,7 +408,7 @@ export function DashboardPage() {
                       "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-slate-50 border border-transparent",
                       taskOverdue && "bg-red-50 hover:bg-red-100 border-red-200"
                     )}
-                    onClick={() => navigate('/kanban')}
+                    onClick={() => setSelectedTask(task as Task)}
                   >
                     <div
                       className="w-2 h-2 rounded-full shrink-0"
