@@ -7,6 +7,57 @@ import { sendTelegramMessage, escapeTelegramHtml } from '../services/telegram.js
 
 const router = Router();
 
+// Internal project name for bug reports and feature requests
+const INTERNAL_CLIENT_NAME = 'Internal';
+const INTERNAL_PROJECT_NAME = 'Bug Reports & Feature Requests';
+
+// Get or create the internal project for bug reports and feature requests
+async function getOrCreateInternalProject(): Promise<string> {
+  // Check if internal client exists
+  let client = await prisma.client.findFirst({
+    where: { name: INTERNAL_CLIENT_NAME }
+  });
+
+  if (!client) {
+    client = await prisma.client.create({
+      data: { name: INTERNAL_CLIENT_NAME }
+    });
+  }
+
+  // Check if internal project exists
+  let project = await prisma.project.findFirst({
+    where: {
+      clientId: client.id,
+      name: INTERNAL_PROJECT_NAME
+    }
+  });
+
+  if (!project) {
+    project = await prisma.project.create({
+      data: {
+        clientId: client.id,
+        name: INTERNAL_PROJECT_NAME,
+        subscriptionStatus: 'active'
+      }
+    });
+  }
+
+  return project.id;
+}
+
+// Get all admin user IDs
+async function getAdminUserIds(): Promise<string[]> {
+  const admins = await prisma.user.findMany({
+    where: {
+      role: 'admin',
+      active: true,
+      archived: false
+    },
+    select: { id: true }
+  });
+  return admins.map(a => a.id);
+}
+
 // Helper to send Telegram notifications to admins
 async function notifyAdminsViaTelegram(message: string) {
   try {
@@ -81,9 +132,62 @@ router.post('/bug-report', isAuthenticated, async (req: Request, res: Response, 
 
     await sendBugReportEmail(report);
 
+    // Create task in internal project
+    const projectId = await getOrCreateInternalProject();
+    const adminIds = await getAdminUserIds();
+
+    // Set due date based on urgency: blocking = 1 day, annoying = 3 days, minor = 7 days
+    const dueDaysMap: Record<string, number> = {
+      blocking: 1,
+      annoying: 3,
+      minor: 7
+    };
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + (dueDaysMap[urgency] || 7));
+
+    // Map urgency to task priority
+    const priorityMap: Record<string, 'high' | 'medium' | 'low'> = {
+      blocking: 'high',
+      annoying: 'medium',
+      minor: 'low'
+    };
+
+    // Build task description
+    const taskDescription = `**Reported by:** ${user.name}
+**Browser:** ${browser}
+**Device:** ${device}
+**Urgency:** ${urgency}
+
+**What were you trying to do?**
+${action}
+
+**What actually happened?**
+${actual}
+
+**Error message (if any):**
+${errorMessage || 'None'}
+
+**Steps to reproduce:**
+${steps}${screenshotUrl ? `\n\n**Screenshot:** ${screenshotUrl}` : ''}`;
+
+    await prisma.task.create({
+      data: {
+        projectId,
+        title: `🐛 Bug: ${action.substring(0, 80)}${action.length > 80 ? '...' : ''}`,
+        description: taskDescription,
+        priority: priorityMap[urgency] || 'medium',
+        status: 'todo',
+        dueDate,
+        tags: ['bug-report', urgency],
+        assignees: adminIds.length > 0 ? {
+          create: adminIds.map(userId => ({ userId }))
+        } : undefined
+      }
+    });
+
     // Send Telegram notification to admins
     const urgencyEmoji = urgency === 'blocking' ? '🚨' : urgency === 'annoying' ? '⚠️' : '📝';
-    const telegramMessage = `${urgencyEmoji} <b>Bug Report</b> (${urgency.toUpperCase()})\n\n<b>From:</b> ${escapeTelegramHtml(user.name)}\n<b>Issue:</b> ${escapeTelegramHtml(action.substring(0, 100))}${action.length > 100 ? '...' : ''}\n\n<i>Check email for full details</i>`;
+    const telegramMessage = `${urgencyEmoji} <b>Bug Report</b> (${urgency.toUpperCase()})\n\n<b>From:</b> ${escapeTelegramHtml(user.name)}\n<b>Issue:</b> ${escapeTelegramHtml(action)}\n\n<i>Task created in Bug Reports & Feature Requests project</i>`;
     notifyAdminsViaTelegram(telegramMessage);
 
     res.json({ success: true, message: 'Bug report submitted successfully' });
@@ -127,9 +231,54 @@ router.post('/feature-request', isAuthenticated, async (req: Request, res: Respo
 
     await sendFeatureRequestEmail(request);
 
+    // Create task in internal project
+    const projectId = await getOrCreateInternalProject();
+    const adminIds = await getAdminUserIds();
+
+    // Set due date based on priority: important = 7 days, would_help = 14 days, nice_to_have = 30 days
+    const dueDaysMap: Record<string, number> = {
+      important: 7,
+      would_help: 14,
+      nice_to_have: 30
+    };
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + (dueDaysMap[priority] || 14));
+
+    // Map priority to task priority
+    const priorityMap: Record<string, 'high' | 'medium' | 'low'> = {
+      important: 'high',
+      would_help: 'medium',
+      nice_to_have: 'low'
+    };
+
+    // Build task description
+    const taskDescription = `**Requested by:** ${user.name}
+**Priority:** ${priority.replace('_', ' ')}
+
+**Feature:**
+${description}
+
+**Use Case:**
+${useCase}`;
+
+    await prisma.task.create({
+      data: {
+        projectId,
+        title: `✨ Feature: ${title.substring(0, 80)}${title.length > 80 ? '...' : ''}`,
+        description: taskDescription,
+        priority: priorityMap[priority] || 'medium',
+        status: 'todo',
+        dueDate,
+        tags: ['feature-request', priority.replace('_', '-')],
+        assignees: adminIds.length > 0 ? {
+          create: adminIds.map(userId => ({ userId }))
+        } : undefined
+      }
+    });
+
     // Send Telegram notification to admins
     const priorityEmoji = priority === 'important' ? '⭐' : priority === 'would_help' ? '💡' : '✨';
-    const telegramMessage = `${priorityEmoji} <b>Feature Request</b>\n\n<b>From:</b> ${escapeTelegramHtml(user.name)}\n<b>Feature:</b> ${escapeTelegramHtml(title.substring(0, 100))}${title.length > 100 ? '...' : ''}\n\n<i>Check email for full details</i>`;
+    const telegramMessage = `${priorityEmoji} <b>Feature Request</b>\n\n<b>From:</b> ${escapeTelegramHtml(user.name)}\n<b>Feature:</b> ${escapeTelegramHtml(title)}\n\n<i>Task created in Bug Reports & Feature Requests project</i>`;
     notifyAdminsViaTelegram(telegramMessage);
 
     res.json({ success: true, message: 'Feature request submitted successfully' });
