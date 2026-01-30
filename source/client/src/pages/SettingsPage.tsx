@@ -946,6 +946,8 @@ export function SettingsPage() {
       clientsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setEditingClient(null);
       toast({ title: 'Client updated' });
     },
@@ -1014,6 +1016,7 @@ export function SettingsPage() {
       projectsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setEditingProject(null);
       toast({ title: 'Project updated' });
     },
