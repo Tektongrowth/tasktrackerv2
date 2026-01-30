@@ -601,8 +601,14 @@ export interface StripePricesResponse {
   };
 }
 
+export interface WebhookUrlResponse {
+  url: string;
+  events: string[];
+}
+
 export const settings = {
   getStripePrices: () => fetchApi<StripePricesResponse>('/api/settings/stripe-prices'),
+  getWebhookUrl: () => fetchApi<WebhookUrlResponse>('/api/settings/webhook-url'),
   testStripeConnection: () => fetchApi<{ success: boolean; message: string }>('/api/settings/test-stripe', { method: 'POST' }),
 };
 

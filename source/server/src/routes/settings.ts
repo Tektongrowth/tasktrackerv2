@@ -106,12 +106,12 @@ router.get('/webhook-url', isAuthenticated, isAdmin, async (req: Request, res: R
 // Get Stripe price mappings
 router.get('/stripe-prices', isAuthenticated, isAdmin, async (req: Request, res: Response) => {
   const priceMappings = [
-    { envVar: 'STRIPE_PRICE_LVL1_BASIC', planType: 'lvl1_basic', label: 'Plan Tier 1 (Entry)' },
-    { envVar: 'STRIPE_PRICE_LVL1_ADVANCED', planType: 'lvl1_advanced', label: 'Plan Tier 2 (Standard)' },
-    { envVar: 'STRIPE_PRICE_LVL2_BASIC', planType: 'lvl2_basic', label: 'Plan Tier 3 (Professional)' },
-    { envVar: 'STRIPE_PRICE_LVL2_ADVANCED', planType: 'lvl2_advanced', label: 'Plan Tier 4 (Premium)' },
-    { envVar: 'STRIPE_PRICE_HOSTING_PLUS', planType: 'hosting_plus', label: 'Plan Tier 5 (Optional)' },
-    { envVar: 'STRIPE_PRICE_HOSTING_UNLIMITED', planType: 'hosting_unlimited', label: 'Plan Tier 6 (Optional)' },
+    { envVar: 'STRIPE_PRICE_PACKAGE_ONE', planType: 'package_one', label: 'Package 1' },
+    { envVar: 'STRIPE_PRICE_PACKAGE_TWO', planType: 'package_two', label: 'Package 2' },
+    { envVar: 'STRIPE_PRICE_PACKAGE_THREE', planType: 'package_three', label: 'Package 3' },
+    { envVar: 'STRIPE_PRICE_PACKAGE_FOUR', planType: 'package_four', label: 'Package 4' },
+    { envVar: 'STRIPE_PRICE_FACEBOOK_ADS', planType: 'facebook_ads_addon', label: 'Facebook Ads Add-on' },
+    { envVar: 'STRIPE_PRICE_CUSTOM_WEBSITE', planType: 'custom_website_addon', label: 'Custom Website Add-on' },
   ];
 
   const configured = priceMappings.map(({ envVar, planType, label }) => ({

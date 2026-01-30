@@ -305,6 +305,13 @@ function StripeConfigTab() {
     queryFn: settings.getStripePrices,
   });
 
+  const { data: webhookInfo } = useQuery({
+    queryKey: ['webhook-url'],
+    queryFn: settings.getWebhookUrl,
+  });
+
+  const webhookUrl = webhookInfo?.url || 'Loading...';
+
   const testConnection = useMutation({
     mutationFn: settings.testStripeConnection,
     onSuccess: (data) => {
@@ -324,7 +331,7 @@ function StripeConfigTab() {
             Stripe Configuration
           </CardTitle>
           <CardDescription>
-            Configure your Stripe integration for automatic subscription-based task assignment.
+            Configure your Stripe integration for automatic client and project creation when customers subscribe.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -334,13 +341,13 @@ function StripeConfigTab() {
             <div className="flex gap-2">
               <Input
                 readOnly
-                value={`${window.location.origin}/webhooks/stripe`}
+                value={webhookUrl}
                 data-sensitive
               />
               <Button
                 variant="outline"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/webhooks/stripe`);
+                  navigator.clipboard.writeText(webhookUrl);
                   toast({ title: 'Copied to clipboard' });
                 }}
               >
@@ -435,13 +442,15 @@ function StripeConfigTab() {
 
           <div className="mt-4 p-3 bg-muted rounded-md">
             <p className="text-sm text-muted-foreground">
-              <strong>How to configure:</strong> Add these environment variables to your deployment (only configure the tiers you use):
+              <strong>How to configure:</strong> Add these environment variables to your deployment:
             </p>
             <pre className="mt-2 text-xs bg-background p-2 rounded border overflow-x-auto">
-{`STRIPE_PRICE_LVL1_BASIC=price_xxx     # Tier 1
-STRIPE_PRICE_LVL1_ADVANCED=price_xxx  # Tier 2
-STRIPE_PRICE_LVL2_BASIC=price_xxx     # Tier 3
-STRIPE_PRICE_LVL2_ADVANCED=price_xxx  # Tier 4`}
+{`STRIPE_PRICE_PACKAGE_ONE=price_xxx      # Package 1
+STRIPE_PRICE_PACKAGE_TWO=price_xxx      # Package 2
+STRIPE_PRICE_PACKAGE_THREE=price_xxx    # Package 3
+STRIPE_PRICE_PACKAGE_FOUR=price_xxx     # Package 4
+STRIPE_PRICE_FACEBOOK_ADS=price_xxx     # Facebook Ads Add-on
+STRIPE_PRICE_CUSTOM_WEBSITE=price_xxx   # Custom Website Add-on`}
             </pre>
           </div>
         </CardContent>
