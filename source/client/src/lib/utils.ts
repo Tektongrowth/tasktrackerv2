@@ -21,6 +21,18 @@ export function formatDate(date: string | Date): string {
   });
 }
 
+export function formatDateTime(date: string | Date): string {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }) + ' at ' + d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function isOverdue(dueDate: string | Date): boolean {
   return new Date(dueDate) < new Date();
 }

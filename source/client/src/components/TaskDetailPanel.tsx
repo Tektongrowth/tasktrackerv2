@@ -16,7 +16,7 @@ import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, Messa
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
 import { ReactionPicker, ReactionDisplay } from '@/components/reactions';
-import { cn, formatDate, formatDuration, getTagColor, sanitizeText } from '@/lib/utils';
+import { cn, formatDate, formatDateTime, formatDuration, getTagColor, sanitizeText } from '@/lib/utils';
 import type { Task, TaskPriority, TaskStatus, EmojiKey } from '@/lib/types';
 import { priorityConfig } from './TaskCard';
 
@@ -1214,7 +1214,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm">{displayName}</span>
                           <span className="text-xs text-muted-foreground">
-                            {formatDate(comment.createdAt)}
+                            {formatDateTime(comment.createdAt)}
                           </span>
                           <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                             <ReactionPicker
@@ -1299,7 +1299,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     </span>
                     {' '}{formatActivityAction(activity.action, activity.details)}
                     <span className="text-slate-400 ml-1">
-                      · {formatDate(activity.createdAt)}
+                      · {formatDateTime(activity.createdAt)}
                     </span>
                   </span>
                 </div>
