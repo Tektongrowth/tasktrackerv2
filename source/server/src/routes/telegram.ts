@@ -265,7 +265,12 @@ export async function handleTelegramWebhook(req: Request, res: Response) {
         },
         include: {
           task: {
-            select: { title: true },
+            select: {
+              title: true,
+              project: {
+                include: { client: { select: { name: true } } }
+              }
+            },
           },
         },
       });
@@ -293,6 +298,8 @@ export async function handleTelegramWebhook(req: Request, res: Response) {
 
         const contentPreview = cleanedReplyText.substring(0, 100);
         const senderMentionName = sender.name.toLowerCase().replace(/\s+/g, '');
+        const clientName = comment.task.project?.client?.name || 'Unknown Client';
+        const projectName = comment.task.project?.name || 'Unknown Project';
 
         // Send email notifications
         for (const mentionedUser of mentionedUsersDetails) {
@@ -306,7 +313,7 @@ export async function handleTelegramWebhook(req: Request, res: Response) {
         }
 
         // Send Telegram notifications with reply instructions
-        const telegramCaption = `💬 <b>${escapeTelegramHtml(sender.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) replied in "${escapeTelegramHtml(comment.task.title)}":\n\n"${escapeTelegramHtml(contentPreview)}${cleanedReplyText.length > 100 ? '...' : ''}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
+        const telegramCaption = `💬 <b>${escapeTelegramHtml(sender.name)}</b> (@${escapeTelegramHtml(senderMentionName)}) replied in "${escapeTelegramHtml(comment.task.title)}":\n\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}\n\n"${escapeTelegramHtml(cleanedReplyText)}"\n\n<i>Reply to this message to respond, or use @${escapeTelegramHtml(senderMentionName)}</i>`;
 
         for (const mentionedUser of mentionedUsersDetails) {
           if (mentionedUser.telegramChatId) {
