@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bug, Lightbulb, Send, CheckCircle, BookOpen, MessageCircle, Bell, Reply, AtSign, Unlink } from 'lucide-react';
+import { Bug, Lightbulb, Send, CheckCircle, BookOpen, MessageCircle, Bell, Reply, AtSign, Unlink, Trophy, Target, Flame, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function HelpPage() {
@@ -277,6 +277,243 @@ export function HelpPage() {
                     <li className="flex items-start gap-2">
                       <span>💡</span>
                       <span>You can mute the bot in Telegram if you want to check messages manually</span>
+                    </li>
+                  </ul>
+                </section>
+              </CardContent>
+            </Card>
+
+            {/* Monthly Leaderboard Guide */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-6 w-6 text-yellow-500" />
+                  Monthly Leaderboard Guide
+                </CardTitle>
+                <CardDescription>
+                  Compete with your teammates, earn points, collect badges, and win monthly prizes!
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Section 1: How It Works */}
+                <section>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm">1</span>
+                    How It Works
+                  </h3>
+                  <div className="pl-8 space-y-3 text-muted-foreground">
+                    <p>The leaderboard tracks your task completion performance each month:</p>
+                    <ul className="space-y-2 ml-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>Complete tasks to earn <strong className="text-foreground">points</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>Higher priority tasks = more points</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>Complete tasks on time (or early!) for <strong className="text-foreground">bonus points</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>Earn special <strong className="text-foreground">badges</strong> for achievements</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>Leaderboard resets on the 1st of each month</span>
+                      </li>
+                    </ul>
+                  </div>
+                </section>
+
+                {/* Section 2: Point System */}
+                <section>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    Point System
+                  </h3>
+                  <div className="pl-8 space-y-4 text-muted-foreground">
+                    <div>
+                      <p className="font-medium text-foreground mb-2">Base Points (by task priority):</p>
+                      <div className="grid grid-cols-2 gap-2 ml-2">
+                        <div className="flex items-center gap-2 p-2 bg-slate-50 rounded">
+                          <span className="w-3 h-3 rounded-full bg-slate-400"></span>
+                          <span>Low: <strong className="text-foreground">5 points</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-blue-50 rounded">
+                          <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                          <span>Medium: <strong className="text-foreground">10 points</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-orange-50 rounded">
+                          <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+                          <span>High: <strong className="text-foreground">20 points</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-red-50 rounded">
+                          <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                          <span>Urgent: <strong className="text-foreground">50 points</strong></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-foreground mb-2">Timing Bonuses:</p>
+                      <ul className="space-y-2 ml-2">
+                        <li className="flex items-center gap-2 p-2 bg-green-50 rounded">
+                          <span className="text-green-600">🎉</span>
+                          <span><strong className="text-foreground">Early completion:</strong> +50% bonus points</span>
+                        </li>
+                        <li className="flex items-center gap-2 p-2 bg-blue-50 rounded">
+                          <span className="text-blue-600">✓</span>
+                          <span><strong className="text-foreground">On-time completion:</strong> +25% bonus points</span>
+                        </li>
+                        <li className="flex items-center gap-2 p-2 bg-red-50 rounded">
+                          <span className="text-red-600">⚠</span>
+                          <span><strong className="text-foreground">Late completion:</strong> −50% points (still counts!)</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-foreground mb-2">Extra Bonuses:</p>
+                      <ul className="space-y-1 ml-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span><strong className="text-foreground">+2 points</strong> per completed subtask</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span><strong className="text-foreground">+1 point</strong> per hour of time tracked</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Section 3: Badges */}
+                <section>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Flame className="h-5 w-5 text-primary" />
+                    Achievement Badges
+                  </h3>
+                  <div className="pl-8 space-y-3 text-muted-foreground">
+                    <p>Earn these special badges by hitting milestones:</p>
+                    <div className="grid gap-3 mt-4">
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className="text-2xl">🎯</span>
+                        <div>
+                          <p className="font-medium text-foreground">Sharpshooter</p>
+                          <p className="text-sm">90% or more of tasks completed on time</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className="text-2xl">🌅</span>
+                        <div>
+                          <p className="font-medium text-foreground">Early Bird</p>
+                          <p className="text-sm">50% or more of tasks completed early</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className="text-2xl">🔥</span>
+                        <div>
+                          <p className="font-medium text-foreground">On Fire</p>
+                          <p className="text-sm">5+ day completion streak (completed at least 1 task per day)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className="text-2xl">⚡</span>
+                        <div>
+                          <p className="font-medium text-foreground">Powerhouse</p>
+                          <p className="text-sm">20 or more tasks completed this month</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className="text-2xl">⏱️</span>
+                        <div>
+                          <p className="font-medium text-foreground">Time Lord</p>
+                          <p className="text-sm">40+ hours tracked this month</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className="text-2xl">🔍</span>
+                        <div>
+                          <p className="font-medium text-foreground">Detail Master</p>
+                          <p className="text-sm">Completed tasks with 50+ subtasks total</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Section 4: Creating Tasks for Requests */}
+                <section>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <PlusCircle className="h-5 w-5 text-primary" />
+                    Capture Your Work!
+                  </h3>
+                  <div className="pl-8 space-y-3 text-muted-foreground">
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="font-medium text-amber-800 mb-2">Important: Create Tasks for All Requests</p>
+                      <p className="text-amber-700">
+                        When someone asks you to do something via a <strong>comment</strong> or <strong>chat message</strong>,
+                        create a task for it! This ensures your work gets tracked in the monthly leaderboard.
+                      </p>
+                    </div>
+                    <div className="mt-4">
+                      <p className="font-medium text-foreground mb-2">Why create tasks?</p>
+                      <ul className="space-y-2 ml-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span>Work only counts toward the leaderboard when it's a <strong className="text-foreground">completed task</strong></span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span>Tasks help you track progress and get credit for your effort</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span>Even small requests can be quick tasks worth points!</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <p className="text-sm font-medium text-foreground mb-2">Example:</p>
+                      <div className="text-sm space-y-2">
+                        <p className="bg-background p-2 rounded border">
+                          <span className="font-medium">Comment received:</span> "Hey, can you update the logo on the homepage?"
+                        </p>
+                        <p className="text-muted-foreground">
+                          → Create a task: "Update homepage logo" → Complete it → Earn points! 🎉
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Tips */}
+                <section className="bg-yellow-50 dark:bg-yellow-950/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-900">
+                  <h3 className="text-lg font-semibold mb-2 text-yellow-800 dark:text-yellow-200">Pro Tips</h3>
+                  <ul className="space-y-2 text-sm text-yellow-700 dark:text-yellow-300">
+                    <li className="flex items-start gap-2">
+                      <span>🏆</span>
+                      <span>The monthly winner receives a prize - stay tuned for announcements!</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>⏰</span>
+                      <span>Complete tasks before their due date for the biggest bonus (+50%)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>📝</span>
+                      <span>Break large tasks into subtasks - each completed subtask is worth +2 points</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>🔥</span>
+                      <span>Try to complete at least one task every day to build your streak</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>⏱️</span>
+                      <span>Log your time! Each hour tracked adds +1 point to your score</span>
                     </li>
                   </ul>
                 </section>
