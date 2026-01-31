@@ -209,17 +209,17 @@ export function HelpPage() {
                     Replying from Telegram
                   </h3>
                   <div className="pl-8 space-y-3 text-muted-foreground">
-                    <p>You can reply to task comments directly from Telegram without opening the app:</p>
+                    <p>You can reply to <strong className="text-foreground">task comments</strong> and <strong className="text-foreground">chat messages</strong> directly from Telegram:</p>
                     <ol className="list-decimal list-inside space-y-2 ml-2">
                       <li><strong className="text-foreground">Swipe left</strong> on the notification message (or long-press and tap Reply)</li>
                       <li>Type your response</li>
-                      <li>Send it - your reply will appear as a comment on the task</li>
+                      <li>Send it - your reply will be posted to the task or chat</li>
                     </ol>
                     <div className="mt-4 p-4 bg-muted rounded-lg">
-                      <p className="text-sm font-medium text-foreground mb-2">Example:</p>
+                      <p className="text-sm font-medium text-foreground mb-2">Task Comment Example:</p>
                       <div className="text-sm space-y-2">
                         <p className="bg-background p-2 rounded border">
-                          <span className="font-medium">Notification:</span> Alice (@alice) mentioned you in "Fix login bug": "Hey @Bob can you check this?"
+                          <span className="font-medium">Notification:</span> Alice mentioned you in "Fix login bug": "Hey @Bob can you check this?"
                         </p>
                         <p className="bg-background p-2 rounded border">
                           <span className="font-medium">Your reply:</span> "Looks good, I'll merge it"
@@ -260,7 +260,28 @@ export function HelpPage() {
                   </div>
                 </section>
 
-                {/* Section 5: Disconnecting */}
+                {/* Section 5: Starting Chats */}
+                <section>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-primary" />
+                    Starting Chats from Telegram
+                  </h3>
+                  <div className="pl-8 space-y-3 text-muted-foreground">
+                    <p>You can start or continue a personal chat directly from Telegram using the <code className="bg-muted px-1 rounded">/dm</code> command:</p>
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <p className="text-sm font-medium text-foreground mb-2">Format:</p>
+                      <p className="text-sm bg-background p-2 rounded border font-mono">/dm @name your message here</p>
+                      <p className="text-sm mt-3 font-medium text-foreground mb-2">Examples:</p>
+                      <ul className="text-sm space-y-1">
+                        <li><code className="bg-background px-1 rounded">/dm @John Hey, got a minute?</code></li>
+                        <li><code className="bg-background px-1 rounded">/dm @Sarah Johnson Can you review this?</code></li>
+                      </ul>
+                    </div>
+                    <p className="mt-2">The recipient will receive a notification they can reply to, creating a back-and-forth conversation entirely through Telegram.</p>
+                  </div>
+                </section>
+
+                {/* Section 6: Disconnecting */}
                 <section>
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Unlink className="h-5 w-5 text-primary" />
