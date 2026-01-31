@@ -210,7 +210,7 @@ export function DashboardPage() {
   if (selectedProjectId) params.projectId = selectedProjectId;
   if (selectedClientId) params.clientId = selectedClientId;
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard', 'stats', params],
     queryFn: () => dashboard.stats(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
@@ -268,6 +268,21 @@ export function DashboardPage() {
     const today = new Date();
     return due.toDateString() === today.toDateString();
   });
+
+  // Show loading state if no data yet
+  if (statsLoading && !stats) {
+    return (
+      <div>
+        <PageHeader
+          title="Dashboard"
+          subtitle={`Welcome back, ${user?.name?.split(' ')[0]}`}
+        />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

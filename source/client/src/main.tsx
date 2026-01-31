@@ -12,6 +12,7 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
+      placeholderData: (previousData: unknown) => previousData, // Keep showing old data while refetching
     },
   },
 });

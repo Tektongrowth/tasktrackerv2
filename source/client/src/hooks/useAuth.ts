@@ -9,6 +9,8 @@ export function useAuth() {
     queryKey: ['auth', 'me'],
     queryFn: auth.me,
     retry: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes - auth doesn't change often
+    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
 
   const logoutMutation = useMutation({
