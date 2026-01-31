@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasks } from '@/lib/api';
+import { toast } from '@/components/ui/toaster';
 import type { Task, TaskStatus, TaskInput } from '@/lib/types';
 
 export function useTasks(params?: Record<string, string>, options?: { enabled?: boolean }) {
@@ -75,13 +76,19 @@ export function useUpdateTaskStatus() {
 
       return { cache };
     },
-    onError: (_, __, context) => {
+    onError: (error: Error, _, context) => {
       // Rollback all caches on error
       if (context?.cache) {
         context.cache.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
+      // Show error toast
+      toast({
+        title: 'Failed to update task status',
+        description: error.message || 'You may not have permission to edit this task',
+        variant: 'destructive',
+      });
     },
     onSuccess: () => {
       // Only invalidate dashboard - tasks already updated optimistically
