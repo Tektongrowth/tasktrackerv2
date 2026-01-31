@@ -22,6 +22,7 @@ import {
   RotateCcw,
   Bell,
   Bug,
+  Trophy,
 } from 'lucide-react';
 import { useGuide } from './useGuide';
 import { GuideId } from './types';
@@ -146,6 +147,12 @@ export function HelpButton() {
           <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help?tab=guides'); }}>
             <HelpCircle className="mr-2 h-4 w-4" />
             <span className="flex-1">Telegram Guide</span>
+          </DropdownMenuItem>
+
+          {/* Leaderboard Guide */}
+          <DropdownMenuItem onClick={() => { setOpen(false); navigate('/help?tab=guides#leaderboard'); }}>
+            <Trophy className="mr-2 h-4 w-4 text-yellow-500" />
+            <span className="flex-1">Leaderboard Guide</span>
           </DropdownMenuItem>
 
           {/* Bug Report */}

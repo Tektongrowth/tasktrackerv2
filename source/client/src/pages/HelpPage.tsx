@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { support, BugReportData, FeatureRequestData } from '@/lib/api';
 import { toast } from '@/components/ui/toaster';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 export function HelpPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const tabParam = searchParams.get('tab');
   const initialTab = (tabParam === 'bug' || tabParam === 'feature' || tabParam === 'guides') ? tabParam : 'guides';
   const [activeTab, setActiveTab] = useState<'guides' | 'bug' | 'feature'>(initialTab);
@@ -27,6 +28,19 @@ export function HelpPage() {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
+
+  // Scroll to anchor when hash is present
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [location.hash]);
 
   const handleTabChange = (value: string) => {
     const tab = value as 'guides' | 'bug' | 'feature';
@@ -284,7 +298,7 @@ export function HelpPage() {
             </Card>
 
             {/* Monthly Leaderboard Guide */}
-            <Card>
+            <Card id="leaderboard">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-6 w-6 text-yellow-500" />

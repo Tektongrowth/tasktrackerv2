@@ -16,6 +16,7 @@
     "postinstall": "cd client && npm install && cd ../server && npm install"
   },
   "devDependencies": {
+    "@railway/cli": "^4.27.5",
     "concurrently": "^8.2.2"
   },
   "engines": {
