@@ -19,6 +19,7 @@ import {
   UserX,
   CalendarX,
   MessageSquare,
+  Trophy,
 } from 'lucide-react';
 import { formatDate, getTagColor, isOverdue, sanitizeText } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -249,6 +250,13 @@ export function DashboardPage() {
     queryKey: ['dashboard', 'recent-activity', params],
     queryFn: () => dashboard.recentActivity(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
+  });
+
+  const { data: leaderboardData } = useQuery({
+    queryKey: ['dashboard', 'leaderboard'],
+    queryFn: () => dashboard.leaderboard(),
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes - leaderboard doesn't need frequent updates
   });
 
   const totalTasks = (stats?.tasks.todo || 0) + (stats?.tasks.inReview || 0) + (stats?.tasks.completed || 0);
@@ -536,6 +544,100 @@ export function DashboardPage() {
             )}
           </div>
         </DashboardCard>
+
+        {/* Monthly Leaderboard */}
+        {leaderboardData && leaderboardData.leaderboard.length > 0 && (
+          <DashboardCard
+            title="Monthly Leaderboard"
+            badge={
+              <span className="text-sm text-white/80 flex items-center gap-1">
+                <Trophy className="h-4 w-4" />
+                {leaderboardData.month}
+              </span>
+            }
+          >
+            <div className="space-y-3">
+              {leaderboardData.leaderboard.map((entry, index) => {
+                const isCurrentUser = entry.id === user?.id;
+                const rankColors = ['bg-yellow-100 border-yellow-300', 'bg-slate-100 border-slate-300', 'bg-amber-100 border-amber-300'];
+                const rankBg = index < 3 ? rankColors[index] : 'bg-slate-50 border-slate-200';
+                const trophyColors = ['text-yellow-500', 'text-slate-400', 'text-amber-600'];
+
+                return (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      "flex items-center gap-4 p-3 rounded-lg border transition-colors",
+                      rankBg,
+                      isCurrentUser && "ring-2 ring-[var(--theme-primary)] ring-offset-1"
+                    )}
+                  >
+                    {/* Rank */}
+                    <div className="flex items-center justify-center w-8 h-8 shrink-0">
+                      {index < 3 ? (
+                        <Trophy className={cn("h-6 w-6", trophyColors[index])} />
+                      ) : (
+                        <span className="text-lg font-bold text-slate-500">#{entry.rank}</span>
+                      )}
+                    </div>
+
+                    {/* User info */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <UserAvatar
+                        name={entry.name}
+                        avatarUrl={entry.avatarUrl}
+                        size="md"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {entry.name}
+                          {isCurrentUser && <span className="text-muted-foreground ml-1">(you)</span>}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{entry.tasksCompleted} tasks</span>
+                          <span>·</span>
+                          <span>{entry.onTimeRate}% on time</span>
+                          {entry.streak > 0 && (
+                            <>
+                              <span>·</span>
+                              <span>{entry.streak} day streak</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Points */}
+                    <div className="text-right shrink-0">
+                      <p className="text-lg font-bold" style={{ color: 'var(--theme-primary)' }}>
+                        {entry.points}
+                      </p>
+                      <p className="text-xs text-muted-foreground">points</p>
+                    </div>
+
+                    {/* Badges */}
+                    {entry.badges.length > 0 && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {entry.badges.slice(0, 3).map((badge, i) => (
+                          <span
+                            key={i}
+                            className="text-xl cursor-help"
+                            title={`${badge.label}: ${badge.description}`}
+                          >
+                            {badge.emoji}
+                          </span>
+                        ))}
+                        {entry.badges.length > 3 && (
+                          <span className="text-xs text-muted-foreground">+{entry.badges.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </DashboardCard>
+        )}
 
         {/* Time Summary - Admin Only */}
         {isAdmin && timeSummary && (

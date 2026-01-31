@@ -361,6 +361,22 @@ export const dashboard = {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return fetchApi<import('./types').RecentActivity[]>(`/api/dashboard/recent-activity${query}`);
   },
+  leaderboard: () => fetchApi<{
+    month: string;
+    leaderboard: {
+      rank: number;
+      id: string;
+      name: string;
+      email: string;
+      avatarUrl: string | null;
+      points: number;
+      tasksCompleted: number;
+      onTimeRate: number;
+      streak: number;
+      hoursTracked: number;
+      badges: { emoji: string; label: string; description: string }[];
+    }[];
+  }>('/api/dashboard/leaderboard'),
 };
 
 // Tags

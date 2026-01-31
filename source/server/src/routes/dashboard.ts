@@ -411,4 +411,212 @@ router.get('/stats', isAuthenticated, async (req: Request, res: Response, next: 
   }
 });
 
+// Get monthly leaderboard
+router.get('/leaderboard', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get start of current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Get all completed tasks this month with assignees, subtasks, and time entries
+    const completedTasks = await prisma.task.findMany({
+      where: {
+        status: 'completed',
+        completedAt: { gte: startOfMonth }
+      },
+      include: {
+        assignees: {
+          include: {
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } }
+          }
+        },
+        subtasks: { select: { id: true, completed: true } },
+        timeEntries: { select: { durationMinutes: true } }
+      }
+    });
+
+    // Point values by priority
+    const priorityPoints: Record<string, number> = {
+      low: 5,
+      medium: 10,
+      high: 20,
+      urgent: 50
+    };
+
+    // Calculate scores per user
+    const userScores: Record<string, {
+      id: string;
+      name: string;
+      email: string;
+      avatarUrl: string | null;
+      points: number;
+      tasksCompleted: number;
+      onTimeCount: number;
+      earlyCount: number;
+      lateCount: number;
+      subtasksCompleted: number;
+      hoursTracked: number;
+      streak: number;
+      completionDates: Set<string>;
+    }> = {};
+
+    for (const task of completedTasks) {
+      const basePoints = priorityPoints[task.priority] || 10;
+      const completedAt = task.completedAt ? new Date(task.completedAt) : now;
+      const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+
+      // Calculate timing bonus
+      let timingMultiplier = 1;
+      let wasEarly = false;
+      let wasOnTime = false;
+      let wasLate = false;
+
+      if (dueDate) {
+        const daysBeforeDue = (dueDate.getTime() - completedAt.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysBeforeDue >= 3) {
+          timingMultiplier = 1.5; // 50% bonus for early
+          wasEarly = true;
+        } else if (daysBeforeDue >= 0) {
+          timingMultiplier = 1.25; // 25% bonus for on-time
+          wasOnTime = true;
+        } else {
+          timingMultiplier = 0.5; // Reduced points for late
+          wasLate = true;
+        }
+      }
+
+      // Calculate subtask bonus
+      const completedSubtasks = task.subtasks.filter(s => s.completed).length;
+      const subtaskBonus = completedSubtasks * 2;
+
+      // Calculate time bonus (1 point per hour tracked)
+      const totalMinutes = task.timeEntries.reduce((sum, e) => sum + (e.durationMinutes || 0), 0);
+      const timeBonus = Math.floor(totalMinutes / 60);
+
+      // Total points for this task
+      const taskPoints = Math.round(basePoints * timingMultiplier) + subtaskBonus + timeBonus;
+
+      // Distribute points to all assignees
+      for (const assignee of task.assignees) {
+        const userId = assignee.user.id;
+        if (!userScores[userId]) {
+          userScores[userId] = {
+            id: userId,
+            name: assignee.user.name,
+            email: assignee.user.email,
+            avatarUrl: assignee.user.avatarUrl,
+            points: 0,
+            tasksCompleted: 0,
+            onTimeCount: 0,
+            earlyCount: 0,
+            lateCount: 0,
+            subtasksCompleted: 0,
+            hoursTracked: 0,
+            streak: 0,
+            completionDates: new Set()
+          };
+        }
+
+        userScores[userId].points += taskPoints;
+        userScores[userId].tasksCompleted += 1;
+        userScores[userId].subtasksCompleted += completedSubtasks;
+        userScores[userId].hoursTracked += totalMinutes / 60;
+
+        if (wasEarly) userScores[userId].earlyCount += 1;
+        if (wasOnTime) userScores[userId].onTimeCount += 1;
+        if (wasLate) userScores[userId].lateCount += 1;
+
+        // Track completion date for streak calculation
+        const dateStr = completedAt.toISOString().split('T')[0];
+        userScores[userId].completionDates.add(dateStr);
+      }
+    }
+
+    // Calculate streaks and determine badges
+    const leaderboard = Object.values(userScores).map(user => {
+      // Calculate streak (consecutive days with completions)
+      const dates = Array.from(user.completionDates).sort().reverse();
+      let streak = 0;
+      const today = new Date().toISOString().split('T')[0];
+      let checkDate = new Date(today);
+
+      for (let i = 0; i < 30; i++) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (dates.includes(dateStr)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else if (i > 0) {
+          break;
+        } else {
+          checkDate.setDate(checkDate.getDate() - 1);
+        }
+      }
+
+      // Determine badges
+      const badges: { emoji: string; label: string; description: string }[] = [];
+
+      // On-time rate badge
+      const totalWithDue = user.earlyCount + user.onTimeCount + user.lateCount;
+      const onTimeRate = totalWithDue > 0 ? (user.earlyCount + user.onTimeCount) / totalWithDue : 0;
+      if (onTimeRate >= 0.9 && totalWithDue >= 3) {
+        badges.push({ emoji: '🎯', label: 'Sharpshooter', description: '90%+ on-time rate' });
+      }
+
+      // Early bird badge
+      if (user.earlyCount >= 5) {
+        badges.push({ emoji: '🌅', label: 'Early Bird', description: '5+ tasks completed early' });
+      }
+
+      // Streak badge
+      if (streak >= 5) {
+        badges.push({ emoji: '🔥', label: 'On Fire', description: `${streak} day streak` });
+      }
+
+      // High volume badge
+      if (user.tasksCompleted >= 20) {
+        badges.push({ emoji: '⚡', label: 'Powerhouse', description: '20+ tasks completed' });
+      }
+
+      // Time tracker badge
+      if (user.hoursTracked >= 40) {
+        badges.push({ emoji: '⏱️', label: 'Time Lord', description: '40+ hours tracked' });
+      }
+
+      // Detail oriented badge (subtasks)
+      if (user.subtasksCompleted >= 15) {
+        badges.push({ emoji: '🔍', label: 'Detail Master', description: '15+ subtasks completed' });
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        points: user.points,
+        tasksCompleted: user.tasksCompleted,
+        onTimeRate: Math.round(onTimeRate * 100),
+        streak,
+        hoursTracked: Math.round(user.hoursTracked * 10) / 10,
+        badges
+      };
+    });
+
+    // Sort by points descending
+    leaderboard.sort((a, b) => b.points - a.points);
+
+    // Add rank
+    const rankedLeaderboard = leaderboard.map((user, index) => ({
+      rank: index + 1,
+      ...user
+    }));
+
+    res.json({
+      month: now.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+      leaderboard: rankedLeaderboard
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
