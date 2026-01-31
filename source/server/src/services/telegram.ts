@@ -281,6 +281,29 @@ export async function storeTelegramMessageMapping(
 }
 
 /**
+ * Store a mapping between a Telegram message and a chat for reply tracking
+ */
+export async function storeTelegramChatMapping(
+  telegramMessageId: number,
+  chatId: string,
+  recipientId: string,
+  replyToUserId: string
+): Promise<void> {
+  try {
+    await prisma.telegramMessageMap.create({
+      data: {
+        telegramMessageId: String(telegramMessageId),
+        chatId,
+        recipientId,
+        replyToUserId,
+      },
+    });
+  } catch (error) {
+    console.error('Error storing Telegram chat mapping:', error);
+  }
+}
+
+/**
  * Get message mapping for a Telegram message ID
  */
 export async function getTelegramMessageMapping(telegramMessageId: number) {
@@ -291,6 +314,13 @@ export async function getTelegramMessageMapping(telegramMessageId: number) {
         task: {
           include: {
             project: { select: { name: true } }
+          }
+        },
+        chat: {
+          include: {
+            participants: {
+              include: { user: { select: { id: true, name: true } } }
+            }
           }
         },
         replyToUser: { select: { id: true, name: true } },

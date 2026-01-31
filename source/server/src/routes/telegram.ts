@@ -13,6 +13,7 @@ import {
   findUsersByName,
   escapeTelegramHtml,
   storeTelegramMessageMapping,
+  storeTelegramChatMapping,
 } from '../services/telegram.js';
 import { sendMentionNotificationEmail } from '../services/email.js';
 
@@ -179,8 +180,147 @@ export async function handleTelegramWebhook(req: Request, res: Response) {
       const chatId = update.message.chat.id.toString();
       await sendTelegramMessage(
         chatId,
-        '👋 Welcome to TaskTracker Notifications!\n\nTo connect your account, go to <b>My Settings</b> in TaskTracker and click <b>Connect Telegram</b>.'
+        '👋 Welcome to TaskTracker Notifications!\n\nTo connect your account, go to <b>My Settings</b> in TaskTracker and click <b>Connect Telegram</b>.\n\n<b>Commands:</b>\n/dm @name message - Send a direct message\n/help - Show available commands'
       );
+      return res.sendStatus(200);
+    }
+
+    // Handle /help command
+    if (update.message?.text === '/help') {
+      const chatId = update.message.chat.id.toString();
+      await sendTelegramMessage(
+        chatId,
+        '📖 <b>Available Commands:</b>\n\n/dm @name message - Send a direct message to someone\n/help - Show this help message\n\n<b>Tips:</b>\n• Reply to any notification message to respond directly\n• Use @name in your replies to mention someone'
+      );
+      return res.sendStatus(200);
+    }
+
+    // Handle /dm command to start a chat
+    if (update.message?.text?.startsWith('/dm ')) {
+      const chatId = update.message.chat.id.toString();
+      const dmText = update.message.text.slice(4).trim();
+
+      // Find the sender
+      const sender = await prisma.user.findFirst({
+        where: { telegramChatId: chatId },
+        select: { id: true, name: true },
+      });
+
+      if (!sender) {
+        await sendTelegramMessage(
+          chatId,
+          '❌ Your Telegram account is not linked to TaskTracker.\n\nGo to My Settings to connect.'
+        );
+        return res.sendStatus(200);
+      }
+
+      // Parse the recipient name (expect @name or just name at the start)
+      const dmMatch = dmText.match(/^@?([a-zA-Z][a-zA-Z0-9\s]*?)\s+(.+)$/);
+      if (!dmMatch) {
+        await sendTelegramMessage(
+          chatId,
+          '❌ Invalid format.\n\nUsage: /dm @name message\nExample: /dm @John Hey, how are you?'
+        );
+        return res.sendStatus(200);
+      }
+
+      const recipientName = dmMatch[1].trim();
+      const messageContent = dmMatch[2].trim();
+
+      // Find the recipient
+      const recipients = await findUsersByName([recipientName]);
+      if (recipients.length === 0) {
+        await sendTelegramMessage(
+          chatId,
+          `❌ User "${escapeTelegramHtml(recipientName)}" not found.`
+        );
+        return res.sendStatus(200);
+      }
+
+      // Use the first match
+      const recipient = recipients[0];
+
+      if (recipient.id === sender.id) {
+        await sendTelegramMessage(
+          chatId,
+          '❌ You cannot send a message to yourself.'
+        );
+        return res.sendStatus(200);
+      }
+
+      // Check if there's an existing chat between these two users
+      let existingChat = await prisma.chat.findFirst({
+        where: {
+          isGroup: false,
+          participants: {
+            every: {
+              userId: { in: [sender.id, recipient.id] }
+            }
+          },
+          AND: [
+            { participants: { some: { userId: sender.id } } },
+            { participants: { some: { userId: recipient.id } } }
+          ]
+        },
+        include: {
+          participants: { include: { user: { select: { id: true, name: true, telegramChatId: true } } } }
+        }
+      });
+
+      // Create a new chat if none exists
+      if (!existingChat) {
+        existingChat = await prisma.chat.create({
+          data: {
+            creatorId: sender.id,
+            isGroup: false,
+            participants: {
+              create: [
+                { userId: sender.id },
+                { userId: recipient.id }
+              ]
+            }
+          },
+          include: {
+            participants: { include: { user: { select: { id: true, name: true, telegramChatId: true } } } }
+          }
+        });
+      }
+
+      // Create the message
+      const message = await prisma.chatMessage.create({
+        data: {
+          chatId: existingChat.id,
+          senderId: sender.id,
+          content: messageContent,
+        },
+        include: {
+          sender: { select: { id: true, name: true } }
+        }
+      });
+
+      // Notify the recipient if they have Telegram
+      const recipientData = existingChat.participants.find(p => p.userId === recipient.id)?.user;
+      if (recipientData?.telegramChatId) {
+        const telegramMessage = `💬 <b>${escapeTelegramHtml(sender.name)}</b> sent you a message:\n\n${escapeTelegramHtml(messageContent)}\n\n<i>Reply to this message to respond</i>`;
+
+        const result = await sendTelegramMessage(recipientData.telegramChatId, telegramMessage);
+
+        if (result.success && result.messageId) {
+          await storeTelegramChatMapping(
+            result.messageId,
+            existingChat.id,
+            recipient.id,
+            sender.id
+          );
+        }
+      }
+
+      // Send confirmation
+      await sendTelegramMessage(
+        chatId,
+        `✅ Message sent to ${escapeTelegramHtml(recipient.name)}`
+      );
+
       return res.sendStatus(200);
     }
 
@@ -211,6 +351,67 @@ export async function handleTelegramWebhook(req: Request, res: Response) {
         await sendTelegramMessage(
           chatId,
           '❌ Cannot find the original message. It may be too old (over 30 days) or was not a notification you can reply to.'
+        );
+        return res.sendStatus(200);
+      }
+
+      // Check if this is a chat message reply or task comment reply
+      if (mapping.chatId && mapping.chat) {
+        // ===== HANDLE CHAT MESSAGE REPLY =====
+        const appChatId = mapping.chatId;
+
+        // Create the chat message
+        const message = await prisma.chatMessage.create({
+          data: {
+            chatId: appChatId,
+            senderId: sender.id,
+            content: replyText,
+          },
+          include: {
+            sender: { select: { id: true, name: true } },
+            chat: {
+              include: {
+                participants: {
+                  include: { user: { select: { id: true, name: true, email: true, telegramChatId: true } } }
+                }
+              }
+            }
+          }
+        });
+
+        // Notify other participants in the chat
+        const chatName = message.chat.name || 'Direct message';
+        for (const p of message.chat.participants) {
+          if (p.userId !== sender.id && p.user.telegramChatId) {
+            const telegramMessage = `💬 <b>${escapeTelegramHtml(sender.name)}</b> in "${escapeTelegramHtml(chatName)}":\n\n${escapeTelegramHtml(replyText)}\n\n<i>Reply to this message to respond</i>`;
+
+            const result = await sendTelegramMessage(p.user.telegramChatId, telegramMessage);
+
+            if (result.success && result.messageId) {
+              await storeTelegramChatMapping(
+                result.messageId,
+                appChatId,
+                p.userId,
+                sender.id
+              );
+            }
+          }
+        }
+
+        // Send confirmation
+        await sendTelegramMessage(
+          chatId,
+          `✅ Message sent to "${escapeTelegramHtml(chatName)}"`
+        );
+
+        return res.sendStatus(200);
+      }
+
+      // ===== HANDLE TASK COMMENT REPLY =====
+      if (!mapping.taskId) {
+        await sendTelegramMessage(
+          chatId,
+          '❌ Cannot find the original message context.'
         );
         return res.sendStatus(200);
       }
@@ -355,7 +556,7 @@ export async function handleTelegramWebhook(req: Request, res: Response) {
       const chatId = update.message.chat.id.toString();
       await sendTelegramMessage(
         chatId,
-        '💡 To reply to a comment, <b>swipe left</b> on the notification message and type your reply.\n\nYou can also use @name to mention specific people.'
+        '💡 <b>How to use:</b>\n\n• <b>Reply to notifications</b> - Swipe left on a notification and type your reply\n• <b>Send a DM</b> - Use /dm @name message\n• <b>Mention someone</b> - Use @name in your reply\n\nType /help for more commands.'
       );
       return res.sendStatus(200);
     }

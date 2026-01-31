@@ -2,7 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { prisma } from './db/client.js';
 import { sendChatNotificationEmail } from './services/email.js';
-import { sendTelegramMessage, escapeTelegramHtml } from './services/telegram.js';
+import { sendTelegramMessage, escapeTelegramHtml, storeTelegramChatMapping } from './services/telegram.js';
 
 // Track connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map<string, Set<string>>();
@@ -144,14 +144,24 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
                   chatId
                 );
               }
-              // Send Telegram notification
+              // Send Telegram notification with reply support
               if (p.user.telegramChatId) {
                 const senderName = message.sender.name || 'Someone';
+                const senderMentionName = senderName.toLowerCase().replace(/\s+/g, '');
                 const chatTitle = chat.name || 'Direct message';
-                sendTelegramMessage(
-                  p.user.telegramChatId,
-                  `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(content)}`
-                );
+                const telegramMessage = `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(content)}\n\n<i>Reply to this message to respond</i>`;
+
+                const result = await sendTelegramMessage(p.user.telegramChatId, telegramMessage);
+
+                // Store mapping for reply tracking
+                if (result.success && result.messageId) {
+                  await storeTelegramChatMapping(
+                    result.messageId,
+                    chatId,
+                    p.userId,
+                    userId // The sender becomes the replyToUser
+                  );
+                }
               }
             }
           }

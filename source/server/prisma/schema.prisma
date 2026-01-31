@@ -575,9 +575,10 @@ model Chat {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  creator      User              @relation("ChatCreator", fields: [creatorId], references: [id])
-  participants ChatParticipant[]
-  messages     ChatMessage[]
+  creator          User                 @relation("ChatCreator", fields: [creatorId], references: [id])
+  participants     ChatParticipant[]
+  messages         ChatMessage[]
+  telegramMessages TelegramMessageMap[]
 
   @@map("chats")
 }
@@ -645,16 +646,19 @@ model ChatReadReceipt {
 model TelegramMessageMap {
   id                String   @id @default(uuid())
   telegramMessageId String   @unique @map("telegram_message_id")
-  taskId            String   @map("task_id")
+  taskId            String?  @map("task_id")
+  chatId            String?  @map("chat_id")
   recipientId       String   @map("recipient_id")
   replyToUserId     String   @map("reply_to_user_id")
   createdAt         DateTime @default(now()) @map("created_at")
 
-  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  recipient   User @relation("TelegramRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  replyToUser User @relation("TelegramReplyTo", fields: [replyToUserId], references: [id], onDelete: Cascade)
+  task        Task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  chat        Chat? @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  recipient   User  @relation("TelegramRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  replyToUser User  @relation("TelegramReplyTo", fields: [replyToUserId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
+  @@index([chatId])
   @@index([recipientId])
   @@map("telegram_message_map")
 }
