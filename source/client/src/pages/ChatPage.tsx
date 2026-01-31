@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight } from 'lucide-react';
-import { Chat, ChatMessage, User } from '../lib/types';
+import { Chat, ChatMessage } from '../lib/types';
 import { chats as chatsApi, users as usersApi, notifications as notificationsApi, type MentionNotification } from '../lib/api';
+
+// Minimal user type for chat list (returned by /api/users/chat-list)
+type ChatUser = { id: string; name: string; email: string; avatarUrl: string | null };
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
 import { ReactionPicker, ReactionDisplay } from '../components/reactions';
@@ -20,7 +23,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<ChatUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
   const [mentions, setMentions] = useState<MentionNotification[]>([]);
@@ -776,7 +779,7 @@ function NewChatDialog({
   onClose,
   onCreate,
 }: {
-  users: User[];
+  users: ChatUser[];
   onClose: () => void;
   onCreate: (participantIds: string[], isGroup: boolean, name?: string) => void;
 }) {
