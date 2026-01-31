@@ -57,6 +57,33 @@ router.get('/mentionable', isAuthenticated, async (req: Request, res: Response, 
   }
 });
 
+// List users for chat (available to all authenticated users, minimal info)
+router.get('/chat-list', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const currentUser = req.user as Express.User;
+
+    // Return only active users with minimal info needed for chat
+    const users = await prisma.user.findMany({
+      where: {
+        active: true,
+        archived: false,
+        id: { not: currentUser.id } // Exclude current user
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // List all users (admin only)
 router.get('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {

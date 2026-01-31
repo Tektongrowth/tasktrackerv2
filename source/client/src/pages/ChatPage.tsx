@@ -146,15 +146,14 @@ export default function ChatPage() {
     loadChats();
   }, [user?.id]);
 
-  // Load users for new chat dialog (separate call, may fail for non-admins)
+  // Load users for new chat dialog
   useEffect(() => {
     async function loadUsers() {
       try {
-        const users = await usersApi.list();
-        setAllUsers(users.filter((u) => u.id !== user?.id && u.active));
+        const users = await usersApi.listForChat();
+        setAllUsers(users);
       } catch (error) {
-        // Non-admins can't list all users - they can still use existing chats
-        console.log('Could not load users list (admin only)');
+        console.error('Could not load users list:', error);
       }
     }
     loadUsers();

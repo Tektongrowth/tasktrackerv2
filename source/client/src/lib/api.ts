@@ -46,6 +46,7 @@ export const auth = {
 // Users
 export const users = {
   list: () => fetchApi<import('./types').User[]>('/api/users'),
+  listForChat: () => fetchApi<{ id: string; name: string; email: string; avatarUrl: string | null }[]>('/api/users/chat-list'),
   listMentionable: () => fetchApi<{ id: string; name: string; email: string; avatarUrl: string | null }[]>('/api/users/mentionable'),
   invite: (data: { email: string; name?: string; accessLevel?: import('./types').AccessLevel; projectIds?: string[]; jobRoleId?: string; permissions?: object }) =>
     fetchApi<import('./types').User>('/api/users/invite', {
