@@ -1,5 +1,5 @@
 // Service Worker for Push Notifications
-const CACHE_NAME = 'tasktracker-v1';
+const CACHE_NAME = 'tasktracker-v2';
 
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
@@ -65,7 +65,9 @@ self.addEventListener('notificationclick', (event) => {
   }
 
   // Get the URL to open from notification data
-  const urlToOpen = event.notification.data?.url || '/';
+  const path = event.notification.data?.url || '/';
+  // Construct full URL from service worker origin
+  const urlToOpen = new URL(path, self.location.origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -74,8 +76,7 @@ self.addEventListener('notificationclick', (event) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             // Navigate existing window to the notification URL
-            client.navigate(urlToOpen);
-            return client.focus();
+            return client.focus().then(() => client.navigate(urlToOpen));
           }
         }
         // If no window is open, open a new one
