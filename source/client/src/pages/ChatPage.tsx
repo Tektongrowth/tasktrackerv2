@@ -167,7 +167,17 @@ export default function ChatPage() {
     async function loadChats() {
       try {
         const chats = await chatsApi.list();
-        setChatList(chats);
+        // Sort chats: unread first, then by updatedAt
+        const sortedChats = chats.sort((a, b) => {
+          const aUnread = a.unreadCount || 0;
+          const bUnread = b.unreadCount || 0;
+          // If one has unread and other doesn't, unread comes first
+          if (aUnread > 0 && bUnread === 0) return -1;
+          if (bUnread > 0 && aUnread === 0) return 1;
+          // Otherwise sort by date
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+        setChatList(sortedChats);
       } catch (error) {
         console.error('Failed to load chats:', error);
       } finally {
@@ -522,8 +532,12 @@ export default function ChatPage() {
               <button
                 key={chat.id}
                 onClick={() => setActiveChatId(chat.id)}
-                className={`w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors ${
-                  activeChatId === chat.id ? 'bg-muted' : (chat.unreadCount || 0) > 0 ? 'bg-red-100 dark:bg-red-900/30' : ''
+                className={`w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors border-l-4 ${
+                  activeChatId === chat.id
+                    ? 'bg-muted border-l-transparent'
+                    : (chat.unreadCount || 0) > 0
+                      ? 'bg-red-50 border-l-red-500 dark:bg-red-900/30'
+                      : 'border-l-transparent'
                 }`}
               >
                 {getChatAvatar(chat)}
