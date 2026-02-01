@@ -125,7 +125,8 @@ const generalApiLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => {
     // Skip rate limiting for VAPID public key (static, no auth needed)
-    return req.path === '/api/push/vapid-public-key' || req.path === '/api/push/status';
+    // req.path is relative to the mount point, so /api/push/... becomes /push/...
+    return req.path === '/push/vapid-public-key' || req.path === '/push/status';
   },
 });
 
