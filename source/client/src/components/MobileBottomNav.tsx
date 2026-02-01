@@ -12,6 +12,7 @@ import {
   Inbox,
   LogOut,
   Search,
+  HelpCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -53,8 +54,8 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
     { to: '/my-settings', icon: Settings, label: 'My Settings', show: !isAdmin },
   ].filter(item => item.show);
 
-  // Check if current path matches any "more" item
-  const isMoreActive = moreItems.some(item => location.pathname === item.to);
+  // Check if current path matches any "more" item (including /help)
+  const isMoreActive = moreItems.some(item => location.pathname === item.to) || location.pathname === '/help';
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--theme-sidebar)] border-t border-white/10 md:hidden">
@@ -129,6 +130,19 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
                 {item.label}
               </DropdownMenuItem>
             ))}
+
+            <DropdownMenuSeparator />
+
+            {/* Help & Guides */}
+            <DropdownMenuItem
+              onClick={() => navigate('/help')}
+              className={cn(
+                location.pathname === '/help' && 'bg-accent'
+              )}
+            >
+              <HelpCircle className="h-4 w-4 mr-2" />
+              Help & Guides
+            </DropdownMenuItem>
 
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600">
