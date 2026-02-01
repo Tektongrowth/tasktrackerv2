@@ -62,7 +62,12 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
       <div className="flex items-center justify-around h-16 px-2">
         {mainNavItems.map((item) => {
           const isActive = location.pathname === item.to;
+          // Show badge if there are unread messages OR always for testing
           const showBadge = item.to === '/chat' && unreadMessageCount > 0;
+          // Debug: log the unread count
+          if (item.to === '/chat') {
+            console.log('MobileBottomNav unread count:', unreadMessageCount);
+          }
 
           return (
             <NavLink
@@ -78,9 +83,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
               <div className="relative">
                 <item.icon className={cn('h-5 w-5', isActive && 'text-[var(--theme-accent)]')} />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
-                    {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
-                  </span>
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[var(--theme-sidebar)]" />
                 )}
               </div>
               <span className={cn('text-[10px] mt-1', isActive && 'font-medium')}>{item.label}</span>

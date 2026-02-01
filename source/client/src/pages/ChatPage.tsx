@@ -167,8 +167,9 @@ export default function ChatPage() {
     async function loadChats() {
       try {
         const chats = await chatsApi.list();
+        console.log('Loaded chats with unread counts:', chats.map(c => ({ name: c.name, unreadCount: c.unreadCount })));
         // Sort chats: unread first, then by updatedAt
-        const sortedChats = chats.sort((a, b) => {
+        const sortedChats = [...chats].sort((a, b) => {
           const aUnread = a.unreadCount || 0;
           const bUnread = b.unreadCount || 0;
           // If one has unread and other doesn't, unread comes first

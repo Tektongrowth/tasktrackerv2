@@ -231,6 +231,9 @@ export function Layout() {
   // Total unread for messages badge (chats + mentions)
   const totalUnreadMessages = unreadChatCount + unreadMentionCount;
 
+  // Debug unread counts
+  console.log('Layout unread counts:', { unreadChatCount, unreadMentionCount, totalUnreadMessages });
+
   // Get branding from theme
   const logoUrl = theme?.branding?.logoUrl || '/logo.png';
   const backgroundImage = theme?.branding?.backgroundImage || '/background.jpg';
