@@ -40,6 +40,8 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'default',
     renotify: true,
     requireInteraction: false,
+    silent: false, // Enable notification sound
+    vibrate: [200, 100, 200], // Vibration pattern for mobile
     data: data.data,
     actions: [
       { action: 'open', title: 'Open' },
