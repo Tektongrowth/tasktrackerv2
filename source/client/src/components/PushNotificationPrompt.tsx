@@ -215,3 +215,4 @@ export function PushNotificationSettings() {
     </div>
   );
 }
+
