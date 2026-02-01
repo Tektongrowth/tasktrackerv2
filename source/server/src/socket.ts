@@ -132,12 +132,10 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
             io.to(`user:${p.userId}`).emit('message:new', messageWithTempId);
           }
 
-          // Notify offline users via push, email, and Telegram
+          // Send push notifications to all participants (even if online)
           for (const p of chat.participants) {
-            if (p.userId !== userId && !isUserOnline(p.userId)) {
+            if (p.userId !== userId) {
               const senderName = message.sender.name || 'Someone';
-
-              // Send push notification
               sendChatMessagePush(
                 p.userId,
                 senderName,
@@ -145,6 +143,13 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
                 chatId,
                 chat.name || undefined
               );
+            }
+          }
+
+          // Notify offline users via email and Telegram
+          for (const p of chat.participants) {
+            if (p.userId !== userId && !isUserOnline(p.userId)) {
+              const senderName = message.sender.name || 'Someone';
 
               // Send email notification
               if (p.user.email) {
