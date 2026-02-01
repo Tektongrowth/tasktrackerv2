@@ -541,7 +541,7 @@ export default function ChatPage() {
                       {chat.messages?.[0]?.content || 'No messages yet'}
                     </p>
                     {(chat.unreadCount || 0) > 0 && (
-                      <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                      <span className="ml-2 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {chat.unreadCount}
                       </span>
                     )}
@@ -562,7 +562,7 @@ export default function ChatPage() {
               <AtSign className="w-4 h-4 text-primary" />
               <span className="font-medium text-sm">Task Mentions</span>
               {unreadMentionCount > 0 && (
-                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                <span className="min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                   {unreadMentionCount}
                 </span>
               )}
