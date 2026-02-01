@@ -802,7 +802,7 @@ export default function ChatPage() {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 pr-6 md:pr-4 border-t">
             <div className="flex items-center gap-2">
               <input
                 type="file"
