@@ -123,6 +123,10 @@ const generalApiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for VAPID public key (static, no auth needed)
+    return req.path === '/api/push/vapid-public-key' || req.path === '/api/push/status';
+  },
 });
 
 // Apply rate limiters to specific routes
