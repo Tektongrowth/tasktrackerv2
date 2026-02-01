@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toaster';
+import { PushNotificationSettings } from '@/components/PushNotificationPrompt';
 import {
   Bell,
   FolderPlus,
@@ -21,6 +22,7 @@ import {
   MessageCircle,
   ExternalLink,
   Unlink,
+  Smartphone,
 } from 'lucide-react';
 
 interface NotificationSettingProps {
@@ -324,6 +326,23 @@ export function MySettingsPage() {
                 </div>
               </>
             ) : null}
+          </CardContent>
+        </Card>
+
+        {/* Push Notifications Card */}
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-[var(--theme-primary)]" />
+              <CardTitle>Push Notifications</CardTitle>
+            </div>
+            <CardDescription>
+              Get instant push notifications in your browser or on your phone when you receive messages or mentions.
+              On iOS, you must add this app to your home screen first.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushNotificationSettings />
           </CardContent>
         </Card>
 
