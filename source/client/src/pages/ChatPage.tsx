@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight, ListPlus } from 'lucide-react';
 import { Chat, ChatMessage } from '../lib/types';
-import { chats as chatsApi, users as usersApi, notifications as notificationsApi, type MentionNotification } from '../lib/api';
+import { chats as chatsApi, users as usersApi, notifications as notificationsApi, projects as projectsApi, type MentionNotification } from '../lib/api';
+import { useCreateTask } from '../hooks/useTasks';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from '../components/ui/toaster';
 
 // Minimal user type for chat list (returned by /api/users/chat-list)
 type ChatUser = { id: string; name: string; email: string; avatarUrl: string | null };
@@ -29,6 +38,20 @@ export default function ChatPage() {
   const [mentions, setMentions] = useState<MentionNotification[]>([]);
   const [showMentions, setShowMentions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Create task from message state
+  const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
+  const [createTaskContent, setCreateTaskContent] = useState('');
+  const [createTaskTitle, setCreateTaskTitle] = useState('');
+  const [createTaskProjectId, setCreateTaskProjectId] = useState('');
+  const createTask = useCreateTask();
+
+  // Fetch all projects for task creation
+  const { data: allProjects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: projectsApi.list,
+    enabled: showCreateTaskDialog,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -397,6 +420,50 @@ export default function ChatPage() {
     navigate(`/kanban?taskId=${mention.task.id}`);
   }, [navigate]);
 
+  // Handler to open create task dialog from a message
+  const handleCreateTaskFromMessage = useCallback((message: ChatMessage) => {
+    const authorName = message.sender?.name || 'Unknown';
+    const content = message.content || '';
+    // Generate a title from the first line or first ~50 chars
+    const firstLine = content.split('\n')[0].slice(0, 50);
+    const suggestedTitle = firstLine.length < content.length ? `${firstLine}...` : firstLine;
+
+    setCreateTaskTitle(suggestedTitle);
+    setCreateTaskContent(`From chat message by ${authorName}:\n\n${content}`);
+    setCreateTaskProjectId('');
+    setShowCreateTaskDialog(true);
+  }, []);
+
+  // Handle creating the task from message
+  const handleCreateTask = useCallback(() => {
+    if (!createTaskTitle.trim() || !createTaskProjectId) {
+      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
+      return;
+    }
+
+    createTask.mutate(
+      {
+        title: createTaskTitle.trim(),
+        description: createTaskContent.trim(),
+        projectId: createTaskProjectId,
+        status: 'todo',
+        priority: 'medium',
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Task created successfully' });
+          setShowCreateTaskDialog(false);
+          setCreateTaskTitle('');
+          setCreateTaskContent('');
+          setCreateTaskProjectId('');
+        },
+        onError: (error: Error) => {
+          toast({ title: 'Failed to create task', description: error.message, variant: 'destructive' });
+        },
+      }
+    );
+  }, [createTaskTitle, createTaskContent, createTaskProjectId, createTask]);
+
   const unreadMentionCount = mentions.filter((m) => !m.readAt).length;
 
   if (isLoading) {
@@ -668,9 +735,16 @@ export default function ChatPage() {
                         </div>
                       )}
                     </div>
-                    {/* Reaction picker - shows on hover */}
+                    {/* Reaction picker and create task - shows on hover */}
                     <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
-                      <div className="opacity-0 group-hover/message:opacity-100 transition-opacity">
+                      <div className="opacity-0 group-hover/message:opacity-100 transition-opacity flex items-center gap-1">
+                        <button
+                          onClick={() => handleCreateTaskFromMessage(message)}
+                          className="p-1 hover:bg-muted rounded transition-colors"
+                          title="Create task from message"
+                        >
+                          <ListPlus className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        </button>
                         <ReactionPicker
                           onSelect={(emoji) => activeChatId && toggleReaction(activeChatId, message.id, emoji)}
                           className="h-5 w-5"
@@ -770,6 +844,68 @@ export default function ChatPage() {
           onCreate={createNewChat}
         />
       )}
+
+      {/* Create Task from Message Dialog */}
+      <Dialog open={showCreateTaskDialog} onOpenChange={setShowCreateTaskDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListPlus className="h-5 w-5" />
+              Create Task from Message
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="newTaskTitle">Task Title</Label>
+              <Input
+                id="newTaskTitle"
+                value={createTaskTitle}
+                onChange={(e) => setCreateTaskTitle(e.target.value)}
+                placeholder="Enter task title..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newTaskProject">Project</Label>
+              <Select value={createTaskProjectId} onValueChange={setCreateTaskProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {allProjects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newTaskDescription">Description</Label>
+              <Textarea
+                id="newTaskDescription"
+                value={createTaskContent}
+                onChange={(e) => setCreateTaskContent(e.target.value)}
+                rows={4}
+                className="text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateTaskDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateTask}
+                disabled={!createTaskTitle.trim() || !createTaskProjectId || createTask.isPending}
+              >
+                {createTask.isPending ? 'Creating...' : 'Create Task'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

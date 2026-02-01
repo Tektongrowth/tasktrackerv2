@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useUpdateTask } from '@/hooks/useTasks';
+import { useUpdateTask, useCreateTask } from '@/hooks/useTasks';
 import { useRunningTimer, useStartTimer, useStopTimer, useCreateTimeEntry, useDeleteTimeEntry } from '@/hooks/useTimeEntries';
 import { useAuth } from '@/hooks/useAuth';
-import { users, tasks as tasksApi, subtasks as subtasksApi, comments as commentsApi, roles as rolesApi } from '@/lib/api';
+import { users, tasks as tasksApi, subtasks as subtasksApi, comments as commentsApi, roles as rolesApi, projects } from '@/lib/api';
 import { toast } from '@/components/ui/toaster';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon } from 'lucide-react';
+import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon, ListPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
 import { ReactionPicker, ReactionDisplay } from '@/components/reactions';
@@ -199,6 +200,64 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+
+  // Create task from comment state
+  const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
+  const [createTaskContent, setCreateTaskContent] = useState('');
+  const [createTaskTitle, setCreateTaskTitle] = useState('');
+  const [createTaskProjectId, setCreateTaskProjectId] = useState('');
+  const createTask = useCreateTask();
+
+  // Fetch all projects for task creation
+  const { data: allProjects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: projects.list,
+    enabled: showCreateTaskDialog,
+  });
+
+  // Handler to open create task dialog from a comment
+  const handleCreateTaskFromComment = (comment: { content?: string; user?: { name?: string } | null; userName?: string }) => {
+    const authorName = comment.user?.name || comment.userName || 'Unknown';
+    const content = comment.content || '';
+    // Generate a title from the first line or first ~50 chars
+    const firstLine = content.split('\n')[0].slice(0, 50);
+    const suggestedTitle = firstLine.length < content.length ? `${firstLine}...` : firstLine;
+
+    setCreateTaskTitle(suggestedTitle);
+    setCreateTaskContent(`From comment by ${authorName}:\n\n${content}`);
+    setCreateTaskProjectId(task.projectId);
+    setShowCreateTaskDialog(true);
+  };
+
+  // Handle creating the task
+  const handleCreateTask = () => {
+    if (!createTaskTitle.trim() || !createTaskProjectId) {
+      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
+      return;
+    }
+
+    createTask.mutate(
+      {
+        title: createTaskTitle.trim(),
+        description: createTaskContent.trim(),
+        projectId: createTaskProjectId,
+        status: 'todo',
+        priority: 'medium',
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Task created successfully' });
+          setShowCreateTaskDialog(false);
+          setCreateTaskTitle('');
+          setCreateTaskContent('');
+          setCreateTaskProjectId('');
+        },
+        onError: (error: Error) => {
+          toast({ title: 'Failed to create task', description: error.message, variant: 'destructive' });
+        },
+      }
+    );
+  };
 
   // Time tracking
   const { data: runningTimer } = useRunningTimer();
@@ -1217,6 +1276,15 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                             {formatDateTime(comment.createdAt)}
                           </span>
                           <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5"
+                              onClick={() => handleCreateTaskFromComment(comment)}
+                              title="Create task from comment"
+                            >
+                              <ListPlus className="h-3 w-3" />
+                            </Button>
                             <ReactionPicker
                               onSelect={(emoji) => toggleReaction.mutate({ commentId: comment.id, emoji })}
                               disabled={toggleReaction.isPending}
@@ -1309,6 +1377,68 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
         )}
       </div>
     </div>
+
+    {/* Create Task from Comment Dialog */}
+    <Dialog open={showCreateTaskDialog} onOpenChange={setShowCreateTaskDialog}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ListPlus className="h-5 w-5" />
+            Create Task from Comment
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="newTaskTitle">Task Title</Label>
+            <Input
+              id="newTaskTitle"
+              value={createTaskTitle}
+              onChange={(e) => setCreateTaskTitle(e.target.value)}
+              placeholder="Enter task title..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="newTaskProject">Project</Label>
+            <Select value={createTaskProjectId} onValueChange={setCreateTaskProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a project..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allProjects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="newTaskDescription">Description</Label>
+            <Textarea
+              id="newTaskDescription"
+              value={createTaskContent}
+              onChange={(e) => setCreateTaskContent(e.target.value)}
+              rows={4}
+              className="text-sm"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateTaskDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTask}
+              disabled={!createTaskTitle.trim() || !createTaskProjectId || createTask.isPending}
+            >
+              {createTask.isPending ? 'Creating...' : 'Create Task'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
