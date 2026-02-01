@@ -180,7 +180,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
 
   return (
     <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-      <table className="w-full" style={{ tableLayout: 'fixed' }}>
+      <table className="w-full md:table-fixed">
+        {/* Colgroup only on desktop - mobile uses auto layout */}
         <colgroup className="hidden md:table-column-group">
           <col style={{ width: columnWidths.task }} />
           <col style={{ width: columnWidths.progress }} />
@@ -189,6 +190,9 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
           <col style={{ width: columnWidths.dueDate }} />
           <col style={{ width: columnWidths.assignee }} />
           <col style={{ width: columnWidths.timer }} />
+        </colgroup>
+        <colgroup className="md:hidden">
+          <col style={{ width: '100%' }} />
         </colgroup>
         <thead>
           <tr className="bg-[var(--theme-primary-dark)]">
@@ -261,7 +265,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                     onClick={() => onTaskClick(task.id)}
                   >
                     {/* Task Title */}
-                    <td className="px-4 py-3 overflow-hidden">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <Checkbox
                           checked={task.status === 'completed'}
