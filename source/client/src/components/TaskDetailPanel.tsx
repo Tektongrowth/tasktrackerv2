@@ -206,6 +206,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const [createTaskContent, setCreateTaskContent] = useState('');
   const [createTaskTitle, setCreateTaskTitle] = useState('');
   const [createTaskProjectId, setCreateTaskProjectId] = useState('');
+  const [createTaskAssigneeIds, setCreateTaskAssigneeIds] = useState<string[]>([]);
   const createTask = useCreateTask();
 
   // Fetch all projects for task creation
@@ -226,6 +227,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     setCreateTaskTitle(suggestedTitle);
     setCreateTaskContent(`From comment by ${authorName}:\n\n${content}`);
     setCreateTaskProjectId(task.projectId);
+    setCreateTaskAssigneeIds([]);
     setShowCreateTaskDialog(true);
   };
 
@@ -243,6 +245,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
         projectId: createTaskProjectId,
         status: 'todo',
         priority: 'medium',
+        assigneeIds: createTaskAssigneeIds.length > 0 ? createTaskAssigneeIds : undefined,
       },
       {
         onSuccess: () => {
@@ -251,6 +254,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
           setCreateTaskTitle('');
           setCreateTaskContent('');
           setCreateTaskProjectId('');
+          setCreateTaskAssigneeIds([]);
         },
         onError: (error: Error) => {
           toast({ title: 'Failed to create task', description: error.message, variant: 'destructive' });
@@ -1411,6 +1415,36 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Assign To</Label>
+            <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
+              {allUsers?.filter(u => u.active && !u.archived).map((user) => (
+                <div key={user.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`create-task-assignee-${user.id}`}
+                    checked={createTaskAssigneeIds.includes(user.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCreateTaskAssigneeIds(prev => [...prev, user.id]);
+                      } else {
+                        setCreateTaskAssigneeIds(prev => prev.filter(id => id !== user.id));
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={`create-task-assignee-${user.id}`}
+                    className="flex items-center gap-2 text-sm cursor-pointer flex-1"
+                  >
+                    <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
+                    {user.name}
+                  </label>
+                </div>
+              ))}
+              {(!allUsers || allUsers.filter(u => u.active && !u.archived).length === 0) && (
+                <p className="text-sm text-muted-foreground">No users available</p>
+              )}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="newTaskDescription">Description</Label>
