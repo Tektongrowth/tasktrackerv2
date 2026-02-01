@@ -43,7 +43,7 @@ import { KanbanColumn } from '@/components/KanbanColumn';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskDetailPanel } from '@/components/TaskDetailPanel';
 import { KanbanColumnSkeleton } from '@/components/TaskCardSkeleton';
-import { Users, Tag, Plus, FolderPlus, Flag, User, Archive, Square } from 'lucide-react';
+import { Users, Tag, Plus, FolderPlus, Flag, User, Archive, Square, Filter } from 'lucide-react';
 // Note: List view removed from Kanban - use dedicated List page instead
 import { cn, formatDuration } from '@/lib/utils';
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types';
@@ -439,14 +439,93 @@ export function KanbanPage() {
         <div className="flex items-center justify-between">
           {/* Left: Title + Description */}
           <div>
-            <h1 className="text-2xl font-bold">Kanban Board</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="text-xl md:text-2xl font-bold">Kanban Board</h1>
+            <p className="text-muted-foreground text-sm hidden md:block">
               Drag and drop tasks between columns
             </p>
           </div>
 
           {/* Right: Filters + Actions */}
           <div className="flex items-center gap-2" data-guide="kanban-filters">
+            {/* Mobile Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "h-8 px-3 text-sm border rounded-md transition-colors flex md:hidden items-center gap-1.5",
+                    (showMyTasks || showArchived || selectedAssignees.length > 0 || selectedTags.length > 0)
+                      ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
+                      : "bg-white text-gray-700 border-gray-300"
+                  )}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {(showMyTasks || showArchived || selectedAssignees.length > 0 || selectedTags.length > 0) && (
+                    <span className="ml-1 w-2 h-2 bg-white rounded-full" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Filters</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={showMyTasks}
+                  onCheckedChange={() => {
+                    setShowMyTasks((prev) => !prev);
+                    setShowArchived(false);
+                  }}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  My Tasks
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={showArchived}
+                  onCheckedChange={() => {
+                    setShowArchived((prev) => !prev);
+                    setShowMyTasks(false);
+                  }}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archived
+                </DropdownMenuCheckboxItem>
+                {isAdmin && allUsers.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs">Assignees</DropdownMenuLabel>
+                    {allUsers.map((filterUser) => (
+                      <DropdownMenuCheckboxItem
+                        key={filterUser.id}
+                        checked={selectedAssignees.includes(filterUser.id)}
+                        onCheckedChange={() => toggleAssignee(filterUser.id)}
+                      >
+                        {filterUser.name}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </>
+                )}
+                {allTags.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs">Tags</DropdownMenuLabel>
+                    {allTags.map((tag) => (
+                      <DropdownMenuCheckboxItem
+                        key={tag.id}
+                        checked={selectedTags.includes(tag.name)}
+                        onCheckedChange={() => toggleTag(tag.name)}
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        {tag.name}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Desktop Filters */}
             <button
               onClick={() => {
                 setShowMyTasks((prev) => !prev);
@@ -454,7 +533,7 @@ export function KanbanPage() {
               }}
               data-guide="filter-my-tasks"
               className={cn(
-                "h-8 px-3 text-sm border rounded-md transition-colors flex items-center gap-1.5",
+                "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                 showMyTasks
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
@@ -470,7 +549,7 @@ export function KanbanPage() {
                 setShowMyTasks(false);
               }}
               className={cn(
-                "h-8 px-3 text-sm border rounded-md transition-colors flex items-center gap-1.5",
+                "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                 showArchived
                   ? "bg-amber-500 text-white border-amber-500"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-amber-500 hover:text-white hover:border-amber-500"
@@ -485,7 +564,7 @@ export function KanbanPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       className={cn(
-                        "h-8 px-3 text-sm border rounded-md transition-colors flex items-center gap-1.5",
+                        "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                         selectedAssignees.length > 0
                           ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                           : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
@@ -520,7 +599,7 @@ export function KanbanPage() {
                 <DropdownMenuTrigger asChild>
                   <button
                     className={cn(
-                      "h-8 px-3 text-sm border rounded-md transition-colors flex items-center gap-1.5",
+                      "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                       selectedTags.length > 0
                         ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                         : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
@@ -554,11 +633,11 @@ export function KanbanPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-            {/* Separator */}
-            <div className="w-px h-6 bg-slate-200 mx-1" />
+            {/* Separator - hidden on mobile */}
+            <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block" />
 
             {runningTimer && (
-              <div className="flex items-center gap-3 px-4 py-2 bg-[var(--theme-primary)]/10 border border-[var(--theme-primary)]/30 text-[var(--theme-primary)] rounded-lg">
+              <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-[var(--theme-primary)]/10 border border-[var(--theme-primary)]/30 text-[var(--theme-primary)] rounded-lg">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-[var(--theme-accent)] rounded-full animate-pulse" />
                   <span className="font-mono font-semibold">{formatDuration(timerElapsed)}</span>
@@ -578,8 +657,8 @@ export function KanbanPage() {
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={false}>
               <DialogTrigger asChild>
                 <Button size="sm" className="shadow-sm transition-all hover:shadow-md" data-guide="new-task-button">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Task
+                  <Plus className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">New Task</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -703,11 +782,11 @@ export function KanbanPage() {
               </DialogContent>
             </Dialog>
 
-            {/* Create Project Button */}
+            {/* Create Project Button - hidden on mobile */}
             {isAdmin && (
               <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog} modal={false}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-9">
+                  <Button size="sm" variant="outline" className="h-9 hidden md:flex">
                     <FolderPlus className="h-4 w-4 mr-2" />
                     New Project
                   </Button>
@@ -773,7 +852,7 @@ export function KanbanPage() {
       <div className="flex-1 overflow-auto">
         {isLoadingTasks && !activeTasks ? (
           /* Loading Skeletons - only show on initial load when we have no data */
-          <div className="flex gap-4 p-6 overflow-x-auto min-h-[400px]">
+          <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6 md:overflow-x-auto min-h-[400px]">
             <KanbanColumnSkeleton />
             <KanbanColumnSkeleton />
             <KanbanColumnSkeleton />
@@ -788,7 +867,7 @@ export function KanbanPage() {
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
             >
-              <div className="flex gap-4 p-6 overflow-x-auto min-h-[400px]" data-guide="kanban-columns">
+              <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6 md:overflow-x-auto min-h-[400px]" data-guide="kanban-columns">
                 {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id);
                   return (

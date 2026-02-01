@@ -17,7 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserX, AlertTriangle, Square, Archive } from 'lucide-react';
+import { UserX, AlertTriangle, Square, Archive, Filter } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn, formatDuration } from '@/lib/utils';
 import type { Task, TaskStatus } from '@/lib/types';
 
@@ -162,21 +170,112 @@ export function ListPage() {
         <div className="flex items-center justify-between">
           {/* Left: Title + Description */}
           <div>
-            <h1 className="text-2xl font-bold">Task List</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="text-xl md:text-2xl font-bold">Task List</h1>
+            <p className="text-muted-foreground text-sm hidden md:block">
               View and manage all tasks across projects
             </p>
           </div>
 
           {/* Right: Filters + Actions */}
           <div className="flex items-center gap-2">
+            {/* Mobile Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "h-8 px-3 text-sm border rounded-md transition-colors flex md:hidden items-center gap-1.5",
+                    (quickFilter !== 'all' || showArchived || statusFilter !== 'all')
+                      ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
+                      : "bg-white text-gray-700 border-gray-300"
+                  )}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {(quickFilter !== 'all' || showArchived || statusFilter !== 'all') && (
+                    <span className="ml-1 w-2 h-2 bg-white rounded-full" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Quick Filters</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={quickFilter === 'all' && !showArchived}
+                  onCheckedChange={() => {
+                    setQuickFilter('all');
+                    setShowArchived(false);
+                  }}
+                >
+                  All Tasks
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={quickFilter === 'unassigned' && !showArchived}
+                  onCheckedChange={() => {
+                    setQuickFilter('unassigned');
+                    setShowArchived(false);
+                  }}
+                >
+                  <UserX className="h-4 w-4 mr-2" />
+                  Unassigned {counts.unassigned > 0 && `(${counts.unassigned})`}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={quickFilter === 'overdue' && !showArchived}
+                  onCheckedChange={() => {
+                    setQuickFilter('overdue');
+                    setShowArchived(false);
+                  }}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Overdue {counts.overdue > 0 && `(${counts.overdue})`}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={showArchived}
+                  onCheckedChange={() => {
+                    setShowArchived((prev) => !prev);
+                    setQuickFilter('all');
+                    setStatusFilter('all');
+                  }}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archived
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs">Status</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem
+                  checked={statusFilter === 'all'}
+                  onCheckedChange={() => setStatusFilter('all')}
+                >
+                  All Statuses
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={statusFilter === 'todo'}
+                  onCheckedChange={() => setStatusFilter('todo')}
+                >
+                  To Do
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={statusFilter === 'in_review'}
+                  onCheckedChange={() => setStatusFilter('in_review')}
+                >
+                  In Review
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={statusFilter === 'completed'}
+                  onCheckedChange={() => setStatusFilter('completed')}
+                >
+                  Completed
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Desktop Filters */}
             <button
               onClick={() => {
                 setQuickFilter('all');
                 setShowArchived(false);
               }}
               className={cn(
-                "h-8 px-3 text-sm border rounded transition-colors",
+                "h-8 px-3 text-sm border rounded transition-colors hidden md:block",
                 quickFilter === 'all' && !showArchived
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
@@ -190,7 +289,7 @@ export function ListPage() {
                 setShowArchived(false);
               }}
               className={cn(
-                "h-8 px-3 text-sm border rounded transition-colors flex items-center gap-1.5",
+                "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
                 quickFilter === 'unassigned' && !showArchived
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
@@ -213,7 +312,7 @@ export function ListPage() {
                 setShowArchived(false);
               }}
               className={cn(
-                "h-8 px-3 text-sm border rounded transition-colors flex items-center gap-1.5",
+                "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
                 quickFilter === 'overdue' && !showArchived
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
@@ -238,7 +337,7 @@ export function ListPage() {
                 setStatusFilter('all');
               }}
               className={cn(
-                "h-8 px-3 text-sm border rounded transition-colors flex items-center gap-1.5",
+                "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
                 showArchived
                   ? "bg-amber-500 text-white border-amber-500"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-amber-500 hover:text-white hover:border-amber-500"
@@ -248,9 +347,9 @@ export function ListPage() {
               Archived
             </button>
 
-            {/* Status Dropdown */}
+            {/* Status Dropdown - hidden on mobile */}
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TaskStatus | 'all')}>
-              <SelectTrigger className="w-36 h-8">
+              <SelectTrigger className="w-36 h-8 hidden md:flex">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -261,7 +360,10 @@ export function ListPage() {
               </SelectContent>
             </Select>
 
-            <RunningTimer />
+            {/* Running Timer - hidden on mobile */}
+            <div className="hidden md:block">
+              <RunningTimer />
+            </div>
           </div>
         </div>
       </div>

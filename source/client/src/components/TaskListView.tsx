@@ -181,7 +181,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
   return (
     <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
       <table className="w-full" style={{ tableLayout: 'fixed' }}>
-        <colgroup>
+        <colgroup className="hidden md:table-column-group">
           <col style={{ width: columnWidths.task }} />
           <col style={{ width: columnWidths.progress }} />
           <col style={{ width: columnWidths.tags }} />
@@ -196,27 +196,27 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
               Task
               <ResizeHandle column="task" />
             </th>
-            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative">
+            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative hidden md:table-cell">
               Progress
               <ResizeHandle column="progress" />
             </th>
-            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative">
+            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative hidden md:table-cell">
               Tags
               <ResizeHandle column="tags" />
             </th>
-            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative">
+            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative hidden md:table-cell">
               Status
               <ResizeHandle column="status" />
             </th>
-            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative">
+            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative hidden md:table-cell">
               Due Date
               <ResizeHandle column="dueDate" />
             </th>
-            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative">
+            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider relative hidden md:table-cell">
               Assignee
               <ResizeHandle column="assignee" />
             </th>
-            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider">
+            <th className="text-center px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider hidden md:table-cell">
               Timer
             </th>
           </tr>
@@ -289,8 +289,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       </div>
                     </td>
 
-                    {/* Progress */}
-                    <td className="px-4 py-3">
+                    {/* Progress - hidden on mobile */}
+                    <td className="px-4 py-3 hidden md:table-cell">
                       {(() => {
                         const subtasks = task.subtasks || [];
                         const total = subtasks.length;
@@ -324,8 +324,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       })()}
                     </td>
 
-                    {/* Tags */}
-                    <td className="px-4 py-3 overflow-hidden">
+                    {/* Tags - hidden on mobile */}
+                    <td className="px-4 py-3 overflow-hidden hidden md:table-cell">
                       <div className="flex items-center gap-1 flex-wrap">
                         {task.tags.length > 0 ? (
                           <>
@@ -350,8 +350,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       </div>
                     </td>
 
-                    {/* Status */}
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    {/* Status - hidden on mobile */}
+                    <td className="px-4 py-3 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
                       <Select
                         value={task.status}
                         onValueChange={(v) => onStatusChange(task.id, v as TaskStatus)}
@@ -369,8 +369,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       </Select>
                     </td>
 
-                    {/* Due Date */}
-                    <td className="px-4 py-3">
+                    {/* Due Date - hidden on mobile */}
+                    <td className="px-4 py-3 hidden md:table-cell">
                       <div
                         className={cn(
                           'flex items-center gap-1 text-xs',
@@ -387,8 +387,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       </div>
                     </td>
 
-                    {/* Assignees */}
-                    <td className="px-4 py-3">
+                    {/* Assignees - hidden on mobile */}
+                    <td className="px-4 py-3 hidden md:table-cell">
                       <div className="flex items-center">
                         {task.assignees && task.assignees.length > 0 ? (
                           <div className="flex -space-x-2">
@@ -413,8 +413,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       </div>
                     </td>
 
-                    {/* Timer */}
-                    <td className="px-4 py-3">
+                    {/* Timer - hidden on mobile */}
+                    <td className="px-4 py-3 hidden md:table-cell">
                       <div className="flex items-center">
                         <Button
                           variant={runningTimer?.taskId === task.id ? 'default' : 'ghost'}
