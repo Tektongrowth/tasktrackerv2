@@ -645,7 +645,7 @@ export default function ChatPage() {
 
       {/* Chat Area */}
       {activeChat ? (
-        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-card' : ''}`}>
+        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-card pb-16' : ''}`}>
           {/* Chat Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
