@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight, ListPlus } from 'lucide-react';
+import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight, ListPlus, ArrowLeft } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { Chat, ChatMessage } from '../lib/types';
 import { chats as chatsApi, users as usersApi, notifications as notificationsApi, projects as projectsApi, type MentionNotification } from '../lib/api';
 import { useCreateTask } from '../hooks/useTasks';
@@ -25,6 +26,7 @@ import { formatDistanceToNow } from 'date-fns';
 export default function ChatPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const [chatList, setChatList] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(searchParams.get('id'));
@@ -481,9 +483,9 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex bg-card rounded-lg border overflow-hidden">
+    <div className="h-[calc(100vh-8rem)] flex bg-card rounded-lg border overflow-hidden relative">
       {/* Chat List Sidebar */}
-      <div className="w-80 border-r flex flex-col">
+      <div className={`w-full md:w-80 border-r flex flex-col ${isMobile && activeChat ? 'hidden' : ''}`}>
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -643,10 +645,19 @@ export default function ChatPage() {
 
       {/* Chat Area */}
       {activeChat ? (
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-card' : ''}`}>
           {/* Chat Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Back button on mobile */}
+              {isMobile && (
+                <button
+                  onClick={() => setActiveChatId(null)}
+                  className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
               {getChatAvatar(activeChat)}
               <div>
                 <h3 className="font-medium">{getChatName(activeChat)}</h3>
@@ -834,7 +845,7 @@ export default function ChatPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 hidden md:flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Select a chat or start a new conversation</p>
