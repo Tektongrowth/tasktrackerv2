@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { prisma } from './db/client.js';
 import { sendChatNotificationEmail } from './services/email.js';
 import { sendTelegramMessage, escapeTelegramHtml, storeTelegramChatMapping } from './services/telegram.js';
+import { sendChatMessagePush } from './services/pushNotifications.js';
 
 // Track connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map<string, Set<string>>();
@@ -131,14 +132,25 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
             io.to(`user:${p.userId}`).emit('message:new', messageWithTempId);
           }
 
-          // Notify offline users via email and Telegram
+          // Notify offline users via push, email, and Telegram
           for (const p of chat.participants) {
             if (p.userId !== userId && !isUserOnline(p.userId)) {
+              const senderName = message.sender.name || 'Someone';
+
+              // Send push notification
+              sendChatMessagePush(
+                p.userId,
+                senderName,
+                content,
+                chatId,
+                chat.name || undefined
+              );
+
               // Send email notification
               if (p.user.email) {
                 sendChatNotificationEmail(
                   p.user.email,
-                  message.sender.name || 'Someone',
+                  senderName,
                   chat.name,
                   content.substring(0, 100),
                   chatId
@@ -146,8 +158,6 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
               }
               // Send Telegram notification with reply support
               if (p.user.telegramChatId) {
-                const senderName = message.sender.name || 'Someone';
-                const senderMentionName = senderName.toLowerCase().replace(/\s+/g, '');
                 const chatTitle = chat.name || 'Direct message';
                 const telegramMessage = `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(content)}\n\n<i>Reply to this message to respond</i>`;
 

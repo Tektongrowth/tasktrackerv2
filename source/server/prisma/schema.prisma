@@ -116,6 +116,7 @@ model User {
   telegramMessagesFrom     TelegramMessageMap[] @relation("TelegramReplyTo")
   commentReactions         CommentReaction[]    @relation("CommentReactions")
   messageReactions         MessageReaction[]    @relation("MessageReactions")
+  pushSubscriptions        PushSubscription[]
 
   @@index([jobRoleId])
   @@map("users")
@@ -661,4 +662,21 @@ model TelegramMessageMap {
   @@index([chatId])
   @@index([recipientId])
   @@map("telegram_message_map")
+}
+
+// Web Push subscriptions for PWA notifications
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String   // Public key for encryption
+  auth      String   // Auth secret
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }

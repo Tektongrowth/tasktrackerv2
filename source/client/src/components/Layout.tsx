@@ -14,6 +14,7 @@ import { BulkActionBar } from '@/components/BulkActionBar';
 import { GlobalSearchModal } from '@/components/GlobalSearchModal';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { MobileProjectSelector } from '@/components/MobileProjectSelector';
+import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 import {
   LayoutDashboard,
   Kanban,
@@ -417,6 +418,9 @@ export function Layout() {
 
       {/* Global Search Modal */}
       <GlobalSearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen} />
+
+      {/* Push Notification Prompt */}
+      <PushNotificationPrompt />
     </div>
   );
 }
