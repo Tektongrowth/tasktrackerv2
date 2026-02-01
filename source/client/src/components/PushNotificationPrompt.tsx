@@ -16,9 +16,6 @@ export function PushNotificationPrompt({ className }: PushNotificationPromptProp
     permission,
     error,
     subscribe,
-    unsubscribe,
-    isIOS,
-    isPWA,
     needsInstall,
   } = usePushNotifications();
 
