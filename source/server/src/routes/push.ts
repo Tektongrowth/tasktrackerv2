@@ -104,7 +104,7 @@ router.get('/subscriptions', isAuthenticated, async (req: Request, res: Response
 router.delete('/subscriptions/:id', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user as Express.User;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     // Ensure user owns this subscription
     const subscription = await prisma.pushSubscription.findFirst({
