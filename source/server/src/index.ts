@@ -170,6 +170,19 @@ app.use('/api', (_req, res, next) => {
   next();
 });
 
+// Health check endpoint for monitoring
+app.get('/health', async (_req, res) => {
+  try {
+    // Test database connection
+    const { prisma } = await import('./db/client.js');
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'healthy', database: 'connected' });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ status: 'unhealthy', database: 'disconnected', error: String(error) });
+  }
+});
+
 // API Routes
 app.use('/auth', authRoutes);
 app.use('/api/users', userRoutes);
