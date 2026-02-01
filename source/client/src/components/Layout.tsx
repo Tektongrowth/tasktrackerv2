@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useFilters } from '@/hooks/useFilters';
 import { useTheme } from '@/hooks/useTheme';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { clients } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { BulkActionBar } from '@/components/BulkActionBar';
 import { GlobalSearchModal } from '@/components/GlobalSearchModal';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { MobileProjectSelector } from '@/components/MobileProjectSelector';
 import {
   LayoutDashboard,
   Kanban,
@@ -202,6 +205,7 @@ export function Layout() {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
 
@@ -300,8 +304,8 @@ export function Layout() {
         </div>
       )}
 
-      {/* Main Navigation Sidebar */}
-      <aside className="w-16 sidebar-dark flex flex-col items-center py-4 relative z-50">
+      {/* Main Navigation Sidebar - Hidden on mobile */}
+      <aside className="w-16 sidebar-dark hidden md:flex flex-col items-center py-4 relative z-50">
         <div className="mb-8">
           <img src={logoUrl} alt="Logo" className="w-10 h-10 object-contain" />
         </div>
@@ -363,15 +367,17 @@ export function Layout() {
         </div>
       </aside>
 
-      {/* Project Sidebar */}
+      {/* Project Sidebar - Hidden on mobile */}
       {showProjectSidebar && (
-        <aside className="w-64 bg-white border-r flex flex-col relative z-10">
+        <aside className="w-64 bg-white border-r hidden md:flex flex-col relative z-10">
           <ProjectSidebar />
         </aside>
       )}
 
       {/* Main content - always show scrollbar to prevent layout shift */}
-      <main className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col">
+      <main className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-20 md:pb-0">
+        {/* Mobile Project Selector */}
+        {showProjectSidebar && isMobile && <MobileProjectSelector />}
         <div className="flex-1">
           <Outlet />
         </div>
@@ -388,8 +394,8 @@ export function Layout() {
       {/* Bulk Action Bar */}
       <BulkActionBar />
 
-      {/* Floating Search Button - Bottom Left */}
-      <div className="fixed bottom-6 left-40 z-50 group">
+      {/* Floating Search Button - Bottom Left (hidden on mobile) */}
+      <div className="fixed bottom-6 left-40 z-50 group hidden md:block">
         <button
           onClick={() => setSearchModalOpen(true)}
           className="w-14 h-14 bg-[var(--theme-accent)] hover:bg-[var(--theme-primary)] rounded-full flex items-center justify-center shadow-lg transition-colors animate-slow-pulse"
@@ -400,6 +406,14 @@ export function Layout() {
           Search (Option+Space)
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <MobileBottomNav
+          unreadMessageCount={totalUnreadMessages}
+          onSearchClick={() => setSearchModalOpen(true)}
+        />
+      )}
 
       {/* Global Search Modal */}
       <GlobalSearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen} />
