@@ -1,0 +1,3 @@
+# Force cache bust - v2
+[phases.build]
+cmds = ["npm install", "npm run build"]
