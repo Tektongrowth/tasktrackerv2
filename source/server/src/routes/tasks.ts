@@ -5,7 +5,7 @@ import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
 import { sendTelegramMessage, sendTelegramPhoto, sendTelegramDocument, escapeTelegramHtml, storeTelegramMessageMapping } from '../services/telegram.js';
-import { sendMentionPush } from '../services/pushNotifications.js';
+// import { sendMentionPush } from '../services/pushNotifications.js'; // Temporarily disabled
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
@@ -1398,18 +1398,18 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
 
         const contentPreview = content.substring(0, 100);
 
-        // Send push notifications
-        await Promise.allSettled(
-          mentionedUsers.map((mentionedUser) =>
-            sendMentionPush(
-              mentionedUser.id,
-              user.name,
-              task.title,
-              task.id,
-              contentPreview
-            ).catch((err) => console.error(`Failed to send mention push to ${mentionedUser.id}:`, err))
-          )
-        );
+        // Send push notifications - temporarily disabled
+        // await Promise.allSettled(
+        //   mentionedUsers.map((mentionedUser) =>
+        //     sendMentionPush(
+        //       mentionedUser.id,
+        //       user.name,
+        //       task.title,
+        //       task.id,
+        //       contentPreview
+        //     ).catch((err) => console.error(`Failed to send mention push to ${mentionedUser.id}:`, err))
+        //   )
+        // );
 
         // Send email notifications
         await Promise.allSettled(
@@ -1806,18 +1806,18 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
 
           const contentPreview = content.substring(0, 100);
 
-          // Send push notifications
-          await Promise.allSettled(
-            mentionedUsers.map((mentionedUser) =>
-              sendMentionPush(
-                mentionedUser.id,
-                user.name,
-                task.title,
-                task.id,
-                contentPreview
-              ).catch((err) => console.error(`Failed to send mention push to ${mentionedUser.id}:`, err))
-            )
-          );
+          // Send push notifications - temporarily disabled
+          // await Promise.allSettled(
+          //   mentionedUsers.map((mentionedUser) =>
+          //     sendMentionPush(
+          //       mentionedUser.id,
+          //       user.name,
+          //       task.title,
+          //       task.id,
+          //       contentPreview
+          //     ).catch((err) => console.error(`Failed to send mention push to ${mentionedUser.id}:`, err))
+          //   )
+          // );
 
           // Send email notifications
           await Promise.allSettled(

@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { prisma } from './db/client.js';
 import { sendChatNotificationEmail } from './services/email.js';
 import { sendTelegramMessage, escapeTelegramHtml, storeTelegramChatMapping } from './services/telegram.js';
-import { sendChatMessagePush } from './services/pushNotifications.js';
+// import { sendChatMessagePush } from './services/pushNotifications.js'; // Temporarily disabled
 
 // Track connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map<string, Set<string>>();
@@ -137,14 +137,14 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
             if (p.userId !== userId && !isUserOnline(p.userId)) {
               const senderName = message.sender.name || 'Someone';
 
-              // Send push notification
-              sendChatMessagePush(
-                p.userId,
-                senderName,
-                content,
-                chatId,
-                chat.name || undefined
-              );
+              // Send push notification - temporarily disabled
+              // sendChatMessagePush(
+              //   p.userId,
+              //   senderName,
+              //   content,
+              //   chatId,
+              //   chat.name || undefined
+              // );
 
               // Send email notification
               if (p.user.email) {

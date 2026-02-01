@@ -38,7 +38,7 @@ import chatRoutes from './routes/chats.js';
 import notificationRoutes from './routes/notifications.js';
 import supportRoutes from './routes/support.js';
 import telegramRoutes from './routes/telegram.js';
-import pushRoutes from './routes/push.js';
+// import pushRoutes from './routes/push.js'; // Temporarily disabled
 import { initializeScheduler } from './jobs/scheduler.js';
 
 config();
@@ -210,7 +210,7 @@ app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/telegram', telegramRoutes);
-app.use('/api/push', pushRoutes);
+// app.use('/api/push', pushRoutes); // Temporarily disabled
 app.use('/webhooks', webhookRoutes);
 
 // Serve static files in production
