@@ -114,10 +114,12 @@ export function KanbanPage() {
   if (selectedProjectId) params.projectId = selectedProjectId;
   if (selectedClientId) params.clientId = selectedClientId;
 
-  const { data: activeTasks = [], isLoading: isLoadingTasks } = useTasks(
+  const { data: activeTasks, isLoading: isLoadingTasks } = useTasks(
     Object.keys(params).length > 0 ? params : undefined,
     { enabled: !!user }
   );
+  // Use empty array as fallback only when we truly have no data (not during refetch)
+  const safeActiveTasks = activeTasks ?? [];
   const { data: archivedTasks = [] } = useQuery({
     queryKey: ['tasks', 'archived'],
     queryFn: tasksApi.listArchived,
@@ -130,8 +132,8 @@ export function KanbanPage() {
     if (showArchived) {
       return archivedTasks;
     }
-    return activeTasks;
-  }, [activeTasks, archivedTasks, showArchived]);
+    return safeActiveTasks;
+  }, [safeActiveTasks, archivedTasks, showArchived]);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
@@ -769,8 +771,8 @@ export function KanbanPage() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {isLoadingTasks ? (
-          /* Loading Skeletons */
+        {isLoadingTasks && !activeTasks ? (
+          /* Loading Skeletons - only show on initial load when we have no data */
           <div className="flex gap-4 p-6 overflow-x-auto min-h-[400px]">
             <KanbanColumnSkeleton />
             <KanbanColumnSkeleton />

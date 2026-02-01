@@ -92,11 +92,13 @@ export function ListPage() {
   if (selectedClientId) params.clientId = selectedClientId;
   if (statusFilter !== 'all') params.status = statusFilter;
 
-  const { data: activeTasks = [] } = useQuery({
+  const { data: activeTasks } = useQuery({
     queryKey: ['tasks', params],
     queryFn: () => tasksApi.list(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
+  const safeActiveTasks = activeTasks ?? [];
 
   const { data: archivedTasks = [] } = useQuery({
     queryKey: ['tasks', 'archived'],
@@ -109,8 +111,8 @@ export function ListPage() {
     if (showArchived) {
       return archivedTasks;
     }
-    return activeTasks;
-  }, [activeTasks, archivedTasks, showArchived]);
+    return safeActiveTasks;
+  }, [safeActiveTasks, archivedTasks, showArchived]);
 
   // Apply quick filters and sort by due date
   const filteredTasks = useMemo(() => {

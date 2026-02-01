@@ -4,12 +4,32 @@ import { toast } from '@/components/ui/toaster';
 import type { Task, TaskStatus, TaskInput } from '@/lib/types';
 
 export function useTasks(params?: Record<string, string>, options?: { enabled?: boolean }) {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: ['tasks', params],
     queryFn: () => tasks.list(params),
     staleTime: 1000 * 10, // 10 seconds - tasks should be fresh
     refetchOnMount: 'always', // Always refetch when component mounts
     enabled: options?.enabled !== false, // Allow disabling the query
+    // Keep previous data while fetching new data for different params
+    // This prevents the flash of empty content when filters change
+    placeholderData: (previousData) => {
+      // If we have previous data for this exact query, use it
+      if (previousData) return previousData;
+      // Otherwise, try to get data from the base tasks query (no params)
+      // This helps when switching between filtered and unfiltered views
+      const baseTasksData = queryClient.getQueryData<Task[]>(['tasks', undefined]);
+      if (baseTasksData) return baseTasksData;
+      // Or try any tasks query that has data
+      const allTasksQueries = queryClient.getQueriesData<Task[]>({ queryKey: ['tasks'] });
+      for (const [, data] of allTasksQueries) {
+        if (Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+      }
+      return undefined;
+    },
   });
 }
 

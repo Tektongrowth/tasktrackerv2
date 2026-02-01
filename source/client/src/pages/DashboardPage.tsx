@@ -214,24 +214,30 @@ export function DashboardPage() {
     queryKey: ['dashboard', 'stats', params],
     queryFn: () => dashboard.stats(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 
-  const { data: upcomingTasks = [] } = useQuery({
+  const { data: upcomingTasks } = useQuery({
     queryKey: ['dashboard', 'upcoming', params],
     queryFn: () => dashboard.upcoming(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
+  const safeUpcomingTasks = upcomingTasks ?? [];
 
-  const { data: completedTasks = [] } = useQuery({
+  const { data: completedTasks } = useQuery({
     queryKey: ['dashboard', 'completed', params],
     queryFn: () => dashboard.completed(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
+  const safeCompletedTasks = completedTasks ?? [];
 
   const { data: timeSummary } = useQuery({
     queryKey: ['dashboard', 'time-summary', params],
     queryFn: () => dashboard.timeSummary(Object.keys(params).length > 0 ? params : undefined),
     enabled: !!user, // Wait for auth before fetching
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 
   const { data: allUsers = [] } = useQuery({
@@ -261,8 +267,8 @@ export function DashboardPage() {
 
   const totalTasks = (stats?.tasks.todo || 0) + (stats?.tasks.inReview || 0) + (stats?.tasks.completed || 0);
 
-  const overdueTasks = upcomingTasks.filter(t => t.dueDate && isOverdue(t.dueDate));
-  const dueTodayTasks = upcomingTasks.filter(t => {
+  const overdueTasks = safeUpcomingTasks.filter(t => t.dueDate && isOverdue(t.dueDate));
+  const dueTodayTasks = safeUpcomingTasks.filter(t => {
     if (!t.dueDate) return false;
     const due = new Date(t.dueDate);
     const today = new Date();
@@ -422,7 +428,7 @@ export function DashboardPage() {
             }
           >
             <div className="space-y-2 max-h-[1280px] overflow-y-auto">
-              {upcomingTasks.slice(0, 8).map((task) => {
+              {safeUpcomingTasks.slice(0, 8).map((task) => {
                 const taskOverdue = task.dueDate && isOverdue(task.dueDate);
                 return (
                   <div
@@ -464,7 +470,7 @@ export function DashboardPage() {
                   </div>
                 );
               })}
-              {upcomingTasks.length === 0 && (
+              {safeUpcomingTasks.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
                   <p>All caught up!</p>
@@ -531,10 +537,10 @@ export function DashboardPage() {
         {/* Recently Completed - Full width */}
         <DashboardCard
           title="Recently Completed"
-          badge={<span className="text-sm text-white/80">{completedTasks.length} this month</span>}
+          badge={<span className="text-sm text-white/80">{safeCompletedTasks.length} this month</span>}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {completedTasks.slice(0, 9).map((task) => (
+            {safeCompletedTasks.slice(0, 9).map((task) => (
               <div
                 key={task.id}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100 cursor-pointer"
@@ -552,7 +558,7 @@ export function DashboardPage() {
                 </span>
               </div>
             ))}
-            {completedTasks.length === 0 && (
+            {safeCompletedTasks.length === 0 && (
               <div className="col-span-full text-center py-8 text-muted-foreground">
                 <p>No completed tasks yet</p>
               </div>
