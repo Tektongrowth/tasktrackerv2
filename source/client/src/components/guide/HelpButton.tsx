@@ -83,7 +83,7 @@ export function HelpButton() {
   };
 
   return (
-    <div className="fixed bottom-6 left-24 z-50 group">
+    <div className="fixed bottom-6 left-24 z-50 group hidden md:block">
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button
