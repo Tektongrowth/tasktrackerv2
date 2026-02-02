@@ -18,6 +18,86 @@ import { UserAvatar } from '../components/UserAvatar';
 
 // Minimal user type for chat list (returned by /api/users/chat-list)
 type ChatUser = { id: string; name: string; email: string; avatarUrl: string | null };
+
+// Component to display chat attachments with signed URLs
+function ChatAttachmentDisplay({
+  attachment,
+}: {
+  attachment: { id: string; fileName: string; fileType: string; storageKey: string };
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const isImage = attachment.fileType.startsWith('image/');
+  const isPdf = attachment.fileType === 'application/pdf';
+
+  useEffect(() => {
+    if (!isImage) {
+      setLoading(false);
+      return;
+    }
+
+    // Get signed URL from API
+    chatsApi.getAttachmentSignedUrl(attachment.storageKey)
+      .then(({ url }) => {
+        setImageUrl(url);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, [attachment.storageKey, isImage]);
+
+  const handleClick = async () => {
+    if (isImage && imageUrl) {
+      window.open(imageUrl, '_blank');
+    } else {
+      // For non-images or if URL not loaded yet, fetch and open
+      try {
+        const { url } = await chatsApi.getAttachmentSignedUrl(attachment.storageKey);
+        window.open(url, '_blank');
+      } catch {
+        // Fallback to redirect URL
+        window.open(chatsApi.getAttachmentUrl(attachment.storageKey), '_blank');
+      }
+    }
+  };
+
+  if (isImage) {
+    return (
+      <div className="cursor-pointer" onClick={handleClick}>
+        {loading ? (
+          <div className="w-48 h-32 bg-black/10 rounded animate-pulse flex items-center justify-center">
+            <File className="h-6 w-6 opacity-50" />
+          </div>
+        ) : error ? (
+          <div className="w-48 h-32 bg-black/10 rounded flex items-center justify-center">
+            <span className="text-sm opacity-70">Failed to load image</span>
+          </div>
+        ) : (
+          <img
+            src={imageUrl || ''}
+            alt={attachment.fileName}
+            className="max-w-full max-h-64 rounded cursor-pointer hover:opacity-90 transition-opacity"
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-2 p-2 bg-black/10 rounded hover:bg-black/20 transition-colors text-left"
+    >
+      <File className={`w-4 h-4 ${isPdf ? 'text-red-500' : ''}`} />
+      <span className="text-sm truncate">{attachment.fileName}</span>
+      {isPdf && <span className="text-xs opacity-70">(click to view)</span>}
+    </button>
+  );
+}
+
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
 import { ReactionPicker, ReactionDisplay } from '../components/reactions';
@@ -722,48 +802,12 @@ export default function ChatPage() {
                       <p className="whitespace-pre-wrap break-words">{message.content}</p>
                       {message.attachments && message.attachments.length > 0 && (
                         <div className="mt-2 space-y-2">
-                          {message.attachments.map((attachment) => {
-                            const isImage = attachment.fileType.startsWith('image/');
-                            const isPdf = attachment.fileType === 'application/pdf';
-                            const attachmentUrl = chatsApi.getAttachmentUrl(attachment.storageKey);
-
-                            if (isImage) {
-                              return (
-                                <a
-                                  key={attachment.id}
-                                  href={attachmentUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block"
-                                >
-                                  <img
-                                    src={attachmentUrl}
-                                    alt={attachment.fileName}
-                                    crossOrigin="use-credentials"
-                                    className="max-w-full max-h-64 rounded cursor-pointer hover:opacity-90 transition-opacity"
-                                  />
-                                </a>
-                              );
-                            }
-
-                            return (
-                              <a
-                                key={attachment.id}
-                                href={attachmentUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 p-2 bg-black/10 rounded hover:bg-black/20 transition-colors"
-                              >
-                                {isPdf ? (
-                                  <File className="w-4 h-4 text-red-500" />
-                                ) : (
-                                  <File className="w-4 h-4" />
-                                )}
-                                <span className="text-sm truncate">{attachment.fileName}</span>
-                                {isPdf && <span className="text-xs opacity-70">(click to view)</span>}
-                              </a>
-                            );
-                          })}
+                          {message.attachments.map((attachment) => (
+                            <ChatAttachmentDisplay
+                              key={attachment.id}
+                              attachment={attachment}
+                            />
+                          ))}
                         </div>
                       )}
                     </div>

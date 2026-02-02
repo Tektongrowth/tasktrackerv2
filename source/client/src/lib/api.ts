@@ -713,6 +713,11 @@ export const chats = {
     return res.json() as Promise<import('./types').ChatMessage>;
   },
   getAttachmentUrl: (storageKey: string) => `${API_BASE}/api/chats/attachments/${storageKey}`,
+  getAttachmentSignedUrl: (storageKey: string) =>
+    fetchApi<{ url: string }>('/api/chats/attachments/signed-url', {
+      method: 'POST',
+      body: JSON.stringify({ storageKey }),
+    }),
   toggleReaction: (chatId: string, messageId: string, emoji: import('./types').EmojiKey) =>
     fetchApi<{ reactions: import('./types').Reaction[] }>(`/api/chats/${chatId}/messages/${messageId}/reactions`, {
       method: 'POST',

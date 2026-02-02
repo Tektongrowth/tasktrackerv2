@@ -620,7 +620,51 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
   }
 });
 
-// Serve attachment file (redirect to signed R2 URL)
+// Get signed URL for attachment (returns JSON)
+router.post('/attachments/signed-url', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user as Express.User;
+    const { storageKey } = req.body;
+
+    if (!storageKey || typeof storageKey !== 'string') {
+      throw new AppError('storageKey is required', 400);
+    }
+
+    // Find the attachment
+    const attachment = await prisma.chatAttachment.findFirst({
+      where: { storageKey },
+      include: {
+        message: {
+          include: {
+            chat: {
+              include: {
+                participants: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!attachment) {
+      throw new AppError('Attachment not found', 404);
+    }
+
+    // Verify user is a participant
+    const isParticipant = attachment.message.chat.participants.some(p => p.userId === user.id);
+    if (!isParticipant) {
+      throw new AppError('Not authorized to access this attachment', 403);
+    }
+
+    // Get signed URL from R2
+    const signedUrl = await getSignedDownloadUrl(attachment.storageKey);
+    res.json({ url: signedUrl });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Serve attachment file (redirect to signed R2 URL) - fallback for direct links
 // Use wildcard to capture storageKey with slashes (e.g., chat/1234-abc.jpg)
 router.get('/attachments/*', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
