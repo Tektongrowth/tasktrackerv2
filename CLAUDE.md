@@ -123,3 +123,16 @@ Key env vars (set in Railway):
 - 2-space indentation
 - React functional components with hooks
 - Prisma for all database operations (no raw SQL)
+
+## Maintenance
+
+**Last reviewed**: 2026-02-02
+
+This file contains foundational project information. Update it when:
+- New services or integrations are added
+- Architecture patterns or conventions change
+- Project structure changes
+- New commands or workflows are established
+- New gotchas are discovered
+
+At session start, check if significant commits have been made since last review date. If foundational changes occurred, update this file and the review date.
