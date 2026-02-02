@@ -363,26 +363,59 @@ router.post('/:id/resend-invite', isAuthenticated, isAdmin, async (req: Request,
   }
 });
 
-// Valid notification preference keys
-const VALID_NOTIFICATION_KEYS = [
+// Valid notification preference keys with channel support
+// Core notification types that support per-channel preferences
+const CHANNEL_NOTIFICATION_TYPES = ['taskAssignment', 'mentions', 'chatMessages'] as const;
+
+// Legacy notification keys (email-only)
+const LEGACY_NOTIFICATION_KEYS = [
   'projectAssignment',     // When assigned to a new project
-  'taskAssignment',        // When assigned to a new task
   'taskMovedToReview',     // When a task is moved to review
   'taskCompleted',         // When a task is marked complete
   'taskOverdue',           // When a task becomes overdue
   'taskDueSoon',           // When a task is due within 24 hours
-  'mentions',              // When mentioned in comments
   'dailyDigest',           // Daily summary email
   'weeklyDigest',          // Weekly summary email
 ] as const;
 
-// Validate notification preferences
-function sanitizeNotificationPrefs(prefs: unknown): Record<string, boolean> | null {
+// Valid channels for channel-based preferences
+const VALID_CHANNELS = ['email', 'push', 'telegram'] as const;
+
+interface ChannelPrefs {
+  email?: boolean;
+  push?: boolean;
+  telegram?: boolean;
+}
+
+// Validate and sanitize notification preferences
+// Supports both old boolean format and new channel format
+function sanitizeNotificationPrefs(prefs: unknown): Record<string, boolean | ChannelPrefs> | null {
   if (!prefs || typeof prefs !== 'object') return null;
 
-  const sanitized: Record<string, boolean> = {};
+  const sanitized: Record<string, boolean | ChannelPrefs> = {};
+
   for (const [key, value] of Object.entries(prefs)) {
-    if (VALID_NOTIFICATION_KEYS.includes(key as any) && typeof value === 'boolean') {
+    // Handle channel-based notification types
+    if (CHANNEL_NOTIFICATION_TYPES.includes(key as any)) {
+      if (typeof value === 'boolean') {
+        // Old format: boolean (for backwards compatibility)
+        sanitized[key] = value;
+      } else if (value && typeof value === 'object') {
+        // New format: channel object
+        const channelPrefs: ChannelPrefs = {};
+        const v = value as Record<string, unknown>;
+        for (const channel of VALID_CHANNELS) {
+          if (typeof v[channel] === 'boolean') {
+            channelPrefs[channel] = v[channel] as boolean;
+          }
+        }
+        if (Object.keys(channelPrefs).length > 0) {
+          sanitized[key] = channelPrefs;
+        }
+      }
+    }
+    // Handle legacy notification keys (email-only, boolean)
+    else if (LEGACY_NOTIFICATION_KEYS.includes(key as any) && typeof value === 'boolean') {
       sanitized[key] = value;
     }
   }
@@ -404,21 +437,61 @@ router.get('/me/notifications', isAuthenticated, async (req: Request, res: Respo
       throw new AppError('User not found', 404);
     }
 
-    // Return preferences with defaults for any missing keys
-    const defaultPrefs: Record<string, boolean> = {
+    // Default channel preferences for core notification types
+    const defaultChannelPrefs = {
+      taskAssignment: { email: true, push: true, telegram: true },
+      mentions: { email: true, push: true, telegram: true },
+      chatMessages: { email: false, push: true, telegram: true },
+    };
+
+    // Default legacy preferences (email-only)
+    const defaultLegacyPrefs: Record<string, boolean> = {
       projectAssignment: true,
-      taskAssignment: false,
       taskMovedToReview: true,
       taskCompleted: false,
       taskOverdue: true,
       taskDueSoon: false,
-      mentions: true,
       dailyDigest: false,
       weeklyDigest: true,
     };
 
-    const currentPrefs = (user.notificationPreferences as Record<string, boolean>) || {};
-    const mergedPrefs = { ...defaultPrefs, ...currentPrefs };
+    const currentPrefs = (user.notificationPreferences as Record<string, unknown>) || {};
+
+    // Build the merged preferences
+    const mergedPrefs: Record<string, unknown> = { ...defaultLegacyPrefs };
+
+    // Merge legacy preferences
+    for (const key of LEGACY_NOTIFICATION_KEYS) {
+      if (typeof currentPrefs[key] === 'boolean') {
+        mergedPrefs[key] = currentPrefs[key];
+      }
+    }
+
+    // Merge channel-based preferences with migration support
+    for (const type of CHANNEL_NOTIFICATION_TYPES) {
+      const value = currentPrefs[type];
+      if (value === undefined) {
+        // Use default
+        mergedPrefs[type] = defaultChannelPrefs[type];
+      } else if (typeof value === 'boolean') {
+        // Old format: convert boolean to all channels
+        mergedPrefs[type] = {
+          email: value,
+          push: value,
+          telegram: value,
+        };
+      } else if (value && typeof value === 'object') {
+        // New format: merge with defaults
+        const channelValue = value as Record<string, unknown>;
+        mergedPrefs[type] = {
+          email: typeof channelValue.email === 'boolean' ? channelValue.email : defaultChannelPrefs[type].email,
+          push: typeof channelValue.push === 'boolean' ? channelValue.push : defaultChannelPrefs[type].push,
+          telegram: typeof channelValue.telegram === 'boolean' ? channelValue.telegram : defaultChannelPrefs[type].telegram,
+        };
+      } else {
+        mergedPrefs[type] = defaultChannelPrefs[type];
+      }
+    }
 
     res.json(mergedPrefs);
   } catch (error) {
@@ -443,12 +516,12 @@ router.patch('/me/notifications', isAuthenticated, async (req: Request, res: Res
       select: { notificationPreferences: true }
     });
 
-    const currentPrefs = (user?.notificationPreferences as Record<string, boolean>) || {};
+    const currentPrefs = (user?.notificationPreferences as Record<string, unknown>) || {};
     const mergedPrefs = { ...currentPrefs, ...sanitized };
 
     await prisma.user.update({
       where: { id: userId },
-      data: { notificationPreferences: mergedPrefs }
+      data: { notificationPreferences: mergedPrefs as object }
     });
 
     res.json(mergedPrefs);

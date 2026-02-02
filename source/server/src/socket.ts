@@ -4,6 +4,7 @@ import { prisma } from './db/client.js';
 import { sendChatNotificationEmail } from './services/email.js';
 import { sendTelegramMessage, escapeTelegramHtml, storeTelegramChatMapping } from './services/telegram.js';
 import { sendChatMessagePush } from './services/pushNotifications.js';
+import { shouldNotify } from './utils/notificationPrefs.js';
 
 // Track connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map<string, Set<string>>();
@@ -132,27 +133,31 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
             io.to(`user:${p.userId}`).emit('message:new', messageWithTempId);
           }
 
-          // Send push notifications to all participants (even if online)
+          // Send push notifications to all participants (even if online, check preferences)
           for (const p of chat.participants) {
             if (p.userId !== userId) {
               const senderName = message.sender.name || 'Someone';
-              sendChatMessagePush(
-                p.userId,
-                senderName,
-                content,
-                chatId,
-                chat.name || undefined
-              );
+              // Check push preference for chat messages
+              const shouldPush = await shouldNotify(p.userId, 'chatMessages', 'push');
+              if (shouldPush) {
+                sendChatMessagePush(
+                  p.userId,
+                  senderName,
+                  content,
+                  chatId,
+                  chat.name || undefined
+                );
+              }
             }
           }
 
-          // Notify offline users via email and Telegram
+          // Notify offline users via email and Telegram (check preferences)
           for (const p of chat.participants) {
             if (p.userId !== userId && !isUserOnline(p.userId)) {
               const senderName = message.sender.name || 'Someone';
 
-              // Send email notification
-              if (p.user.email) {
+              // Send email notification (check preference)
+              if (p.user.email && await shouldNotify(p.userId, 'chatMessages', 'email')) {
                 sendChatNotificationEmail(
                   p.user.email,
                   senderName,
@@ -161,8 +166,8 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
                   chatId
                 );
               }
-              // Send Telegram notification with reply support
-              if (p.user.telegramChatId) {
+              // Send Telegram notification with reply support (check preference)
+              if (p.user.telegramChatId && await shouldNotify(p.userId, 'chatMessages', 'telegram')) {
                 const chatTitle = chat.name || 'Direct message';
                 const telegramMessage = `💬 <b>${escapeTelegramHtml(senderName)}</b> in "${escapeTelegramHtml(chatTitle)}":\n\n${escapeTelegramHtml(content)}\n\n<i>Reply to this message to respond</i>`;
 

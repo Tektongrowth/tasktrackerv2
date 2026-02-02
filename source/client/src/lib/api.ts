@@ -529,17 +529,27 @@ export const guide = {
     fetchApi<{ success: boolean }>('/api/guide/reset', { method: 'POST' }),
 };
 
+// Notification Channel Preferences (for core notification types)
+export interface ChannelPrefs {
+  email: boolean;
+  push: boolean;
+  telegram: boolean;
+}
+
 // Notification Preferences
 export interface NotificationPreferences {
+  // Legacy notification types (email-only, boolean)
   projectAssignment: boolean;
-  taskAssignment: boolean;
   taskMovedToReview: boolean;
   taskCompleted: boolean;
   taskOverdue: boolean;
   taskDueSoon: boolean;
-  mentions: boolean;
   dailyDigest: boolean;
   weeklyDigest: boolean;
+  // Core notification types with per-channel preferences
+  taskAssignment: ChannelPrefs;
+  mentions: ChannelPrefs;
+  chatMessages: ChannelPrefs;
 }
 
 export interface MentionNotification {

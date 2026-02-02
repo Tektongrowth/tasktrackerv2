@@ -5,10 +5,11 @@ import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
 import { sendTelegramMessage, sendTelegramPhoto, sendTelegramDocument, escapeTelegramHtml, storeTelegramMessageMapping } from '../services/telegram.js';
-import { sendMentionPush } from '../services/pushNotifications.js';
+import { sendMentionPush, sendTaskAssignmentPush } from '../services/pushNotifications.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
+import { shouldNotify } from '../utils/notificationPrefs.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -335,16 +336,24 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
       }
     });
 
-    // Send email and Telegram notifications to assignees
+    // Send notifications to assignees (check preferences for each channel)
     for (const assignee of task.assignees) {
-      if (assignee.user.email !== user.email) {
-        await sendTaskAssignedEmail(assignee.user.email, task);
-      }
-      if (assignee.user.telegramChatId && assignee.user.id !== user.id) {
-        await sendTelegramMessage(
-          assignee.user.telegramChatId,
-          `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
-        );
+      if (assignee.user.id !== user.id) {
+        // Email notification
+        if (assignee.user.email && await shouldNotify(assignee.user.id, 'taskAssignment', 'email')) {
+          await sendTaskAssignedEmail(assignee.user.email, task);
+        }
+        // Push notification
+        if (await shouldNotify(assignee.user.id, 'taskAssignment', 'push')) {
+          await sendTaskAssignmentPush(assignee.user.id, user.name, task.title, task.id);
+        }
+        // Telegram notification
+        if (assignee.user.telegramChatId && await shouldNotify(assignee.user.id, 'taskAssignment', 'telegram')) {
+          await sendTelegramMessage(
+            assignee.user.telegramChatId,
+            `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
+          );
+        }
       }
     }
 
@@ -584,17 +593,25 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
       });
     }
 
-    // Notify new assignees
+    // Notify new assignees (check preferences for each channel)
     for (const assigneeId of addedAssigneeIds) {
       const assignee = task?.assignees.find(a => a.userId === assigneeId);
-      if (assignee && assignee.user.email !== user.email) {
-        await sendTaskAssignedEmail(assignee.user.email, task);
-      }
-      if (assignee?.user.telegramChatId && assignee.user.id !== user.id) {
-        await sendTelegramMessage(
-          assignee.user.telegramChatId,
-          `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task!.title)}"\n\nProject: ${escapeTelegramHtml(task!.project.client.name)}`
-        );
+      if (assignee && assignee.user.id !== user.id) {
+        // Email notification
+        if (assignee.user.email && await shouldNotify(assignee.user.id, 'taskAssignment', 'email')) {
+          await sendTaskAssignedEmail(assignee.user.email, task);
+        }
+        // Push notification
+        if (await shouldNotify(assignee.user.id, 'taskAssignment', 'push')) {
+          await sendTaskAssignmentPush(assignee.user.id, user.name, task!.title, task!.id);
+        }
+        // Telegram notification
+        if (assignee.user.telegramChatId && await shouldNotify(assignee.user.id, 'taskAssignment', 'telegram')) {
+          await sendTelegramMessage(
+            assignee.user.telegramChatId,
+            `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task!.title)}"\n\nProject: ${escapeTelegramHtml(task!.project.client.name)}`
+          );
+        }
       }
     }
 
@@ -963,7 +980,7 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
       }
     });
 
-    // Notify new assignees
+    // Notify new assignees (check preferences for each channel)
     if (newAssigneeIds.length > 0) {
       const assignees = await prisma.user.findMany({
         where: { id: { in: newAssigneeIds } },
@@ -974,17 +991,23 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
         include: { project: { include: { client: true } } }
       });
       for (const assignee of assignees) {
-        if (assignee.email !== user.email) {
+        if (assignee.id !== user.id) {
           for (const task of tasks) {
-            await sendTaskAssignedEmail(assignee.email, task);
-          }
-        }
-        if (assignee.telegramChatId && assignee.id !== user.id) {
-          for (const task of tasks) {
-            await sendTelegramMessage(
-              assignee.telegramChatId,
-              `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
-            );
+            // Email notification
+            if (assignee.email && await shouldNotify(assignee.id, 'taskAssignment', 'email')) {
+              await sendTaskAssignedEmail(assignee.email, task);
+            }
+            // Push notification
+            if (await shouldNotify(assignee.id, 'taskAssignment', 'push')) {
+              await sendTaskAssignmentPush(assignee.id, user.name, task.title, task.id);
+            }
+            // Telegram notification
+            if (assignee.telegramChatId && await shouldNotify(assignee.id, 'taskAssignment', 'telegram')) {
+              await sendTelegramMessage(
+                assignee.telegramChatId,
+                `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
+              );
+            }
           }
         }
       }
@@ -1380,33 +1403,37 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
 
         const contentPreview = content.substring(0, 100);
 
-        // Send push notifications
+        // Send push notifications (check preferences)
         await Promise.allSettled(
-          mentionedUsers.map((mentionedUser) =>
-            sendMentionPush(
-              mentionedUser.id,
-              user.name,
-              task.title,
-              task.id,
-              contentPreview
-            ).catch((err) => console.error(`Failed to send mention push to ${mentionedUser.id}:`, err))
-          )
+          mentionedUsers.map(async (mentionedUser) => {
+            if (await shouldNotify(mentionedUser.id, 'mentions', 'push')) {
+              await sendMentionPush(
+                mentionedUser.id,
+                user.name,
+                task.title,
+                task.id,
+                contentPreview
+              );
+            }
+          })
         );
 
-        // Send email notifications
+        // Send email notifications (check preferences)
         await Promise.allSettled(
-          mentionedUsers.map((mentionedUser) =>
-            sendMentionNotificationEmail(
-              mentionedUser.email,
-              user.name,
-              task.title,
-              task.id,
-              contentPreview
-            ).catch((err) => console.error(`Failed to send mention email to ${mentionedUser.email}:`, err))
-          )
+          mentionedUsers.map(async (mentionedUser) => {
+            if (await shouldNotify(mentionedUser.id, 'mentions', 'email')) {
+              await sendMentionNotificationEmail(
+                mentionedUser.email,
+                user.name,
+                task.title,
+                task.id,
+                contentPreview
+              );
+            }
+          })
         );
 
-        // Send Telegram notifications with reply instructions
+        // Send Telegram notifications with reply instructions (check preferences)
         // Get sender's name for @mention (lowercase, no spaces)
         const senderMentionName = user.name.toLowerCase().replace(/\s+/g, '');
         const clientName = task.project?.client?.name || 'Unknown Client';
@@ -1416,7 +1443,7 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
         // Check for attachments
         const attachment = comment.attachments?.[0];
 
-        // Send notifications and store mappings for reply tracking
+        // Send Telegram notifications and store mappings for reply tracking
         const telegramUsersToNotify = mentionedUsers.filter((u) => u.telegramChatId);
 
         if (attachment) {
@@ -1424,30 +1451,34 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
           const isImage = attachment.fileType.startsWith('image/');
 
           for (const mentionedUser of telegramUsersToNotify) {
-            const result = isImage
-              ? await sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
-              : await sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption);
+            if (await shouldNotify(mentionedUser.id, 'mentions', 'telegram')) {
+              const result = isImage
+                ? await sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
+                : await sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption);
 
-            if (result.success && result.messageId) {
-              await storeTelegramMessageMapping(
-                result.messageId,
-                task.id,
-                mentionedUser.id,
-                user.id
-              );
+              if (result.success && result.messageId) {
+                await storeTelegramMessageMapping(
+                  result.messageId,
+                  task.id,
+                  mentionedUser.id,
+                  user.id
+                );
+              }
             }
           }
         } else {
           for (const mentionedUser of telegramUsersToNotify) {
-            const result = await sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption);
+            if (await shouldNotify(mentionedUser.id, 'mentions', 'telegram')) {
+              const result = await sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption);
 
-            if (result.success && result.messageId) {
-              await storeTelegramMessageMapping(
-                result.messageId,
-                task.id,
-                mentionedUser.id,
-                user.id
-              );
+              if (result.success && result.messageId) {
+                await storeTelegramMessageMapping(
+                  result.messageId,
+                  task.id,
+                  mentionedUser.id,
+                  user.id
+                );
+              }
             }
           }
         }
@@ -1788,33 +1819,37 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
 
           const contentPreview = content.substring(0, 100);
 
-          // Send push notifications
+          // Send push notifications (check preferences)
           await Promise.allSettled(
-            mentionedUsers.map((mentionedUser) =>
-              sendMentionPush(
-                mentionedUser.id,
-                user.name,
-                task.title,
-                task.id,
-                contentPreview
-              ).catch((err) => console.error(`Failed to send mention push to ${mentionedUser.id}:`, err))
-            )
+            mentionedUsers.map(async (mentionedUser) => {
+              if (await shouldNotify(mentionedUser.id, 'mentions', 'push')) {
+                await sendMentionPush(
+                  mentionedUser.id,
+                  user.name,
+                  task.title,
+                  task.id,
+                  contentPreview
+                );
+              }
+            })
           );
 
-          // Send email notifications
+          // Send email notifications (check preferences)
           await Promise.allSettled(
-            mentionedUsers.map((mentionedUser) =>
-              sendMentionNotificationEmail(
-                mentionedUser.email,
-                user.name,
-                task.title,
-                task.id,
-                contentPreview
-              ).catch((err) => console.error(`Failed to send mention email to ${mentionedUser.email}:`, err))
-            )
+            mentionedUsers.map(async (mentionedUser) => {
+              if (await shouldNotify(mentionedUser.id, 'mentions', 'email')) {
+                await sendMentionNotificationEmail(
+                  mentionedUser.email,
+                  user.name,
+                  task.title,
+                  task.id,
+                  contentPreview
+                );
+              }
+            })
           );
 
-          // Send Telegram notifications with reply instructions
+          // Send Telegram notifications with reply instructions (check preferences)
           const senderMentionName = user.name.toLowerCase().replace(/\s+/g, '');
           const clientName = task.project?.client?.name || 'Unknown Client';
           const projectName = task.project?.name || 'Unknown Project';
@@ -1823,7 +1858,7 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
           // Check for attachments
           const attachment = comment.attachments?.[0];
 
-          // Send notifications and store mappings for reply tracking
+          // Send Telegram notifications and store mappings for reply tracking
           const telegramUsersToNotify = mentionedUsers.filter((u) => u.telegramChatId);
 
           if (attachment) {
@@ -1831,30 +1866,34 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
             const isImage = attachment.fileType.startsWith('image/');
 
             for (const mentionedUser of telegramUsersToNotify) {
-              const result = isImage
-                ? await sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
-                : await sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption);
+              if (await shouldNotify(mentionedUser.id, 'mentions', 'telegram')) {
+                const result = isImage
+                  ? await sendTelegramPhoto(mentionedUser.telegramChatId!, fileUrl, telegramCaption)
+                  : await sendTelegramDocument(mentionedUser.telegramChatId!, fileUrl, attachment.fileName, telegramCaption);
 
-              if (result.success && result.messageId) {
-                await storeTelegramMessageMapping(
-                  result.messageId,
-                  task.id,
-                  mentionedUser.id,
-                  user.id
-                );
+                if (result.success && result.messageId) {
+                  await storeTelegramMessageMapping(
+                    result.messageId,
+                    task.id,
+                    mentionedUser.id,
+                    user.id
+                  );
+                }
               }
             }
           } else {
             for (const mentionedUser of telegramUsersToNotify) {
-              const result = await sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption);
+              if (await shouldNotify(mentionedUser.id, 'mentions', 'telegram')) {
+                const result = await sendTelegramMessage(mentionedUser.telegramChatId!, telegramCaption);
 
-              if (result.success && result.messageId) {
-                await storeTelegramMessageMapping(
-                  result.messageId,
-                  task.id,
-                  mentionedUser.id,
-                  user.id
-                );
+                if (result.success && result.messageId) {
+                  await storeTelegramMessageMapping(
+                    result.messageId,
+                    task.id,
+                    mentionedUser.id,
+                    user.id
+                  );
+                }
               }
             }
           }

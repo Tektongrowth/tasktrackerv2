@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notifications, NotificationPreferences, telegram } from '@/lib/api';
+import { notifications, ChannelPrefs, telegram } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -23,10 +23,18 @@ import {
   ExternalLink,
   Unlink,
   Smartphone,
+  Mail,
+  Send,
 } from 'lucide-react';
 
-interface NotificationSettingProps {
-  id: keyof NotificationPreferences;
+// Legacy notification types (email-only)
+type LegacyNotificationKey = 'projectAssignment' | 'taskMovedToReview' | 'taskCompleted' | 'taskOverdue' | 'taskDueSoon' | 'dailyDigest' | 'weeklyDigest';
+
+// Channel-based notification types
+type ChannelNotificationKey = 'taskAssignment' | 'mentions' | 'chatMessages';
+
+interface LegacyNotificationSettingProps {
+  id: LegacyNotificationKey;
   label: string;
   description: string;
   icon: React.ElementType;
@@ -35,14 +43,14 @@ interface NotificationSettingProps {
   disabled?: boolean;
 }
 
-function NotificationSetting({
+function LegacyNotificationSetting({
   label,
   description,
   icon: Icon,
   checked,
   onCheckedChange,
   disabled,
-}: NotificationSettingProps) {
+}: LegacyNotificationSettingProps) {
   return (
     <div className="flex items-start justify-between py-4 border-b last:border-0">
       <div className="flex items-start gap-3">
@@ -63,25 +71,111 @@ function NotificationSetting({
   );
 }
 
-const notificationSettings: Array<{
-  id: keyof NotificationPreferences;
+// Channel-based notification settings with 3 toggles per row
+interface ChannelNotificationRowProps {
+  id: ChannelNotificationKey;
   label: string;
   description: string;
   icon: React.ElementType;
-  category: 'assignments' | 'tasks' | 'communication' | 'digest';
+  prefs: ChannelPrefs;
+  onChannelChange: (channel: keyof ChannelPrefs, checked: boolean) => void;
+  disabled?: boolean;
+  telegramConnected?: boolean;
+}
+
+function ChannelNotificationRow({
+  label,
+  description,
+  icon: Icon,
+  prefs,
+  onChannelChange,
+  disabled,
+  telegramConnected,
+}: ChannelNotificationRowProps) {
+  return (
+    <div className="py-4 border-b last:border-0">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="p-2 rounded-lg bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <Label className="text-sm font-medium">{label}</Label>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-6 ml-11">
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground w-12">Email</span>
+          <Switch
+            checked={prefs.email}
+            onCheckedChange={(checked) => onChannelChange('email', checked)}
+            disabled={disabled}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Smartphone className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground w-12">Push</span>
+          <Switch
+            checked={prefs.push}
+            onCheckedChange={(checked) => onChannelChange('push', checked)}
+            disabled={disabled}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Send className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground w-12">Telegram</span>
+          <Switch
+            checked={prefs.telegram}
+            onCheckedChange={(checked) => onChannelChange('telegram', checked)}
+            disabled={disabled || !telegramConnected}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Channel-based notification types config
+const channelNotificationSettings: Array<{
+  id: ChannelNotificationKey;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+}> = [
+  {
+    id: 'taskAssignment',
+    label: 'Task Assignments',
+    description: 'When a task is assigned to you',
+    icon: ClipboardList,
+  },
+  {
+    id: 'mentions',
+    label: 'Mentions',
+    description: 'When someone mentions you in a comment',
+    icon: AtSign,
+  },
+  {
+    id: 'chatMessages',
+    label: 'Chat Messages',
+    description: 'When you receive a new chat message while offline',
+    icon: MessageCircle,
+  },
+];
+
+// Legacy notification settings (email-only)
+const legacyNotificationSettings: Array<{
+  id: LegacyNotificationKey;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  category: 'assignments' | 'tasks' | 'digest';
 }> = [
   {
     id: 'projectAssignment',
     label: 'New Project Assignment',
     description: 'When you are added to a new project',
     icon: FolderPlus,
-    category: 'assignments',
-  },
-  {
-    id: 'taskAssignment',
-    label: 'New Task Assignment',
-    description: 'When a task is assigned to you',
-    icon: ClipboardList,
     category: 'assignments',
   },
   {
@@ -111,13 +205,6 @@ const notificationSettings: Array<{
     description: 'When a task is due within 24 hours',
     icon: Clock,
     category: 'tasks',
-  },
-  {
-    id: 'mentions',
-    label: 'Mentions',
-    description: 'When someone mentions you in a comment',
-    icon: AtSign,
-    category: 'communication',
   },
   {
     id: 'dailyDigest',
@@ -191,14 +278,26 @@ export function MySettingsPage() {
     },
   });
 
-  const handleToggle = (key: keyof NotificationPreferences, value: boolean) => {
+  // Handle legacy (email-only) notification toggle
+  const handleLegacyToggle = (key: LegacyNotificationKey, value: boolean) => {
     updatePrefs.mutate({ [key]: value });
   };
 
-  const assignmentSettings = notificationSettings.filter(s => s.category === 'assignments');
-  const taskSettings = notificationSettings.filter(s => s.category === 'tasks');
-  const communicationSettings = notificationSettings.filter(s => s.category === 'communication');
-  const digestSettings = notificationSettings.filter(s => s.category === 'digest');
+  // Handle channel-based notification toggle
+  const handleChannelToggle = (type: ChannelNotificationKey, channel: keyof ChannelPrefs, value: boolean) => {
+    if (!preferences) return;
+    const currentPrefs = preferences[type] as ChannelPrefs;
+    updatePrefs.mutate({
+      [type]: {
+        ...currentPrefs,
+        [channel]: value,
+      },
+    });
+  };
+
+  const assignmentSettings = legacyNotificationSettings.filter(s => s.category === 'assignments');
+  const taskSettings = legacyNotificationSettings.filter(s => s.category === 'tasks');
+  const digestSettings = legacyNotificationSettings.filter(s => s.category === 'digest');
 
   return (
     <div>
@@ -208,14 +307,15 @@ export function MySettingsPage() {
       />
 
       <div className="p-6 max-w-3xl" data-guide="notification-settings">
+        {/* Channel-based Notifications Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-[var(--theme-primary)]" />
-              <CardTitle>Email Notifications</CardTitle>
+              <CardTitle>Notification Channels</CardTitle>
             </div>
             <CardDescription>
-              Control which email notifications you receive. Turn off notifications to keep your inbox clean.
+              Choose how you want to be notified for each type of notification. You can enable or disable Email, Push, and Telegram independently.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -226,20 +326,56 @@ export function MySettingsPage() {
               </div>
             ) : isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between py-4 border-b">
-                    <div className="flex items-center gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="py-4 border-b">
+                    <div className="flex items-center gap-3 mb-3">
                       <Skeleton className="h-8 w-8 rounded-lg" />
                       <div>
                         <Skeleton className="h-4 w-32 mb-1" />
                         <Skeleton className="h-3 w-48" />
                       </div>
                     </div>
-                    <Skeleton className="h-5 w-10 rounded-full" />
+                    <div className="flex items-center gap-6 ml-11">
+                      <Skeleton className="h-5 w-24" />
+                      <Skeleton className="h-5 w-24" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
                   </div>
                 ))}
               </div>
             ) : preferences ? (
+              <div className="bg-slate-50 rounded-lg px-4">
+                {channelNotificationSettings.map((setting) => (
+                  <ChannelNotificationRow
+                    key={setting.id}
+                    id={setting.id}
+                    label={setting.label}
+                    description={setting.description}
+                    icon={setting.icon}
+                    prefs={preferences[setting.id] as ChannelPrefs}
+                    onChannelChange={(channel, checked) => handleChannelToggle(setting.id, channel, checked)}
+                    disabled={updatePrefs.isPending}
+                    telegramConnected={telegramStatus?.connected}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        {/* Legacy Email Notifications Card */}
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-[var(--theme-primary)]" />
+              <CardTitle>Email-Only Notifications</CardTitle>
+            </div>
+            <CardDescription>
+              These notifications are sent via email only.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {!isLoading && preferences ? (
               <>
                 {/* Assignments Section */}
                 <div>
@@ -248,14 +384,14 @@ export function MySettingsPage() {
                   </h3>
                   <div className="bg-slate-50 rounded-lg px-4">
                     {assignmentSettings.map((setting) => (
-                      <NotificationSetting
+                      <LegacyNotificationSetting
                         key={setting.id}
                         id={setting.id}
                         label={setting.label}
                         description={setting.description}
                         icon={setting.icon}
-                        checked={preferences[setting.id]}
-                        onCheckedChange={(checked) => handleToggle(setting.id, checked)}
+                        checked={preferences[setting.id] as boolean}
+                        onCheckedChange={(checked) => handleLegacyToggle(setting.id, checked)}
                         disabled={updatePrefs.isPending}
                       />
                     ))}
@@ -269,35 +405,14 @@ export function MySettingsPage() {
                   </h3>
                   <div className="bg-slate-50 rounded-lg px-4">
                     {taskSettings.map((setting) => (
-                      <NotificationSetting
+                      <LegacyNotificationSetting
                         key={setting.id}
                         id={setting.id}
                         label={setting.label}
                         description={setting.description}
                         icon={setting.icon}
-                        checked={preferences[setting.id]}
-                        onCheckedChange={(checked) => handleToggle(setting.id, checked)}
-                        disabled={updatePrefs.isPending}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Communication Section */}
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Communication
-                  </h3>
-                  <div className="bg-slate-50 rounded-lg px-4">
-                    {communicationSettings.map((setting) => (
-                      <NotificationSetting
-                        key={setting.id}
-                        id={setting.id}
-                        label={setting.label}
-                        description={setting.description}
-                        icon={setting.icon}
-                        checked={preferences[setting.id]}
-                        onCheckedChange={(checked) => handleToggle(setting.id, checked)}
+                        checked={preferences[setting.id] as boolean}
+                        onCheckedChange={(checked) => handleLegacyToggle(setting.id, checked)}
                         disabled={updatePrefs.isPending}
                       />
                     ))}
@@ -311,14 +426,14 @@ export function MySettingsPage() {
                   </h3>
                   <div className="bg-slate-50 rounded-lg px-4">
                     {digestSettings.map((setting) => (
-                      <NotificationSetting
+                      <LegacyNotificationSetting
                         key={setting.id}
                         id={setting.id}
                         label={setting.label}
                         description={setting.description}
                         icon={setting.icon}
-                        checked={preferences[setting.id]}
-                        onCheckedChange={(checked) => handleToggle(setting.id, checked)}
+                        checked={preferences[setting.id] as boolean}
+                        onCheckedChange={(checked) => handleLegacyToggle(setting.id, checked)}
                         disabled={updatePrefs.isPending}
                       />
                     ))}
@@ -337,8 +452,7 @@ export function MySettingsPage() {
               <CardTitle>Push Notifications</CardTitle>
             </div>
             <CardDescription>
-              Get instant push notifications in your browser or on your phone when you receive messages or mentions.
-              On iOS, you must add this app to your home screen first.
+              Enable push notifications in your browser. Use the channel toggles above to control which notifications you receive via push.
             </CardDescription>
           </CardHeader>
           <CardContent>
