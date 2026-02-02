@@ -621,10 +621,11 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
 });
 
 // Serve attachment file (redirect to signed R2 URL)
-router.get('/attachments/:storageKey', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+// Use wildcard to capture storageKey with slashes (e.g., chat/1234-abc.jpg)
+router.get('/attachments/*', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user as Express.User;
-    const storageKey = req.params.storageKey as string;
+    const storageKey = req.params[0] as string;
 
     // Find the attachment
     const attachment = await prisma.chatAttachment.findFirst({
