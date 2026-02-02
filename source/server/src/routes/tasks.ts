@@ -286,14 +286,7 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
     const validTitle = validateTitle(title);
     const validDescription = validateDescription(description);
 
-    // Check permission to create tasks
-    if (!hasElevatedAccess(user)) {
-      // Check if user has edit access to the project
-      const hasAccess = await hasProjectAccess(user.id, projectId, 'canEdit');
-      if (!hasAccess && !user.permissions?.editAllTasks) {
-        throw new AppError('Permission denied', 403);
-      }
-    }
+    // Any authenticated user can create tasks
 
     // Validate roleId if provided
     if (roleId) {
@@ -387,7 +380,18 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
       canEdit = await hasProjectAccess(user.id, existingTask.projectId, 'canEdit');
     }
 
-    if (!canEdit) {
+    // Allow any user to assign themselves (even without full edit permission)
+    const existingAssigneeIds = existingTask.assignees.map(a => a.userId);
+    const newAssigneeIds: string[] = assigneeIds || existingAssigneeIds;
+    const isSelfAssignOnly = !canEdit &&
+      assigneeIds !== undefined &&
+      newAssigneeIds.includes(user.id) &&
+      newAssigneeIds.filter(id => !existingAssigneeIds.includes(id)).every(id => id === user.id) &&
+      existingAssigneeIds.filter(id => !newAssigneeIds.includes(id)).length === 0 &&
+      title === undefined && description === undefined && status === undefined &&
+      priority === undefined && dueDate === undefined && tags === undefined && roleId === undefined;
+
+    if (!canEdit && !isSelfAssignOnly) {
       throw new AppError('Permission denied', 403);
     }
 
@@ -407,9 +411,7 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
     if (roleId !== undefined) updateData.roleId = roleId || null;
     if (priority !== undefined) updateData.priority = priority;
 
-    // Handle assignee changes
-    const existingAssigneeIds = existingTask.assignees.map(a => a.userId);
-    const newAssigneeIds: string[] = assigneeIds || [];
+    // Handle assignee changes (existingAssigneeIds and newAssigneeIds declared above)
     const addedAssigneeIds = newAssigneeIds.filter(id => !existingAssigneeIds.includes(id));
     const removedAssigneeIds = existingAssigneeIds.filter(id => !newAssigneeIds.includes(id));
 
@@ -1297,17 +1299,7 @@ router.get('/:taskId/comments', isAuthenticated, async (req: Request, res: Respo
       throw new AppError('Task not found', 404);
     }
 
-    // Check view permission
-    const isAssigned = task.assignees.some(a => a.userId === user.id);
-    const canView = user.role === 'admin' ||
-      hasElevatedAccess(user) ||
-      user.permissions?.viewAllTasks ||
-      isAssigned;
-
-    if (!canView) {
-      throw new AppError('Permission denied', 403);
-    }
-
+    // Any authenticated user can view comments
     const comments = await prisma.taskComment.findMany({
       where: { taskId },
       include: {
@@ -1353,17 +1345,7 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
       throw new AppError('Task not found', 404);
     }
 
-    // Check permission - anyone who can view the task can comment
-    const isAssigned = task.assignees.some(a => a.userId === user.id);
-    const canView = user.role === 'admin' ||
-      hasElevatedAccess(user) ||
-      user.permissions?.viewAllTasks ||
-      isAssigned;
-
-    if (!canView) {
-      throw new AppError('Permission denied', 403);
-    }
-
+    // Any authenticated user can comment
     const comment = await prisma.taskComment.create({
       data: {
         taskId,

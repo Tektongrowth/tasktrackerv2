@@ -27,7 +27,7 @@ This file tracks ongoing work context, decisions, and session history. Updated d
 
 ## Current Priorities
 
-- (Add current focus areas here)
+- Task assignment bug fix (completed)
 
 ## Decisions Made
 
@@ -49,3 +49,7 @@ This file tracks ongoing work context, decisions, and session history. Updated d
 ### 2026-02-02
 - Set up memory.md and moved CLAUDE.md to project root for better Claude Code integration
 - Added maintenance workflow for keeping context files updated
+- Fixed task assignment bug: relaxed permissions so any authenticated user can:
+  - Create tasks (removed project edit access requirement)
+  - Assign themselves to any task (special self-assign check added)
+  - Comment on any task (removed view permission requirement)
