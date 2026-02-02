@@ -190,17 +190,17 @@ ${steps}${screenshotUrl ? `\n\n**Screenshot:** ${screenshotUrl}` : ''}`;
     const telegramMessage = `${urgencyEmoji} <b>Bug Report</b> (${urgency.toUpperCase()})\n\n<b>From:</b> ${escapeTelegramHtml(user.name)}\n<b>Issue:</b> ${escapeTelegramHtml(action)}\n\n<i>Task created in Bug Reports & Feature Requests project</i>`;
     notifyAdminsViaTelegram(telegramMessage);
 
-    // Send to bug channel for Claude analysis
-    sendBugReportToChannel({
-      reporterName: user.name,
-      action,
-      actual,
-      steps,
-      urgency,
-      errorMessage: errorMessage || undefined,
-      browser,
-      device,
-    });
+    // Claude bug channel analysis - disabled for now
+    // sendBugReportToChannel({
+    //   reporterName: user.name,
+    //   action,
+    //   actual,
+    //   steps,
+    //   urgency,
+    //   errorMessage: errorMessage || undefined,
+    //   browser,
+    //   device,
+    // });
 
     res.json({ success: true, message: 'Bug report submitted successfully' });
   } catch (error) {
