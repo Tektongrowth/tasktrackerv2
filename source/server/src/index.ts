@@ -153,13 +153,14 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'development-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
+  rolling: true, // Extend session on each request so active users stay logged in
   proxy: isProduction,
   cookie: {
     secure: isProduction,
     httpOnly: true,
     sameSite: 'none',
     domain: isProduction ? 'tektongrowth.com' : undefined,
-    maxAge: 6 * 60 * 60 * 1000 // 6 hours
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));
 
