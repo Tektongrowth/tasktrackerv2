@@ -8,7 +8,33 @@ export function useTasks(params?: Record<string, string>, options?: { enabled?: 
 
   return useQuery({
     queryKey: ['tasks', params],
-    queryFn: () => tasks.list(params),
+    queryFn: async () => {
+      try {
+        const data = await tasks.list(params);
+
+        // Defensive: preserve cached data if API returns empty unexpectedly
+        if (data.length === 0) {
+          const cachedData = queryClient.getQueryData<Task[]>(['tasks', params]);
+          if (cachedData && cachedData.length > 0) {
+            console.warn('[useTasks] Empty response with existing cache - preserving cached data. This may indicate a session or API issue.');
+            return cachedData;
+          }
+        }
+
+        return data;
+      } catch (error) {
+        // Check if this is an auth error
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('Not authenticated')) {
+          toast({
+            title: 'Session expired',
+            description: 'Please refresh the page to log in again.',
+            variant: 'destructive',
+          });
+        }
+        throw error;
+      }
+    },
     staleTime: 1000 * 10, // 10 seconds - tasks should be fresh
     refetchOnMount: 'always', // Always refetch when component mounts
     enabled: options?.enabled !== false, // Allow disabling the query
