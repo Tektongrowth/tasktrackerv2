@@ -3,6 +3,7 @@ import { prisma } from '../db/client.js';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME;
+const TELEGRAM_BUG_CHANNEL_ID = process.env.TELEGRAM_BUG_CHANNEL_ID;
 const SECRET = process.env.SESSION_SECRET || 'development-secret';
 
 // Result type for sending messages - includes message ID for reply tracking
@@ -156,6 +157,43 @@ export function escapeTelegramHtml(text: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+export interface BugReportNotification {
+  reporterName: string;
+  action: string;
+  actual: string;
+  steps: string;
+  urgency: 'blocking' | 'annoying' | 'minor';
+  errorMessage?: string;
+  browser?: string;
+  device?: string;
+}
+
+/**
+ * Send a bug report to the bug channel for Claude analysis
+ * Formatted to be parsed by the Claude Telegram Assistant
+ */
+export async function sendBugReportToChannel(
+  report: BugReportNotification
+): Promise<TelegramSendResult> {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BUG_CHANNEL_ID) {
+    console.log('Bug channel notification not sent - channel not configured');
+    return { success: false };
+  }
+
+  const urgencyEmoji = report.urgency === 'blocking' ? '🚨' : report.urgency === 'annoying' ? '⚠️' : '📝';
+
+  const message = `🐛 Bug Report ${urgencyEmoji}
+Project: TaskTrackerPro
+Reporter: ${report.reporterName}
+Description: ${report.action} - ${report.actual}
+Steps: ${report.steps}${report.errorMessage ? `\nError: ${report.errorMessage}` : ''}
+Browser: ${report.browser || 'Unknown'}
+Device: ${report.device || 'Unknown'}
+Urgency: ${report.urgency}`;
+
+  return sendTelegramMessage(TELEGRAM_BUG_CHANNEL_ID, message, { parseMode: 'Markdown' });
 }
 
 /**
