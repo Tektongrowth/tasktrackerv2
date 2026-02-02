@@ -2,30 +2,15 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { uploadFile, getSignedDownloadUrl, generateStorageKey, isStorageConfigured } from '../services/storage.js';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 
 const router = Router();
 
-// Configure multer for file uploads
-const uploadDir = process.env.UPLOAD_DIR || './uploads/chat';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for memory storage (files uploaded to R2)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
@@ -560,6 +545,10 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
       throw new AppError('No file uploaded', 400);
     }
 
+    if (!isStorageConfigured()) {
+      throw new AppError('Cloud storage not configured', 500);
+    }
+
     // Verify participation
     const participant = await prisma.chatParticipant.findUnique({
       where: {
@@ -568,10 +557,12 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
     });
 
     if (!participant) {
-      // Clean up uploaded file
-      fs.unlinkSync(req.file.path);
       throw new AppError('Not a participant of this chat', 403);
     }
+
+    // Upload to R2
+    const storageKey = generateStorageKey('chat', req.file.originalname);
+    await uploadFile(storageKey, req.file.buffer, req.file.mimetype);
 
     // Create message with attachment
     const message = await prisma.chatMessage.create({
@@ -584,7 +575,7 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
             fileName: req.file.originalname,
             fileSize: req.file.size,
             fileType: req.file.mimetype,
-            storageKey: req.file.filename
+            storageKey
           }
         }
       },
@@ -629,7 +620,7 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
   }
 });
 
-// Serve attachment file
+// Serve attachment file (redirect to signed R2 URL)
 router.get('/attachments/:storageKey', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user as Express.User;
@@ -661,17 +652,9 @@ router.get('/attachments/:storageKey', isAuthenticated, async (req: Request, res
       throw new AppError('Not authorized to access this attachment', 403);
     }
 
-    const filePath = path.join(uploadDir, storageKey);
-    if (!fs.existsSync(filePath)) {
-      throw new AppError('File not found', 404);
-    }
-
-    // Use inline disposition for images and PDFs so they open in browser
-    const isViewable = attachment.fileType.startsWith('image/') || attachment.fileType === 'application/pdf';
-    const disposition = isViewable ? 'inline' : 'attachment';
-    res.setHeader('Content-Disposition', `${disposition}; filename="${attachment.fileName}"`);
-    res.setHeader('Content-Type', attachment.fileType);
-    res.sendFile(path.resolve(filePath));
+    // Get signed URL from R2 and redirect
+    const signedUrl = await getSignedDownloadUrl(attachment.storageKey);
+    res.redirect(signedUrl);
   } catch (error) {
     next(error);
   }
