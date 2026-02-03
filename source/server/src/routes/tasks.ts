@@ -77,25 +77,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
       archived: includeArchived === 'true' ? undefined : false
     };
 
-    // Permission-based filtering for contractors (admins and project managers see all)
-    if (!hasElevatedAccess(user)) {
-      // Get project access for this user
-      const projectAccess = await getUserProjectAccess(user.id);
-      const allowedProjectIds = projectAccess.map(pa => pa.projectId);
-
-      if (allowedProjectIds.length > 0) {
-        // Contractor has explicit project access - show tasks from those projects
-        // Plus tasks assigned to them (even from other projects)
-        where.OR = [
-          { projectId: { in: allowedProjectIds } },
-          { assignees: { some: { userId: user.id } } }
-        ];
-      } else if (user.permissions?.viewOwnTasksOnly !== false) {
-        // No explicit project access and viewOwnTasksOnly is true - only show assigned tasks
-        where.assignees = { some: { userId: user.id } };
-      }
-      // If viewAllTasks is true but no project access, they see nothing from restricted projects
-    }
+    // All authenticated users can see all tasks (matching project visibility)
 
     if (status) where.status = status as Prisma.EnumTaskStatusFilter;
     if (assignedTo) where.assignees = { some: { userId: assignedTo as string } };
