@@ -106,9 +106,9 @@ export function useUpdateTaskStatus() {
       // Snapshot all task caches
       const cache = queryClient.getQueriesData<Task[]>({ queryKey: ['tasks'] });
 
-      // Optimistically update all task queries
+      // Optimistically update all task queries (only arrays, not single task queries)
       cache.forEach(([queryKey, data]) => {
-        if (data) {
+        if (Array.isArray(data)) {
           queryClient.setQueryData<Task[]>(
             queryKey,
             data.map((task) =>
@@ -119,6 +119,16 @@ export function useUpdateTaskStatus() {
           );
         }
       });
+
+      // Also update the single task query if it exists
+      const singleTask = queryClient.getQueryData<Task>(['tasks', id]);
+      if (singleTask) {
+        queryClient.setQueryData<Task>(['tasks', id], {
+          ...singleTask,
+          status,
+          completedAt: status === 'completed' ? new Date().toISOString() : undefined,
+        });
+      }
 
       return { cache };
     },
