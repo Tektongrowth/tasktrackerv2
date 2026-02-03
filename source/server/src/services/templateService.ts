@@ -1,5 +1,6 @@
 import { prisma } from '../db/client.js';
 import { PlanType } from '@prisma/client';
+import { assignRoleContractorsToTask } from './roleAssignment.js';
 
 /**
  * Calculate task sortOrder based on template set and type priority.
@@ -102,6 +103,11 @@ export async function applyTemplateSetToProject(
         } : undefined
       }
     });
+
+    // Auto-assign contractors with the task's role
+    if (template.defaultRoleId) {
+      await assignRoleContractorsToTask(task.id, template.defaultRoleId);
+    }
 
     // Create subtasks from template subtasks
     if (template.subtasks && template.subtasks.length > 0) {
@@ -263,6 +269,11 @@ export async function upgradeProjectPlanType(
         }
       });
 
+      // Auto-assign contractors with the task's role
+      if (template.defaultRoleId) {
+        await assignRoleContractorsToTask(task.id, template.defaultRoleId);
+      }
+
       // Create subtasks from template subtasks
       if (template.subtasks && template.subtasks.length > 0) {
         await prisma.subtask.createMany({
@@ -402,6 +413,11 @@ export async function offboardProject(
           } : undefined
         }
       });
+
+      // Auto-assign contractors with the task's role
+      if (template.defaultRoleId) {
+        await assignRoleContractorsToTask(task.id, template.defaultRoleId);
+      }
 
       // Create subtasks from template subtasks
       if (template.subtasks && template.subtasks.length > 0) {

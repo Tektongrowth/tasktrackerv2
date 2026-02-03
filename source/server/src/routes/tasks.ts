@@ -10,6 +10,7 @@ import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotif
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
 import { shouldNotify } from '../utils/notificationPrefs.js';
+import { assignRoleContractorsToTask } from '../services/roleAssignment.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -318,6 +319,11 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
       }
     });
 
+    // If task has a role, auto-assign contractors with that role
+    if (roleId) {
+      await assignRoleContractorsToTask(task.id, roleId);
+    }
+
     // Send notifications to assignees (check preferences for each channel)
     for (const assignee of task.assignees) {
       if (assignee.user.id !== user.id) {
@@ -532,7 +538,7 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
       }
     }
 
-    // Track role change
+    // Track role change and auto-assign contractors with that role
     if (roleId !== undefined && roleId !== existingTask.roleId) {
       const newRole = roleId ? await prisma.role.findUnique({ where: { id: roleId }, select: { name: true } }) : null;
       await prisma.taskActivity.create({
@@ -548,6 +554,11 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
           }
         }
       });
+
+      // Auto-assign contractors with the new role
+      if (roleId) {
+        await assignRoleContractorsToTask(id, roleId);
+      }
     }
 
     // Track individual assignee changes

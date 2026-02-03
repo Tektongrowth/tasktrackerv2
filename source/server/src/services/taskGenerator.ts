@@ -1,5 +1,6 @@
 import { PlanType } from '@prisma/client';
 import { prisma } from '../db/client.js';
+import { assignRoleContractorsToTask } from './roleAssignment.js';
 
 export async function generateTasksFromTemplates(
   projectId: string,
@@ -54,6 +55,11 @@ export async function generateTasksFromTemplates(
         }
       }
     });
+
+    // Auto-assign contractors with the task's role
+    if (template.defaultRoleId) {
+      await assignRoleContractorsToTask(task.id, template.defaultRoleId);
+    }
 
     // Log creation
     await prisma.taskActivity.create({

@@ -49,6 +49,48 @@ export async function assignContractorToRoleTasks(userId: string, roleId: string
  * @param taskId - The task ID
  * @returns Array of user IDs
  */
+/**
+ * Assigns all contractors with a given role to a task.
+ * Called when a task is assigned a role or when roleId changes.
+ *
+ * @param taskId - The ID of the task
+ * @param roleId - The role ID to find contractors for
+ * @returns Number of contractors assigned to the task
+ */
+export async function assignRoleContractorsToTask(taskId: string, roleId: string): Promise<number> {
+  // Find all active, non-archived users with this jobRoleId
+  // that aren't already assigned to this task
+  const usersWithRole = await prisma.user.findMany({
+    where: {
+      jobRoleId: roleId,
+      active: true,
+      archived: false,
+      // Exclude users already assigned to this task
+      NOT: {
+        taskAssignments: {
+          some: { taskId }
+        }
+      }
+    },
+    select: { id: true }
+  });
+
+  if (usersWithRole.length === 0) {
+    return 0;
+  }
+
+  // Create TaskAssignee records for each user
+  const result = await prisma.taskAssignee.createMany({
+    data: usersWithRole.map(user => ({
+      taskId,
+      userId: user.id
+    })),
+    skipDuplicates: true
+  });
+
+  return result.count;
+}
+
 export async function getEffectiveAssignees(taskId: string): Promise<string[]> {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
