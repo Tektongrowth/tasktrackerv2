@@ -377,7 +377,6 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const { data: allUsers } = useQuery({
     queryKey: ['users'],
     queryFn: users.list,
-    enabled: isAdmin,
   });
 
   const { data: allRoles } = useQuery({

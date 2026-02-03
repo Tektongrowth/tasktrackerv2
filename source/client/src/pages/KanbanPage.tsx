@@ -138,7 +138,6 @@ export function KanbanPage() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: users.list,
-    enabled: isAdmin,
   });
 
   const { data: allTags = [] } = useQuery({
@@ -702,24 +701,22 @@ export function KanbanPage() {
                       </Select>
                     )}
                   </div>
-                  {isAdmin && (
-                    <div className="space-y-2">
-                      <Label>Assignee</Label>
-                      <Select value={newTaskAssigneeId} onValueChange={setNewTaskAssigneeId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select assignee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Unassigned</SelectItem>
-                          {allUsers.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label>Assignee</Label>
+                    <Select value={newTaskAssigneeId} onValueChange={setNewTaskAssigneeId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select assignee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Unassigned</SelectItem>
+                        {allUsers.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label>Priority</Label>
                     <Select value={newTaskPriority} onValueChange={(v) => setNewTaskPriority(v as TaskPriority)}>

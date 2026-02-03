@@ -65,7 +65,6 @@ export function TimeTrackingPage() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: users.list,
-    enabled: isAdmin,
   });
 
   useQuery({

@@ -243,7 +243,6 @@ export function DashboardPage() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: users.list,
-    enabled: isAdmin,
   });
 
   const { data: incompleteTasks } = useQuery({

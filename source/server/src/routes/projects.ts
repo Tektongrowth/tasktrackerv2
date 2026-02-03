@@ -7,31 +7,10 @@ import { applyNewProjectTemplates, upgradeProjectPlanType, offboardProject } fro
 
 const router = Router();
 
-// List all projects (filtered by access for contractors)
+// List all projects (all authenticated users can see all projects)
 router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = req.user as Express.User;
-
-    let where: Prisma.ProjectWhereInput = {};
-
-    // Filter by project access for non-admins
-    if (user.role !== 'admin') {
-      const projectAccess = await prisma.projectAccess.findMany({
-        where: { userId: user.id, canView: true },
-        select: { projectId: true }
-      });
-      const allowedProjectIds = projectAccess.map(pa => pa.projectId);
-
-      if (allowedProjectIds.length > 0) {
-        where.id = { in: allowedProjectIds };
-      } else {
-        // No project access - return empty array
-        return res.json([]);
-      }
-    }
-
     const projects = await prisma.project.findMany({
-      where,
       include: {
         client: {
           select: { id: true, name: true, email: true }

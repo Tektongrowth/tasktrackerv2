@@ -84,8 +84,8 @@ router.get('/chat-list', isAuthenticated, async (req: Request, res: Response, ne
   }
 });
 
-// List all users (admin only)
-router.get('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
+// List all users (all authenticated users)
+router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
