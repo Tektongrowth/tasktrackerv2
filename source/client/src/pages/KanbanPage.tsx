@@ -43,7 +43,7 @@ import { KanbanColumn } from '@/components/KanbanColumn';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskDetailPanel } from '@/components/TaskDetailPanel';
 import { KanbanColumnSkeleton } from '@/components/TaskCardSkeleton';
-import { Users, Tag, Plus, FolderPlus, Flag, User, Archive, Square, Filter } from 'lucide-react';
+import { Users, Tag, Plus, FolderPlus, Flag, User, Archive, Square, Filter, RefreshCw } from 'lucide-react';
 // Note: List view removed from Kanban - use dedicated List page instead
 import { cn, formatDuration } from '@/lib/utils';
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types';
@@ -651,6 +651,19 @@ export function KanbanPage() {
                 </Button>
               </div>
             )}
+
+            {/* Refresh Button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                toast({ title: 'Refreshing tasks...' });
+              }}
+              title="Refresh tasks"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
 
             {/* Create Task Button */}
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={false}>

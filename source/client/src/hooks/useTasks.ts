@@ -16,9 +16,15 @@ export function useTasks(params?: Record<string, string>, options?: { enabled?: 
         if (data.length === 0) {
           const cachedData = queryClient.getQueryData<Task[]>(['tasks', params]);
           if (cachedData && cachedData.length > 0) {
-            console.warn('[useTasks] Empty response with existing cache - preserving cached data. This may indicate a session or API issue.');
+            console.warn('[useTasks] Empty response with existing cache - preserving cached data. Params:', params);
+            // Force a refetch after a short delay to try getting fresh data
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            }, 2000);
             return cachedData;
           }
+          // Log when we get empty with no cache to help debug
+          console.warn('[useTasks] Empty response with no cache. Params:', params);
         }
 
         return data;
@@ -146,11 +152,12 @@ export function useUpdateTaskStatus() {
         variant: 'destructive',
       });
     },
-    onSuccess: () => {
-      // Only invalidate dashboard - tasks already updated optimistically
+    onSettled: () => {
+      // Always refetch tasks after mutation settles to ensure cache consistency
+      // This catches any edge cases where optimistic updates get out of sync
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
-    // Note: No onSettled refetch - rely on optimistic update for snappy UI
   });
 }
 
