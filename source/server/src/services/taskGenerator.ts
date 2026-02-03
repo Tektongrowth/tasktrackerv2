@@ -41,6 +41,7 @@ export async function generateTasksFromTemplates(
         status: 'todo',
         dueDate,
         tags: template.tags,
+        roleId: template.defaultRoleId,
         assignees: assigneeIds.length > 0 ? {
           create: assigneeIds.map(userId => ({ userId }))
         } : undefined
