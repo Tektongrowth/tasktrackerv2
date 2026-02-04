@@ -1,6 +1,6 @@
 import { PlanType } from '@prisma/client';
 import { prisma } from '../db/client.js';
-import { generateTasksFromTemplates } from '../services/taskGenerator.js';
+import { applyNewProjectTemplates } from '../services/templateService.js';
 
 interface ClientRow {
   firstName: string;
@@ -112,9 +112,9 @@ async function importClients() {
       taskCount = 1;
       console.log(`CREATE: "${row.businessName}" - no package, 1 manual task (Website Build)`);
     } else if (planType) {
-      // Generate onboarding tasks from templates
-      const tasks = await generateTasksFromTemplates(project.id, 'onboarding', planType);
-      taskCount = tasks.length;
+      // Generate onboarding tasks from TemplateSets
+      const { totalTasksCreated } = await applyNewProjectTemplates(project.id, planType);
+      taskCount = totalTasksCreated;
       console.log(`CREATE: "${row.businessName}" - ${planType}, ${taskCount} tasks generated`);
     } else {
       console.log(`CREATE: "${row.businessName}" - unknown package "${row.package}", no tasks`);

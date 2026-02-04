@@ -314,6 +314,42 @@ interface OffboardResult {
  * Offboard a project - applies offboarding templates and sets status to canceled.
  * Skips templates that have already been applied to prevent duplicates.
  */
+/**
+ * Apply scheduled/recurring templates for a project (triggered by invoice.paid)
+ */
+export async function applyRecurringTemplates(
+  projectId: string,
+  planType: string | null
+): Promise<{ totalTasksCreated: number; templateSetsApplied: number }> {
+  // Find all active template sets with trigger type 'schedule'
+  const templateSets = await prisma.templateSet.findMany({
+    where: {
+      triggerType: 'schedule',
+      active: true
+    }
+  });
+
+  let totalTasksCreated = 0;
+  let templateSetsApplied = 0;
+
+  for (const templateSet of templateSets) {
+    // Check if plan type matches (empty planTypes means all plan types)
+    const planTypesMatch =
+      templateSet.planTypes.length === 0 ||
+      (planType && templateSet.planTypes.includes(planType as typeof templateSet.planTypes[number]));
+
+    if (planTypesMatch) {
+      const result = await applyTemplateSetToProject(templateSet.id, projectId);
+      totalTasksCreated += result.tasksCreated;
+      if (result.tasksCreated > 0) {
+        templateSetsApplied++;
+      }
+    }
+  }
+
+  return { totalTasksCreated, templateSetsApplied };
+}
+
 export async function offboardProject(
   projectId: string
 ): Promise<OffboardResult> {

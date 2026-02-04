@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { PlanType } from '@prisma/client';
 import { prisma } from '../db/client.js';
-import { generateTasksFromTemplates } from './taskGenerator.js';
+import { applyNewProjectTemplates, upgradeProjectPlanType, applyRecurringTemplates } from './templateService.js';
 import { sendNewSubscriptionEmail, sendSubscriptionCanceledEmail } from './email.js';
 
 // Build Price ID to Plan Type mapping from environment variables
@@ -98,13 +98,18 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     }
   });
 
-  // Generate onboarding tasks
-  const tasks = await generateTasksFromTemplates(project.id, 'onboarding', planType);
+  // Generate onboarding tasks from TemplateSets
+  const { totalTasksCreated, templateSetsApplied } = await applyNewProjectTemplates(project.id, planType);
+
+  // Get created tasks for email notification
+  const tasks = await prisma.task.findMany({
+    where: { projectId: project.id }
+  });
 
   // Send notification email to admin
   await sendNewSubscriptionEmail(client, project, tasks);
 
-  console.log(`Created project ${project.id} with ${tasks.length} onboarding tasks for subscription ${subscription.id}`);
+  console.log(`Created project ${project.id} with ${totalTasksCreated} tasks from ${templateSetsApplied} template sets for subscription ${subscription.id}`);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -136,22 +141,12 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   });
 
   // If plan changed, handle upgrade/downgrade logic
-  if (planChanged) {
+  if (planChanged && newPlanType) {
     console.log(`Plan changed from ${oldPlanType} to ${newPlanType} for project ${project.id}`);
 
-    // Check if client has any existing tasks (indicating they're not a new client)
-    const existingTasks = await prisma.task.count({
-      where: { projectId: project.id }
-    });
-
-    // Only generate new onboarding tasks if this is their first subscription (no existing tasks)
-    // For upgrades/downgrades from existing subscriptions, skip onboarding
-    if (existingTasks === 0) {
-      const tasks = await generateTasksFromTemplates(project.id, 'onboarding', newPlanType);
-      console.log(`Generated ${tasks.length} onboarding tasks for new plan`);
-    } else {
-      console.log(`Skipping onboarding tasks - client has ${existingTasks} existing tasks (upgrade/downgrade)`);
-    }
+    // upgradeProjectPlanType handles deduplication - only applies templates not already applied
+    const result = await upgradeProjectPlanType(project.id, newPlanType);
+    console.log(`Upgrade: created ${result.tasksCreated} new tasks, skipped ${result.skippedDuplicates} duplicates`);
   }
 
   console.log(`Updated project ${project.id} billing date${planChanged ? ` and plan type to ${newPlanType}` : ''}`);
@@ -211,8 +206,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     }
   });
 
-  // Generate recurring tasks for this billing cycle
-  const tasks = await generateTasksFromTemplates(project.id, 'recurring', project.planType);
+  // Generate recurring tasks for this billing cycle from TemplateSets with 'schedule' trigger
+  const { totalTasksCreated, templateSetsApplied } = await applyRecurringTemplates(project.id, project.planType);
 
-  console.log(`Generated ${tasks.length} recurring tasks for project ${project.id}`);
+  console.log(`Generated ${totalTasksCreated} recurring tasks from ${templateSetsApplied} template sets for project ${project.id}`);
 }
