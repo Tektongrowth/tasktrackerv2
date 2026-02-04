@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:local": "dotenv -e .env.local -- tsx watch src/index.ts",
     "build": "prisma generate && tsc; exit 0",
     "start": "prisma migrate resolve --applied 20260113120000_add_notification_prefs || true; prisma migrate resolve --applied 20260113131000_multiple_assignees || true; prisma migrate resolve --applied 20260114000000_template_multiple_assignees || true; prisma migrate deploy && node dist/index.js",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:local": "dotenv -e .env.local -- tsx prisma/seed-local.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -46,6 +48,7 @@
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/uuid": "^10.0.0",
     "@types/web-push": "^3.6.4",
+    "dotenv-cli": "^11.0.0",
     "esbuild": "^0.20.0",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",

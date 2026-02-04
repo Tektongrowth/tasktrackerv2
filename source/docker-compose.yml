@@ -1,0 +1,23 @@
+# Local development database
+# Usage: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: tasktracker-db
+    environment:
+      POSTGRES_USER: tasktracker
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: tasktracker
+    ports:
+      - "5433:5432"  # Use 5433 to avoid conflicts with any local PostgreSQL
+    volumes:
+      - tasktracker-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasktracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  tasktracker-data:
