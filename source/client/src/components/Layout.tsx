@@ -115,7 +115,7 @@ function ProjectSidebar() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 pb-24">
         <div
           className={cn(
             'flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm font-medium mb-1',
