@@ -16,6 +16,11 @@ If deployment seems stuck:
 2. Disconnect/reconnect GitHub repo if needed
 3. Push a new commit to trigger deploy
 
+## Workflow Rules
+
+- **Always ask before pushing to production** - Never push to main/deploy without explicit user approval
+- Test changes locally first using `npm run dev:local` (see memory.md for local dev setup)
+
 ## Project Structure
 
 ```
@@ -126,7 +131,7 @@ Key env vars (set in Railway):
 
 ## Maintenance
 
-**Last reviewed**: 2026-02-02
+**Last reviewed**: 2026-02-03
 
 This file contains foundational project information. Update it when:
 - New services or integrations are added

@@ -76,6 +76,8 @@ This file tracks ongoing work context, decisions, and session history. Updated d
 ## Session Log
 
 ### 2026-02-03
+- **Added workflow rule to CLAUDE.md:** Always ask before pushing to production
+
 - **Client import from ClickUp:**
   - Created `importClients.ts` script to bulk import clients from CSV
   - Imported 23 clients with projects and auto-generated tasks from templates
