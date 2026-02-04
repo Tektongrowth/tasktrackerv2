@@ -552,12 +552,12 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 z-40 animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/20 z-[60] animate-in fade-in duration-200"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl border-l z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl border-l z-[70] flex flex-col animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-slate-50/50">
           <div className="flex items-center gap-3">
             <h2 className="font-semibold text-lg">Task Details</h2>
@@ -594,9 +594,13 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               )}
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
               className="hover:bg-slate-200 rounded-full transition-colors"
             >
               <X className="h-4 w-4" />

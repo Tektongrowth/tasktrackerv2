@@ -110,9 +110,10 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
           }
         });
 
-        // Get chat participants for notifications
-        const chat = await prisma.chat.findUnique({
+        // Update chat's updatedAt and get participants for notifications
+        const chat = await prisma.chat.update({
           where: { id: chatId },
+          data: { updatedAt: new Date() },
           include: {
             participants: {
               include: {
