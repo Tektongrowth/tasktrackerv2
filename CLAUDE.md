@@ -21,6 +21,42 @@ If deployment seems stuck:
 - **Always ask before pushing to production** - Never push to main/deploy without explicit user approval
 - Test changes locally first using `npm run dev:local` (see memory.md for local dev setup)
 
+## Future Architecture (Roadmap)
+
+Planning to evolve into a modular monolith with background job processing.
+
+### Planned Modules
+
+| Module | Purpose | Status |
+|--------|---------|--------|
+| core | Current task tracker (tasks, projects, clients, chat) | Active |
+| analytics | Reporting & metrics (leads, ad performance, GBP calls) | Planned |
+| seo | SEO tool ecosystem with automated workflows | Planned |
+| website-builder | Website design automation triggered by projects | Planned |
+
+### Infrastructure Additions (When Ready)
+
+- **Redis** - For job queue (BullMQ)
+- **BullMQ** - Background job processing
+
+### Target Structure
+
+```
+server/src/modules/
+├── core/           # Current functionality
+├── analytics/      # Reports, metrics, dashboards
+│   ├── integrations/   # Google Business, Google Ads, Meta
+│   ├── jobs/           # Scheduled data sync
+│   └── services/
+├── seo/            # SEO workflows
+└── website-builder/
+```
+
+### Trigger System
+
+New projects with specific planTypes will trigger module-specific workflows:
+- Form submission → Project created → Event emitted → Module picks up → Background jobs queued
+
 ## Project Structure
 
 ```
