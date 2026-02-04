@@ -32,7 +32,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { name: 'asc' }
     });
 
     // Only include embedToken and ghlLocationId for admin users
