@@ -177,6 +177,10 @@ app.use('/api', (_req, res, next) => {
   next();
 });
 
+// Track server start time for deploy notifications
+const SERVER_START_TIME = Date.now();
+const DEPLOY_BANNER_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Health check endpoint for monitoring
 app.get('/health', async (_req, res) => {
   try {
@@ -188,6 +192,20 @@ app.get('/health', async (_req, res) => {
     console.error('Health check failed:', error);
     res.status(503).json({ status: 'unhealthy', database: 'disconnected', error: String(error) });
   }
+});
+
+// Deploy status endpoint - returns whether we're in the post-deploy window
+app.get('/api/deploy-status', (_req, res) => {
+  const uptime = Date.now() - SERVER_START_TIME;
+  const isDeploying = uptime < DEPLOY_BANNER_DURATION;
+  const remainingMs = Math.max(0, DEPLOY_BANNER_DURATION - uptime);
+
+  res.json({
+    isDeploying,
+    uptimeMs: uptime,
+    remainingMs,
+    serverStartTime: SERVER_START_TIME
+  });
 });
 
 // API Routes

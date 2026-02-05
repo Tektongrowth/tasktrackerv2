@@ -24,6 +24,7 @@ import { EmbedLocationPage } from './pages/EmbedLocationPage';
 import { Toaster } from './components/ui/toaster';
 import { ConfirmDialogProvider } from './components/ConfirmDialog';
 import { GuideProvider, WelcomeWizard, SpotlightTour, HelpButton } from './components/guide';
+import { DeployBanner } from './components/DeployBanner';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -49,6 +50,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <DeployBanner />
       <ConfirmDialogProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
