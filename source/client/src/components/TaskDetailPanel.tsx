@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
 import { ReactionPicker, ReactionDisplay } from '@/components/reactions';
-import { cn, formatDate, formatDateTime, formatDuration, getTagColor, sanitizeText } from '@/lib/utils';
+import { cn, formatDate, formatDateTime, formatDuration, getTagColor, linkifyText } from '@/lib/utils';
 import type { Task, TaskPriority, TaskStatus, EmojiKey } from '@/lib/types';
 import { priorityConfig } from './TaskCard';
 
@@ -1338,7 +1338,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                         {comment.content && (
                           <p
                             className="text-sm text-muted-foreground whitespace-pre-wrap"
-                            dangerouslySetInnerHTML={{ __html: sanitizeText(comment.content) }}
+                            dangerouslySetInnerHTML={{ __html: linkifyText(comment.content) }}
                           />
                         )}
                         {/* Comment attachments */}

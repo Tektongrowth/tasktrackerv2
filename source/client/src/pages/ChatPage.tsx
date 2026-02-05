@@ -15,6 +15,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/toaster';
 import { UserAvatar } from '../components/UserAvatar';
+import { linkifyText } from '../lib/utils';
 
 // Minimal user type for chat list (returned by /api/users/chat-list)
 type ChatUser = { id: string; name: string; email: string; avatarUrl: string | null };
@@ -799,7 +800,10 @@ export default function ChatPage() {
                           : 'bg-muted'
                       }`}
                     >
-                      <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                      <p
+                        className="whitespace-pre-wrap break-words"
+                        dangerouslySetInnerHTML={{ __html: linkifyText(message.content || '') }}
+                      />
                       {message.attachments && message.attachments.length > 0 && (
                         <div className="mt-2 space-y-2">
                           {message.attachments.map((attachment) => (

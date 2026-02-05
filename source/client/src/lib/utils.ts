@@ -62,6 +62,33 @@ export function sanitizeText(text: string): string {
 }
 
 /**
+ * Sanitize text and convert URLs to clickable links
+ * Returns HTML string safe to use with dangerouslySetInnerHTML
+ */
+export function linkifyText(text: string): string {
+  if (!text) return '';
+
+  // First sanitize the text to prevent XSS
+  const sanitized = sanitizeText(text);
+
+  // URL regex pattern - matches http, https URLs
+  const urlPattern = /(https?:\/\/[^\s<]+[^\s<.,;:!?"')\]])/g;
+
+  // Replace URLs with anchor tags
+  return sanitized.replace(urlPattern, (url) => {
+    // Decode any HTML entities back for the href (they were escaped by sanitizeText)
+    const hrefUrl = url
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'");
+
+    return `<a href="${hrefUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${url}</a>`;
+  });
+}
+
+/**
  * Validate URL to only allow safe protocols (http, https)
  * Returns null for invalid/unsafe URLs
  */
