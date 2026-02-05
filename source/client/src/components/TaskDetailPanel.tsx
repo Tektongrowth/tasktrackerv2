@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon, ListPlus } from 'lucide-react';
+import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon, ListPlus, Archive } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
@@ -462,6 +462,18 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     },
   });
 
+  const archiveTask = useMutation({
+    mutationFn: () => tasksApi.archive(task.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({ title: 'Task archived' });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to archive task', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -592,6 +604,21 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                   <span>Start Timer</span>
                 </>
               )}
+            </Button>
+            {/* Archive Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (confirm('Archive this task? It will be hidden from the main view.')) {
+                  archiveTask.mutate();
+                }
+              }}
+              disabled={archiveTask.isPending}
+              className="hover:bg-slate-200 rounded-full transition-colors"
+              title="Archive task"
+            >
+              <Archive className="h-4 w-4" />
             </Button>
             <Button
               type="button"
