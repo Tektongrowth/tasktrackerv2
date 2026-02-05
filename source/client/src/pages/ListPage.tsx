@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { tasks as tasksApi } from '@/lib/api';
+import { tasks as tasksApi, projects, users } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useFilters } from '@/hooks/useFilters';
-import { useUpdateTaskStatus } from '@/hooks/useTasks';
+import { useUpdateTaskStatus, useCreateTask } from '@/hooks/useTasks';
 import { useRunningTimer, useStopTimer } from '@/hooks/useTimeEntries';
 import { TaskListView } from '@/components/TaskListView';
 import { TaskDetailPanel } from '@/components/TaskDetailPanel';
@@ -17,7 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserX, AlertTriangle, Square, Archive, Filter } from 'lucide-react';
+import { UserX, AlertTriangle, Square, Archive, Filter, Plus, Flag } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/toaster';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +32,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn, formatDuration } from '@/lib/utils';
-import type { Task, TaskStatus } from '@/lib/types';
+import type { Task, TaskStatus, TaskPriority } from '@/lib/types';
+import { priorityConfig } from '@/components/TaskCard';
 
 type FilterType = 'all' | 'unassigned' | 'overdue';
 
@@ -78,10 +84,59 @@ export function ListPage() {
   const { user } = useAuth();
   const { selectedProjectId, selectedClientId } = useFilters();
   const updateTaskStatus = useUpdateTaskStatus();
+  const createTask = useCreateTask();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [quickFilter, setQuickFilter] = useState<FilterType>('all');
   const [showArchived, setShowArchived] = useState(false);
+
+  // Create task dialog state
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskProjectId, setNewTaskProjectId] = useState('');
+  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
+  const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium');
+
+  // Fetch projects and users for create dialog
+  const { data: allProjects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: projects.list,
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: users.list,
+  });
+
+  const handleCreateTask = () => {
+    if (!newTaskTitle.trim() || !newTaskProjectId) {
+      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
+      return;
+    }
+
+    createTask.mutate(
+      {
+        title: newTaskTitle.trim(),
+        description: newTaskDescription.trim() || undefined,
+        projectId: newTaskProjectId,
+        assigneeIds: newTaskAssigneeId && newTaskAssigneeId !== 'none' ? [newTaskAssigneeId] : undefined,
+        priority: newTaskPriority,
+        status: 'todo',
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Task created' });
+          setShowCreateDialog(false);
+          setNewTaskTitle('');
+          setNewTaskDescription('');
+          setNewTaskProjectId('');
+          setNewTaskAssigneeId('');
+          setNewTaskPriority('medium');
+        },
+      }
+    );
+  };
 
   // Set initial filter from URL params
   useEffect(() => {
@@ -364,6 +419,104 @@ export function ListPage() {
             <div className="hidden md:block">
               <RunningTimer />
             </div>
+
+            {/* Create Task Button */}
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="shadow-sm transition-all hover:shadow-md">
+                  <Plus className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">New Task</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Task</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Title *</Label>
+                    <Input
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      placeholder="Task title"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      placeholder="Task description"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Project *</Label>
+                    {allProjects.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-2">No projects available. Create a project first.</p>
+                    ) : (
+                      <Select value={newTaskProjectId} onValueChange={setNewTaskProjectId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allProjects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Assignee</Label>
+                    <Select value={newTaskAssigneeId} onValueChange={setNewTaskAssigneeId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select assignee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Unassigned</SelectItem>
+                        {allUsers.filter(u => u.active && !u.archived).map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Priority</Label>
+                    <Select value={newTaskPriority} onValueChange={(v) => setNewTaskPriority(v as TaskPriority)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(priorityConfig).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            <div className="flex items-center gap-2">
+                              <Flag className={cn('h-3 w-3', config.color)} />
+                              {config.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateTask}
+                      disabled={!newTaskTitle.trim() || !newTaskProjectId || createTask.isPending}
+                    >
+                      {createTask.isPending ? 'Creating...' : 'Create Task'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
