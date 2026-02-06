@@ -16,6 +16,7 @@ import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, Messa
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
+import { GifPicker } from '@/components/GifPicker';
 import { ReactionPicker, ReactionDisplay } from '@/components/reactions';
 import { cn, formatDate, formatDateTime, formatDuration, getTagColor, linkifyText } from '@/lib/utils';
 import type { Task, TaskPriority, TaskStatus, EmojiKey } from '@/lib/types';
@@ -200,6 +201,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [showGifPicker, setShowGifPicker] = useState(false);
 
   // Create task from comment state
   const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
@@ -1229,31 +1231,51 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               </div>
             )}
             <div className="flex justify-between items-center">
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*,.pdf"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      if (file.size > 10 * 1024 * 1024) {
-                        toast({ title: 'File too large', description: 'Maximum file size is 10MB', variant: 'destructive' });
-                        return;
+              <div className="flex gap-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*,.pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast({ title: 'File too large', description: 'Maximum file size is 10MB', variant: 'destructive' });
+                          return;
+                        }
+                        setAttachedFile(file);
                       }
-                      setAttachedFile(file);
-                    }
-                    e.target.value = '';
-                  }}
-                  disabled={createComment.isPending}
-                />
-                <Button variant="outline" size="sm" asChild>
-                  <span>
-                    <Paperclip className="h-4 w-4 mr-2" />
-                    Attach Photo
-                  </span>
-                </Button>
-              </label>
+                      e.target.value = '';
+                    }}
+                    disabled={createComment.isPending}
+                  />
+                  <Button variant="outline" size="sm" asChild>
+                    <span>
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Attach
+                    </span>
+                  </Button>
+                </label>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowGifPicker(!showGifPicker)}
+                  >
+                    <span className="text-xs font-bold mr-1">GIF</span>
+                  </Button>
+                  {showGifPicker && (
+                    <GifPicker
+                      onSelect={(gifUrl) => {
+                        createComment.mutate({ content: gifUrl, file: null });
+                        setShowGifPicker(false);
+                      }}
+                      onClose={() => setShowGifPicker(false)}
+                    />
+                  )}
+                </div>
+              </div>
               <Button
                 size="sm"
                 disabled={(!newComment.trim() && !attachedFile) || createComment.isPending}

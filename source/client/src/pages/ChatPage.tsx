@@ -15,6 +15,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from '../components/ui/toaster';
 import { UserAvatar } from '../components/UserAvatar';
+import { GifPicker } from '../components/GifPicker';
 import { linkifyText } from '../lib/utils';
 
 // Minimal user type for chat list (returned by /api/users/chat-list)
@@ -116,6 +117,7 @@ export default function ChatPage() {
   const [messageInput, setMessageInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [allUsers, setAllUsers] = useState<ChatUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -415,6 +417,38 @@ export default function ChatPage() {
       setIsSending(false);
     }
   }, [messageInput, activeChatId, isSending, user, sendSocketMessage]);
+
+  const handleGifSelect = useCallback(async (gifUrl: string) => {
+    if (!activeChatId || isSending) return;
+
+    setShowGifPicker(false);
+    setIsSending(true);
+
+    // Send GIF URL as message content
+    const content = gifUrl;
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      tempId,
+      chatId: activeChatId,
+      senderId: user!.id,
+      content,
+      createdAt: new Date().toISOString(),
+      sender: { id: user!.id, name: user!.name, email: user!.email, avatarUrl: user!.avatarUrl },
+    };
+    setMessages((prev) => [...prev, optimisticMessage]);
+
+    try {
+      sendSocketMessage(activeChatId, content, tempId);
+    } catch (error) {
+      console.error('Failed to send GIF:', error);
+      setMessages((prev) => prev.filter((m) => m.tempId !== tempId));
+    } finally {
+      setIsSending(false);
+    }
+  }, [activeChatId, isSending, user, sendSocketMessage]);
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -866,7 +900,7 @@ export default function ChatPage() {
 
           {/* Message Input */}
           <div className="p-4 pr-6 md:pr-4 border-t">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -881,6 +915,21 @@ export default function ChatPage() {
               >
                 <Paperclip className="w-5 h-5" />
               </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowGifPicker(!showGifPicker)}
+                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                  title="Send GIF"
+                >
+                  <span className="text-sm font-bold">GIF</span>
+                </button>
+                {showGifPicker && (
+                  <GifPicker
+                    onSelect={handleGifSelect}
+                    onClose={() => setShowGifPicker(false)}
+                  />
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="Type a message..."

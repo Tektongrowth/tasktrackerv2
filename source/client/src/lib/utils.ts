@@ -62,7 +62,21 @@ export function sanitizeText(text: string): string {
 }
 
 /**
+ * Check if a URL is a GIF image URL
+ */
+function isGifUrl(url: string): boolean {
+  const gifPatterns = [
+    /giphy\.com\/media\//i,
+    /media\d*\.giphy\.com\//i,
+    /tenor\.com\/.*\.gif/i,
+    /\.gif(\?|$)/i,
+  ];
+  return gifPatterns.some(pattern => pattern.test(url));
+}
+
+/**
  * Sanitize text and convert URLs to clickable links
+ * GIF URLs are embedded as images
  * Returns HTML string safe to use with dangerouslySetInnerHTML
  */
 export function linkifyText(text: string): string {
@@ -74,7 +88,7 @@ export function linkifyText(text: string): string {
   // URL regex pattern - matches http, https URLs
   const urlPattern = /(https?:\/\/[^\s<]+[^\s<.,;:!?"')\]])/g;
 
-  // Replace URLs with anchor tags
+  // Replace URLs with anchor tags or embedded images
   return sanitized.replace(urlPattern, (url) => {
     // Decode any HTML entities back for the href (they were escaped by sanitizeText)
     const hrefUrl = url
@@ -83,6 +97,11 @@ export function linkifyText(text: string): string {
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#039;/g, "'");
+
+    // Check if it's a GIF URL - embed as image
+    if (isGifUrl(hrefUrl)) {
+      return `<img src="${hrefUrl}" alt="GIF" class="max-w-full rounded-lg mt-1" style="max-height: 200px;" />`;
+    }
 
     return `<a href="${hrefUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${url}</a>`;
   });
