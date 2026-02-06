@@ -944,7 +944,7 @@ export default function ChatPage() {
                     handleSendMessage();
                   }
                 }}
-                className="flex-1 min-w-0 px-3 md:px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm md:text-base"
+                className="flex-1 min-w-0 px-3 md:px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base"
               />
               <button
                 onClick={handleSendMessage}
