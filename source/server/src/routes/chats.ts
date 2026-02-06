@@ -73,26 +73,35 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
       orderBy: { updatedAt: 'desc' }
     });
 
-    // Get unread counts for each chat
-    const chatsWithUnread = await Promise.all(
-      chats.map(async (chat) => {
-        const participant = chat.participants.find(p => p.userId === user.id);
-        const lastReadAt = participant?.lastReadAt || new Date(0);
-
-        const unreadCount = await prisma.chatMessage.count({
-          where: {
-            chatId: chat.id,
-            senderId: { not: user.id },
-            createdAt: { gt: lastReadAt }
-          }
-        });
-
-        return {
-          ...chat,
-          unreadCount
-        };
+    // Aggregate unread counts efficiently instead of per-chat queries
+    const chatIds = chats.map(c => c.id);
+    const participantsByChat = new Map(
+      chats.map(chat => {
+        const p = chat.participants.find(p => p.userId === user.id);
+        return [chat.id, p?.lastReadAt || new Date(0)];
       })
     );
+
+    const unreadCounts = chatIds.length > 0
+      ? await prisma.chatMessage.groupBy({
+          by: ['chatId'],
+          where: {
+            chatId: { in: chatIds },
+            senderId: { not: user.id },
+            OR: chatIds.map(chatId => ({
+              chatId,
+              createdAt: { gt: participantsByChat.get(chatId)! }
+            }))
+          },
+          _count: { id: true }
+        })
+      : [];
+
+    const unreadMap = new Map(unreadCounts.map(c => [c.chatId, c._count.id]));
+    const chatsWithUnread = chats.map(chat => ({
+      ...chat,
+      unreadCount: unreadMap.get(chat.id) || 0
+    }));
 
     res.json(chatsWithUnread);
   } catch (error) {
@@ -110,16 +119,24 @@ router.get('/unread-count', isAuthenticated, async (req: Request, res: Response,
       select: { chatId: true, lastReadAt: true }
     });
 
+    // Aggregate unread counts in a single query instead of per-chat
+    const chatIds = participants.map(p => p.chatId);
     let totalUnread = 0;
-    for (const p of participants) {
-      const count = await prisma.chatMessage.count({
+
+    if (chatIds.length > 0) {
+      const unreadCounts = await prisma.chatMessage.groupBy({
+        by: ['chatId'],
         where: {
-          chatId: p.chatId,
+          chatId: { in: chatIds },
           senderId: { not: user.id },
-          createdAt: { gt: p.lastReadAt || new Date(0) }
-        }
+          OR: participants.map(p => ({
+            chatId: p.chatId,
+            createdAt: { gt: p.lastReadAt || new Date(0) }
+          }))
+        },
+        _count: { id: true }
       });
-      totalUnread += count;
+      totalUnread = unreadCounts.reduce((sum, c) => sum + c._count.id, 0);
     }
 
     res.json({ unreadCount: totalUnread });

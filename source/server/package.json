@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:local": "dotenv -e .env.local -- tsx watch src/index.ts",
-    "build": "prisma generate && tsc; exit 0",
-    "start": "prisma migrate resolve --applied 20260113120000_add_notification_prefs || true; prisma migrate resolve --applied 20260113131000_multiple_assignees || true; prisma migrate resolve --applied 20260114000000_template_multiple_assignees || true; prisma migrate deploy && node dist/index.js",
+    "build": "prisma generate && tsc",
+    "start": "prisma migrate deploy && node dist/index.js",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:local": "dotenv -e .env.local -- tsx prisma/seed-local.ts"
+    "db:seed:local": "dotenv -e .env.local -- tsx prisma/seed-local.ts",
+    "lint": "eslint src/",
+    "format": "prettier --write src/",
+    "test": "vitest run"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -37,6 +40,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
@@ -50,8 +54,13 @@
     "@types/web-push": "^3.6.4",
     "dotenv-cli": "^11.0.0",
     "esbuild": "^0.20.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^4.0.18"
   }
 }

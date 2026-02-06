@@ -117,6 +117,7 @@ model User {
   commentReactions         CommentReaction[]    @relation("CommentReactions")
   messageReactions         MessageReaction[]    @relation("MessageReactions")
   pushSubscriptions        PushSubscription[]
+  taskWatching             TaskWatcher[]
 
   @@index([jobRoleId])
   @@map("users")
@@ -209,6 +210,7 @@ model Task {
   activities   TaskActivity[]
   subtasks     Subtask[]
   comments     TaskComment[]
+  watchers     TaskWatcher[]
   submission       TaskSubmission?
   telegramMessages TelegramMessageMap[]
 
@@ -488,6 +490,7 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [id])
 
+  @@index([userId])
   @@index([action])
   @@index([entityType])
   @@index([createdAt])
@@ -503,6 +506,7 @@ model ScheduledJobRun {
   startedAt   DateTime  @default(now()) @map("started_at")
   completedAt DateTime? @map("completed_at")
 
+  @@index([jobName])
   @@map("scheduled_job_runs")
 }
 
@@ -539,6 +543,8 @@ model TaskSubmission {
 
   @@index([clientId])
   @@index([status])
+  @@index([reviewedBy])
+  @@index([submittedBy])
   @@map("task_submissions")
 }
 
@@ -679,4 +685,20 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+model TaskWatcher {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  muted     Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_watchers")
 }

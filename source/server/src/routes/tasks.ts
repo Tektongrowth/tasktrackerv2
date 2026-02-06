@@ -3,14 +3,15 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { sendTaskAssignedEmail, sendTaskOverdueEmail, sendMentionNotificationEmail } from '../services/email.js';
+import { sendMentionNotificationEmail } from '../services/email.js';
 import { sendTelegramMessage, sendTelegramPhoto, sendTelegramDocument, escapeTelegramHtml, storeTelegramMessageMapping } from '../services/telegram.js';
-import { sendMentionPush, sendTaskAssignmentPush } from '../services/pushNotifications.js';
+import { sendMentionPush, sendTaskUpdatePush } from '../services/pushNotifications.js';
 import { parseMentions, resolveMentions, createMentionRecords, markMentionsNotified } from '../utils/mentions.js';
 import { validateTitle, validateDescription, validateComment, INPUT_LIMITS } from '../utils/validation.js';
 import { uploadFile, getSignedDownloadUrl, deleteFile, generateStorageKey, isStorageConfigured } from '../services/storage.js';
 import { shouldNotify } from '../utils/notificationPrefs.js';
 import { assignRoleContractorsToTask } from '../services/roleAssignment.js';
+import { notifyTaskAssignees } from '../services/notifications.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -34,6 +35,30 @@ const commentUpload = multer({
     }
   }
 });
+
+// Valid status and priority values (must match Prisma enums)
+const VALID_STATUSES = ['todo', 'in_review', 'completed'] as const;
+const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
+
+function validateStatus(status: unknown): void {
+  if (status !== undefined && !VALID_STATUSES.includes(status as any)) {
+    throw new AppError(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
+  }
+}
+
+function validatePriority(priority: unknown): void {
+  if (priority !== undefined && !VALID_PRIORITIES.includes(priority as any)) {
+    throw new AppError(`Invalid priority. Must be one of: ${VALID_PRIORITIES.join(', ')}`, 400);
+  }
+}
+
+function validateTags(tags: unknown): void {
+  if (tags !== undefined) {
+    if (!Array.isArray(tags) || !tags.every(t => typeof t === 'string')) {
+      throw new AppError('Tags must be an array of strings', 400);
+    }
+  }
+}
 
 // Helper to safely parse and validate dates
 function parseDate(dateStr: string | undefined | null): Date | null {
@@ -67,6 +92,99 @@ function hasElevatedAccess(user: Express.User): boolean {
   return user.role === 'admin' || user.accessLevel === 'project_manager';
 }
 
+// Helper to add a user as a watcher (idempotent)
+async function addWatcher(taskId: string, userId: string): Promise<void> {
+  try {
+    await prisma.taskWatcher.upsert({
+      where: { taskId_userId: { taskId, userId } },
+      create: { taskId, userId },
+      update: {}
+    });
+  } catch (error) {
+    console.error('Failed to add watcher:', error);
+  }
+}
+
+// Helper to notify all watchers of a task update
+async function notifyWatchers(
+  taskId: string,
+  actorId: string,
+  actorName: string,
+  taskTitle: string,
+  updateType: 'comment' | 'status' | 'assignee',
+  details?: string,
+  excludeUserIds: string[] = []
+): Promise<void> {
+  try {
+    // Get task with project info for notifications
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        project: {
+          include: { client: { select: { name: true } } }
+        }
+      }
+    });
+    if (!task) return;
+
+    // Get all non-muted watchers except the actor and excluded users
+    const watchers = await prisma.taskWatcher.findMany({
+      where: {
+        taskId,
+        muted: false,
+        userId: { notIn: [actorId, ...excludeUserIds] }
+      },
+      include: {
+        user: {
+          select: { id: true, email: true, telegramChatId: true }
+        }
+      }
+    });
+
+    const clientName = task.project?.client?.name || 'Unknown Client';
+    const projectName = task.project?.name || 'Unknown Project';
+
+    for (const watcher of watchers) {
+      // Push notification
+      if (await shouldNotify(watcher.userId, 'taskUpdates', 'push')) {
+        await sendTaskUpdatePush(
+          watcher.userId,
+          actorName,
+          taskTitle,
+          taskId,
+          updateType,
+          details
+        );
+      }
+
+      // Telegram notification
+      if (watcher.user.telegramChatId && await shouldNotify(watcher.userId, 'taskUpdates', 'telegram')) {
+        let message: string;
+        switch (updateType) {
+          case 'comment':
+            message = `💬 <b>${escapeTelegramHtml(actorName)}</b> commented on "${escapeTelegramHtml(taskTitle)}":\n\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}\n\n"${escapeTelegramHtml(details || '')}"`;
+            break;
+          case 'status':
+            message = `📊 <b>${escapeTelegramHtml(actorName)}</b> changed status to <b>${escapeTelegramHtml(details || 'unknown')}</b>\n\n📋 "${escapeTelegramHtml(taskTitle)}"\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}`;
+            break;
+          case 'assignee':
+            message = `👤 <b>${escapeTelegramHtml(actorName)}</b> updated assignees\n\n📋 "${escapeTelegramHtml(taskTitle)}"\n📁 <b>${escapeTelegramHtml(clientName)}</b> › ${escapeTelegramHtml(projectName)}`;
+            break;
+        }
+        await sendTelegramMessage(watcher.user.telegramChatId, message);
+      }
+
+      // Email notification (if enabled)
+      if (watcher.user.email && await shouldNotify(watcher.userId, 'taskUpdates', 'email')) {
+        // Email would be sent here if we had a generic task update email function
+        // For now, we skip email notifications for task updates
+      }
+    }
+  } catch (error) {
+    console.error('Failed to notify watchers:', error);
+  }
+}
+
 // List tasks with filters
 router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -78,7 +196,15 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
       archived: includeArchived === 'true' ? undefined : false
     };
 
-    // All authenticated users can see all tasks (matching project visibility)
+    // Non-admin/non-PM users can only see tasks in projects they have access to
+    if (!hasElevatedAccess(user)) {
+      const projectAccess = await getUserProjectAccess(user.id);
+      const allowedProjectIds = projectAccess.map(pa => pa.projectId);
+      where.OR = [
+        { projectId: { in: allowedProjectIds } },
+        { assignees: { some: { userId: user.id } } }
+      ];
+    }
 
     if (status) where.status = status as Prisma.EnumTaskStatusFilter;
     if (assignedTo) where.assignees = { some: { userId: assignedTo as string } };
@@ -269,6 +395,8 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
     // Validate inputs
     const validTitle = validateTitle(title);
     const validDescription = validateDescription(description);
+    validateStatus(status);
+    validateTags(tags);
 
     // Any authenticated user can create tasks
 
@@ -319,31 +447,24 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
       }
     });
 
+    // Auto-watch: creator becomes a watcher
+    await addWatcher(task.id, user.id);
+
     // If task has a role, auto-assign contractors with that role
     if (roleId) {
       await assignRoleContractorsToTask(task.id, roleId);
     }
 
-    // Send notifications to assignees (check preferences for each channel)
+    // Auto-watch assignees and send notifications
     for (const assignee of task.assignees) {
-      if (assignee.user.id !== user.id) {
-        // Email notification
-        if (assignee.user.email && await shouldNotify(assignee.user.id, 'taskAssignment', 'email')) {
-          await sendTaskAssignedEmail(assignee.user.email, task);
-        }
-        // Push notification
-        if (await shouldNotify(assignee.user.id, 'taskAssignment', 'push')) {
-          await sendTaskAssignmentPush(assignee.user.id, user.name, task.title, task.id);
-        }
-        // Telegram notification
-        if (assignee.user.telegramChatId && await shouldNotify(assignee.user.id, 'taskAssignment', 'telegram')) {
-          await sendTelegramMessage(
-            assignee.user.telegramChatId,
-            `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
-          );
-        }
-      }
+      await addWatcher(task.id, assignee.user.id);
     }
+    await notifyTaskAssignees(
+      task.assignees.map(a => ({ id: a.user.id, email: a.user.email, telegramChatId: a.user.telegramChatId })),
+      user.id,
+      user.name,
+      task
+    );
 
     res.status(201).json(task);
   } catch (error) {
@@ -391,6 +512,11 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
     if (!canEdit && !isSelfAssignOnly) {
       throw new AppError('Permission denied', 403);
     }
+
+    // Validate fields
+    validateStatus(status);
+    validatePriority(priority);
+    validateTags(tags);
 
     const updateData: Prisma.TaskUncheckedUpdateInput = {};
     if (title !== undefined) updateData.title = validateTitle(title);
@@ -498,7 +624,7 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
       });
     }
 
-    // Track status change
+    // Track status change and notify watchers
     if (status !== undefined && status !== existingTask.status) {
       await prisma.taskActivity.create({
         data: {
@@ -508,6 +634,16 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
           details: { from: existingTask.status, to: status }
         }
       });
+
+      // Notify watchers of status change
+      await notifyWatchers(
+        id,
+        user.id,
+        user.name,
+        task!.title,
+        'status',
+        status
+      );
     }
 
     // Track priority change
@@ -562,50 +698,60 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
     }
 
     // Track individual assignee changes
+    // Batch lookup all changed assignee names to avoid N+1 queries
+    const changedUserIds = [...addedAssigneeIds, ...removedAssigneeIds];
+    const changedUsers = changedUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: changedUserIds } },
+          select: { id: true, name: true }
+        })
+      : [];
+    const userNameMap = new Map(changedUsers.map(u => [u.id, u.name]));
+
     for (const addedId of addedAssigneeIds) {
-      const addedUser = await prisma.user.findUnique({ where: { id: addedId }, select: { name: true } });
       await prisma.taskActivity.create({
         data: {
           taskId: id,
           userId: user.id,
           action: 'assignee_added',
-          details: { addedUserId: addedId, userName: addedUser?.name || 'Unknown' }
+          details: { addedUserId: addedId, userName: userNameMap.get(addedId) || 'Unknown' }
         }
       });
     }
 
     for (const removedId of removedAssigneeIds) {
-      const removedUser = await prisma.user.findUnique({ where: { id: removedId }, select: { name: true } });
       await prisma.taskActivity.create({
         data: {
           taskId: id,
           userId: user.id,
           action: 'assignee_removed',
-          details: { removedUserId: removedId, userName: removedUser?.name || 'Unknown' }
+          details: { removedUserId: removedId, userName: userNameMap.get(removedId) || 'Unknown' }
         }
       });
     }
 
-    // Notify new assignees (check preferences for each channel)
+    // Auto-watch and notify new assignees
     for (const assigneeId of addedAssigneeIds) {
-      const assignee = task?.assignees.find(a => a.userId === assigneeId);
-      if (assignee && assignee.user.id !== user.id) {
-        // Email notification
-        if (assignee.user.email && await shouldNotify(assignee.user.id, 'taskAssignment', 'email')) {
-          await sendTaskAssignedEmail(assignee.user.email, task);
-        }
-        // Push notification
-        if (await shouldNotify(assignee.user.id, 'taskAssignment', 'push')) {
-          await sendTaskAssignmentPush(assignee.user.id, user.name, task!.title, task!.id);
-        }
-        // Telegram notification
-        if (assignee.user.telegramChatId && await shouldNotify(assignee.user.id, 'taskAssignment', 'telegram')) {
-          await sendTelegramMessage(
-            assignee.user.telegramChatId,
-            `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task!.title)}"\n\nProject: ${escapeTelegramHtml(task!.project.client.name)}`
-          );
-        }
-      }
+      await addWatcher(id, assigneeId);
+    }
+    if (addedAssigneeIds.length > 0 && task) {
+      const newAssignees = task.assignees
+        .filter(a => addedAssigneeIds.includes(a.userId))
+        .map(a => ({ id: a.user.id, email: a.user.email, telegramChatId: a.user.telegramChatId }));
+      await notifyTaskAssignees(newAssignees, user.id, user.name, task);
+    }
+
+    // Notify watchers of assignee changes (if any changes were made)
+    if (addedAssigneeIds.length > 0 || removedAssigneeIds.length > 0) {
+      await notifyWatchers(
+        id,
+        user.id,
+        user.name,
+        task!.title,
+        'assignee',
+        undefined,
+        addedAssigneeIds // Don't notify newly added assignees (they already got assignment notification)
+      );
     }
 
     // Fetch task again with activities included (they were created after the transaction)
@@ -690,6 +836,8 @@ router.patch('/:id/status', isAuthenticated, async (req: Request, res: Response,
       throw new AppError('Permission denied', 403);
     }
 
+    validateStatus(status);
+
     const updateData: Prisma.TaskUncheckedUpdateInput = { status };
     if (status === 'completed' && existingTask.status !== 'completed') {
       updateData.completedAt = new Date();
@@ -723,6 +871,16 @@ router.patch('/:id/status', isAuthenticated, async (req: Request, res: Response,
         details: { from: existingTask.status, to: status }
       }
     });
+
+    // Notify watchers of status change
+    await notifyWatchers(
+      id,
+      user.id,
+      user.name,
+      task.title,
+      'status',
+      status
+    );
 
     // Fetch task again with activities included
     const finalTask = await prisma.task.findUnique({
@@ -888,6 +1046,8 @@ router.post('/bulk/status', isAuthenticated, async (req: Request, res: Response,
       throw new AppError('taskIds must be a non-empty array', 400);
     }
 
+    validateStatus(status);
+
     const updateData: Prisma.TaskUncheckedUpdateManyInput = { status };
     if (status === 'completed') {
       updateData.completedAt = new Date();
@@ -973,7 +1133,7 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
       }
     });
 
-    // Notify new assignees (check preferences for each channel)
+    // Notify new assignees
     if (newAssigneeIds.length > 0) {
       const assignees = await prisma.user.findMany({
         where: { id: { in: newAssigneeIds } },
@@ -983,26 +1143,8 @@ router.post('/bulk/assignees', isAuthenticated, async (req: Request, res: Respon
         where: { id: { in: taskIds } },
         include: { project: { include: { client: true } } }
       });
-      for (const assignee of assignees) {
-        if (assignee.id !== user.id) {
-          for (const task of tasks) {
-            // Email notification
-            if (assignee.email && await shouldNotify(assignee.id, 'taskAssignment', 'email')) {
-              await sendTaskAssignedEmail(assignee.email, task);
-            }
-            // Push notification
-            if (await shouldNotify(assignee.id, 'taskAssignment', 'push')) {
-              await sendTaskAssignmentPush(assignee.id, user.name, task.title, task.id);
-            }
-            // Telegram notification
-            if (assignee.telegramChatId && await shouldNotify(assignee.id, 'taskAssignment', 'telegram')) {
-              await sendTelegramMessage(
-                assignee.telegramChatId,
-                `📋 <b>New task assigned to you</b>\n\n"${escapeTelegramHtml(task.title)}"\n\nProject: ${escapeTelegramHtml(task.project.client.name)}`
-              );
-            }
-          }
-        }
+      for (const task of tasks) {
+        await notifyTaskAssignees(assignees, user.id, user.name, task);
       }
     }
 
@@ -1491,6 +1633,23 @@ router.post('/:taskId/comments', isAuthenticated, async (req: Request, res: Resp
       }
     });
 
+    // Auto-watch: commenter becomes a watcher
+    await addWatcher(taskId, user.id);
+
+    // Get mentioned user IDs to exclude from watcher notifications (they already got mention notification)
+    const mentionedUserIds = mentions.length > 0 ? await resolveMentions(mentions) : [];
+
+    // Notify watchers of new comment (excluding commenter and mentioned users)
+    await notifyWatchers(
+      taskId,
+      user.id,
+      user.name,
+      task.title,
+      'comment',
+      content.substring(0, 100),
+      mentionedUserIds
+    );
+
     res.status(201).json(comment);
   } catch (error) {
     next(error);
@@ -1909,6 +2068,29 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
       }
     });
 
+    // Auto-watch: commenter becomes a watcher
+    await addWatcher(taskId, user.id);
+
+    // Get mentioned user IDs to exclude from watcher notifications
+    let mentionedUserIds: string[] = [];
+    if (content) {
+      const mentions = parseMentions(content);
+      if (mentions.length > 0) {
+        mentionedUserIds = await resolveMentions(mentions);
+      }
+    }
+
+    // Notify watchers of new comment (excluding commenter and mentioned users)
+    await notifyWatchers(
+      taskId,
+      user.id,
+      user.name,
+      task.title,
+      'comment',
+      content ? content.substring(0, 100) : 'Shared a file',
+      mentionedUserIds
+    );
+
     res.status(201).json(comment);
   } catch (error) {
     next(error);
@@ -2048,6 +2230,153 @@ router.delete('/:taskId/comments/:commentId/attachments/:attachmentId', isAuthen
     await prisma.commentAttachment.delete({ where: { id: attachmentId } });
 
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ==================== WATCHERS ====================
+
+// List watchers for a task
+router.get('/:id/watchers', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+      select: { id: true }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    const watchers = await prisma.taskWatcher.findMany({
+      where: { taskId: id },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    res.json(watchers);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Add watcher to a task (self or others if admin/PM)
+router.post('/:id/watchers', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const user = req.user as Express.User;
+    const { userId } = req.body;
+
+    const targetUserId = userId || user.id;
+
+    // Only admin/PM can add others as watchers
+    if (targetUserId !== user.id && !hasElevatedAccess(user)) {
+      throw new AppError('Permission denied', 403);
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+      select: { id: true }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    // Check if already watching
+    const existing = await prisma.taskWatcher.findUnique({
+      where: { taskId_userId: { taskId: id, userId: targetUserId } }
+    });
+    if (existing) {
+      return res.json(existing);
+    }
+
+    const watcher = await prisma.taskWatcher.create({
+      data: {
+        taskId: id,
+        userId: targetUserId
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true }
+        }
+      }
+    });
+
+    res.status(201).json(watcher);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Remove watcher from a task
+router.delete('/:id/watchers/:userId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const targetUserId = req.params.userId as string;
+    const user = req.user as Express.User;
+
+    // Only admin/PM can remove others, or user can remove themselves
+    if (targetUserId !== user.id && !hasElevatedAccess(user)) {
+      throw new AppError('Permission denied', 403);
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+      select: { id: true }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    await prisma.taskWatcher.deleteMany({
+      where: { taskId: id, userId: targetUserId }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Toggle mute for current user
+router.patch('/:id/watchers/mute', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const user = req.user as Express.User;
+    const { muted } = req.body;
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+      select: { id: true }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    const watcher = await prisma.taskWatcher.findUnique({
+      where: { taskId_userId: { taskId: id, userId: user.id } }
+    });
+    if (!watcher) {
+      throw new AppError('You are not watching this task', 400);
+    }
+
+    const updated = await prisma.taskWatcher.update({
+      where: { id: watcher.id },
+      data: { muted: muted === true },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true }
+        }
+      }
+    });
+
+    res.json(updated);
   } catch (error) {
     next(error);
   }

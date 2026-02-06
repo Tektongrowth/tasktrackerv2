@@ -34,7 +34,16 @@ import {
 import { chats as chatsApi, notifications as notificationsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-const navItems = [
+interface NavItem {
+  to: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  adminOnly?: boolean;
+  contractorOnly?: boolean;
+  requiresProjectManager?: boolean;
+}
+
+const navItems: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/kanban', icon: Kanban, label: 'Kanban Board' },
   { to: '/list', icon: List, label: 'Task List' },
@@ -159,9 +168,9 @@ function ProjectSidebar() {
                   <div className="w-4" />
                 )}
                 <span className="truncate flex-1">{client.name}</span>
-                {(client as any).incompleteTaskCount > 0 && (
+                {(client as { incompleteTaskCount?: number }).incompleteTaskCount != null && (client as { incompleteTaskCount?: number }).incompleteTaskCount! > 0 && (
                   <Badge variant="secondary" className="text-xs h-5">
-                    {(client as any).incompleteTaskCount}
+                    {(client as { incompleteTaskCount?: number }).incompleteTaskCount}
                   </Badge>
                 )}
               </div>
@@ -231,9 +240,6 @@ export function Layout() {
   // Total unread for messages badge (chats + mentions)
   const totalUnreadMessages = unreadChatCount + unreadMentionCount;
 
-  // Debug unread counts
-  console.log('Layout unread counts:', { unreadChatCount, unreadMentionCount, totalUnreadMessages });
-
   // Get branding from theme
   const logoUrl = theme?.branding?.logoUrl || '/logo.png';
   const backgroundImage = theme?.branding?.backgroundImage || '/background.jpg';
@@ -266,10 +272,10 @@ export function Layout() {
   const showProjectSidebar = ['/kanban', '/dashboard', '/list'].includes(location.pathname);
 
   // Filter nav items based on access level
-  const canShowNavItem = (item: typeof navItems[0]) => {
+  const canShowNavItem = (item: NavItem) => {
     if (item.adminOnly) return isAdmin;
-    if ((item as any).contractorOnly) return !isAdmin;
-    if ((item as any).requiresProjectManager) return isProjectManager;
+    if (item.contractorOnly) return !isAdmin;
+    if (item.requiresProjectManager) return isProjectManager;
     return true;
   };
 
@@ -285,6 +291,12 @@ export function Layout() {
 
   return (
     <div className={cn("h-screen bg-background flex relative overflow-hidden", demoMode && "demo-mode")}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:p-4 focus:bg-white focus:text-primary focus:underline"
+      >
+        Skip to content
+      </a>
       {/* Custom background from theme */}
       {(backgroundImage || backgroundColor) && (
         <div
@@ -361,6 +373,7 @@ export function Layout() {
               size="icon"
               className="w-10 h-10 text-gray-500 hover:text-white hover:bg-white/10"
               onClick={handleLogout}
+              aria-label="Logout"
             >
               <LogOut className="h-5 w-5" />
             </Button>
@@ -379,7 +392,7 @@ export function Layout() {
       )}
 
       {/* Main content - always show scrollbar to prevent layout shift */}
-      <main className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-20 md:pb-0">
+      <main id="main-content" className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-20 md:pb-0">
         {/* Mobile Project Selector */}
         {showProjectSidebar && isMobile && <MobileProjectSelector />}
         <div className="flex-1">
@@ -403,6 +416,7 @@ export function Layout() {
         <button
           onClick={() => setSearchModalOpen(true)}
           className="w-14 h-14 bg-[var(--theme-accent)] hover:bg-[var(--theme-primary)] rounded-full flex items-center justify-center shadow-lg transition-colors animate-slow-pulse"
+          aria-label="Search"
         >
           <Search className="h-6 w-6 text-white" />
         </button>

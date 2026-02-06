@@ -1,5 +1,6 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import cookie from 'cookie';
 import { prisma } from './db/client.js';
 import { sendChatNotificationEmail } from './services/email.js';
 import { sendTelegramMessage, escapeTelegramHtml, storeTelegramChatMapping } from './services/telegram.js';
@@ -9,7 +10,7 @@ import { shouldNotify } from './utils/notificationPrefs.js';
 // Track connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map<string, Set<string>>();
 
-export function initializeSocket(httpServer: HttpServer, corsOrigins: string | string[]) {
+export function initializeSocket(httpServer: HttpServer, corsOrigins: string | string[], sessionStore: import('express-session').Store) {
   const io = new Server(httpServer, {
     cors: {
       origin: corsOrigins,
@@ -17,24 +18,76 @@ export function initializeSocket(httpServer: HttpServer, corsOrigins: string | s
     }
   });
 
-  // Authentication middleware
+  const sessionSecret = process.env.SESSION_SECRET || 'development-secret-change-in-production';
+
+  // Authentication middleware - extract userId from server-side session
   io.use(async (socket, next) => {
-    const userId = socket.handshake.auth.userId;
-    if (!userId) {
-      return next(new Error('Authentication required'));
+    try {
+      const cookieHeader = socket.handshake.headers.cookie;
+      if (!cookieHeader) {
+        return next(new Error('Authentication required'));
+      }
+
+      const cookies = cookie.parse(cookieHeader);
+      const signedCookie = cookies['connect.sid'];
+      if (!signedCookie) {
+        return next(new Error('Authentication required'));
+      }
+
+      // Unsign the cookie: express-session signs as s:<value>.<signature>
+      // The cookie value from the browser is URL-encoded, so decode first
+      const decoded = decodeURIComponent(signedCookie);
+      if (!decoded.startsWith('s:')) {
+        return next(new Error('Invalid session cookie'));
+      }
+
+      const unsigned = decoded.slice(2); // remove "s:"
+      const dotIndex = unsigned.lastIndexOf('.');
+      if (dotIndex === -1) {
+        return next(new Error('Invalid session cookie'));
+      }
+
+      const sessionId = unsigned.slice(0, dotIndex);
+      const signature = unsigned.slice(dotIndex + 1);
+
+      // Verify signature using the same algorithm as express-session (HMAC-SHA256 base64)
+      const crypto = await import('crypto');
+      const expected = crypto.createHmac('sha256', sessionSecret)
+        .update(sessionId)
+        .digest('base64')
+        .replace(/=+$/, '');
+
+      if (signature !== expected) {
+        return next(new Error('Invalid session signature'));
+      }
+
+      // Retrieve session from store
+      sessionStore.get(sessionId, async (err, sessionData) => {
+        if (err || !sessionData) {
+          return next(new Error('Session not found'));
+        }
+
+        // Passport stores userId under passport.user (from serializeUser)
+        const userId = (sessionData as any)?.passport?.user;
+        if (!userId) {
+          return next(new Error('Authentication required'));
+        }
+
+        // Verify user exists and is active
+        const user = await prisma.user.findUnique({
+          where: { id: userId }
+        });
+
+        if (!user || !user.active) {
+          return next(new Error('Invalid user'));
+        }
+
+        socket.data.userId = userId;
+        next();
+      });
+    } catch (err) {
+      return next(new Error('Authentication failed'));
     }
-
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user || !user.active) {
-      return next(new Error('Invalid user'));
-    }
-
-    socket.data.userId = userId;
-    next();
   });
 
   io.on('connection', (socket: Socket) => {

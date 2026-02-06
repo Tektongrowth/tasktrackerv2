@@ -1,10 +1,10 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import fs from 'fs/promises';
+import { createWriteStream } from 'fs';
 import path from 'path';
+import { createGzip } from 'zlib';
+import { pipeline } from 'stream/promises';
 import { prisma } from '../db/client.js';
-
-const execAsync = promisify(exec);
 
 const BACKUP_DIR = process.env.BACKUP_DIR || '/data/backups';
 const RETENTION_DAYS = 7;
@@ -40,10 +40,31 @@ export async function runDatabaseBackup() {
 
     console.log(`[Job] Creating backup at ${filepath}`);
 
-    // Run pg_dump with gzip compression
-    // Use shell to handle pipe
-    await execAsync(`pg_dump "${databaseUrl}" | gzip > "${filepath}"`, {
-      timeout: 600000 // 10 minute timeout
+    // Run pg_dump with gzip compression using safe spawn (no shell interpolation)
+    await new Promise<void>((resolve, reject) => {
+      const pgDump = spawn('pg_dump', [databaseUrl], { stdio: ['ignore', 'pipe', 'pipe'] });
+      const gzip = createGzip();
+      const output = createWriteStream(filepath);
+
+      let stderrData = '';
+      pgDump.stderr.on('data', (chunk) => { stderrData += chunk; });
+
+      pipeline(pgDump.stdout, gzip, output)
+        .then(() => {
+          if (pgDump.exitCode !== 0) {
+            reject(new Error(`pg_dump exited with code ${pgDump.exitCode}: ${stderrData}`));
+          } else {
+            resolve();
+          }
+        })
+        .catch(reject);
+
+      const timeout = setTimeout(() => {
+        pgDump.kill();
+        reject(new Error('pg_dump timed out after 10 minutes'));
+      }, 600000);
+
+      pgDump.on('close', () => clearTimeout(timeout));
     });
 
     // Get file size

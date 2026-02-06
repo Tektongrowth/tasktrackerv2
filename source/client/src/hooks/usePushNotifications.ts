@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.tektongrowth.com';
+import { fetchApi } from '@/lib/api';
 
 interface PushState {
   isSupported: boolean;
@@ -138,15 +137,7 @@ export function usePushNotifications() {
       }
 
       // Get VAPID public key from server
-      const keyResponse = await fetch(`${API_URL}/api/push/vapid-public-key`, {
-        credentials: 'include',
-      });
-
-      if (!keyResponse.ok) {
-        throw new Error('Failed to get VAPID key');
-      }
-
-      const { publicKey } = await keyResponse.json();
+      const { publicKey } = await fetchApi<{ publicKey: string }>('/api/push/vapid-public-key');
 
       // Subscribe to push
       const registration = await navigator.serviceWorker.ready;
@@ -157,16 +148,10 @@ export function usePushNotifications() {
       });
 
       // Send subscription to server
-      const response = await fetch(`${API_URL}/api/push/subscribe`, {
+      await fetchApi<{ success: boolean }>('/api/push/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ subscription: subscription.toJSON() }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to save subscription');
-      }
 
       setState({
         isSupported: true,
@@ -198,10 +183,8 @@ export function usePushNotifications() {
 
       if (subscription) {
         // Notify server
-        await fetch(`${API_URL}/api/push/unsubscribe`, {
+        await fetchApi<{ success: boolean }>('/api/push/unsubscribe', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ endpoint: subscription.endpoint }),
         });
 

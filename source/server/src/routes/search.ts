@@ -37,7 +37,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
 
       taskWhere.AND = {
         OR: [
-          { assignedTo: user.id },
+          { assignees: { some: { userId: user.id } } },
           ...(allowedProjectIds.length > 0 ? [{ projectId: { in: allowedProjectIds } }] : []),
         ],
       };

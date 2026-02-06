@@ -176,3 +176,43 @@ export async function sendTaskAssignmentPush(
     },
   });
 }
+
+/**
+ * Send push notification for task updates (for watchers)
+ */
+export async function sendTaskUpdatePush(
+  recipientId: string,
+  actorName: string,
+  taskTitle: string,
+  taskId: string,
+  updateType: 'comment' | 'status' | 'assignee',
+  details?: string
+): Promise<void> {
+  let body: string;
+  switch (updateType) {
+    case 'comment':
+      body = details
+        ? `${actorName} commented: ${details.length > 80 ? details.substring(0, 80) + '...' : details}`
+        : `${actorName} commented on "${taskTitle}"`;
+      break;
+    case 'status':
+      body = `${actorName} changed status to ${details || 'unknown'}`;
+      break;
+    case 'assignee':
+      body = `${actorName} updated assignees`;
+      break;
+    default:
+      body = `${actorName} updated "${taskTitle}"`;
+  }
+
+  await sendPushNotification(recipientId, {
+    title: `Task Update: ${taskTitle}`,
+    body,
+    tag: `task-update-${taskId}`,
+    data: {
+      type: 'task',
+      taskId,
+      url: `/kanban?taskId=${taskId}`,
+    },
+  });
+}

@@ -1,43 +1,28 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ThemeSettings, defaultTheme, applyTheme } from '@/lib/theme';
+import { fetchApi } from '@/lib/api';
 import { toast } from '@/components/ui/toaster';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.tektongrowth.com';
-
 async function fetchTheme(): Promise<ThemeSettings> {
-  const res = await fetch(`${API_BASE}/api/app-settings/theme`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!res.ok) {
+  try {
+    return await fetchApi<ThemeSettings>('/api/app-settings/theme');
+  } catch {
     return defaultTheme;
   }
-  return res.json();
 }
 
-async function updateTheme(theme: ThemeSettings): Promise<ThemeSettings> {
-  const res = await fetch(`${API_BASE}/api/app-settings/theme`, {
+async function updateThemeApi(theme: ThemeSettings): Promise<ThemeSettings> {
+  return fetchApi<ThemeSettings>('/api/app-settings/theme', {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ theme }),
   });
-  if (!res.ok) {
-    throw new Error('Failed to update theme');
-  }
-  return res.json();
 }
 
-async function resetTheme(): Promise<ThemeSettings> {
-  const res = await fetch(`${API_BASE}/api/app-settings/theme/reset`, {
+async function resetThemeApi(): Promise<ThemeSettings> {
+  return fetchApi<ThemeSettings>('/api/app-settings/theme/reset', {
     method: 'POST',
-    credentials: 'include',
   });
-  if (!res.ok) {
-    throw new Error('Failed to reset theme');
-  }
-  return res.json();
 }
 
 export function useTheme() {
@@ -51,7 +36,7 @@ export function useTheme() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateTheme,
+    mutationFn: updateThemeApi,
     onSuccess: (newTheme) => {
       queryClient.setQueryData(['theme'], newTheme);
       applyTheme(newTheme);
@@ -63,7 +48,7 @@ export function useTheme() {
   });
 
   const resetMutation = useMutation({
-    mutationFn: resetTheme,
+    mutationFn: resetThemeApi,
     onSuccess: (newTheme) => {
       queryClient.invalidateQueries({ queryKey: ['theme'] });
       queryClient.setQueryData(['theme'], newTheme);

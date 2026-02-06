@@ -1,3 +1,5 @@
+import type { NotificationPreferences, MentionNotification, TelegramStatus, TelegramLinkResponse, StripePricesResponse, WebhookUrlResponse, EmailTemplates, BugReportData, FeatureRequestData } from './types';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.tektongrowth.com';
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -193,6 +195,26 @@ export const tasks = {
     fetchApi<{ success: boolean; count: number }>('/api/tasks/bulk/archive', {
       method: 'POST',
       body: JSON.stringify({ taskIds }),
+    }),
+};
+
+// Task Watchers
+export const watchers = {
+  list: (taskId: string) =>
+    fetchApi<import('./types').TaskWatcher[]>(`/api/tasks/${taskId}/watchers`),
+  add: (taskId: string, userId?: string) =>
+    fetchApi<import('./types').TaskWatcher>(`/api/tasks/${taskId}/watchers`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
+  remove: (taskId: string, userId: string) =>
+    fetchApi<{ success: boolean }>(`/api/tasks/${taskId}/watchers/${userId}`, {
+      method: 'DELETE',
+    }),
+  toggleMute: (taskId: string, muted: boolean) =>
+    fetchApi<import('./types').TaskWatcher>(`/api/tasks/${taskId}/watchers/mute`, {
+      method: 'PATCH',
+      body: JSON.stringify({ muted }),
     }),
 };
 
@@ -529,46 +551,7 @@ export const guide = {
     fetchApi<{ success: boolean }>('/api/guide/reset', { method: 'POST' }),
 };
 
-// Notification Channel Preferences (for core notification types)
-export interface ChannelPrefs {
-  email: boolean;
-  push: boolean;
-  telegram: boolean;
-}
-
-// Notification Preferences
-export interface NotificationPreferences {
-  // Legacy notification types (email-only, boolean)
-  projectAssignment: boolean;
-  taskMovedToReview: boolean;
-  taskCompleted: boolean;
-  taskOverdue: boolean;
-  taskDueSoon: boolean;
-  dailyDigest: boolean;
-  weeklyDigest: boolean;
-  // Core notification types with per-channel preferences
-  taskAssignment: ChannelPrefs;
-  mentions: ChannelPrefs;
-  chatMessages: ChannelPrefs;
-}
-
-export interface MentionNotification {
-  id: string;
-  readAt: string | null;
-  createdAt: string;
-  commentId: string;
-  commentContent: string;
-  mentionedBy: { id: string; name: string; avatarUrl: string | null };
-  task: {
-    id: string;
-    title: string;
-    project: {
-      id: string;
-      name: string;
-      client: { id: string; name: string } | null;
-    } | null;
-  };
-}
+export type { ChannelPrefs, NotificationPreferences, MentionNotification } from './types';
 
 export const notifications = {
   getPreferences: () =>
@@ -589,20 +572,7 @@ export const notifications = {
     fetchApi<{ success: boolean }>('/api/notifications/mentions/read-all', { method: 'POST' }),
 };
 
-// Telegram integration
-export interface TelegramStatus {
-  configured: boolean;
-  connected: boolean;
-  linkedAt?: string;
-  botUsername?: string;
-}
-
-export interface TelegramLinkResponse {
-  connected: boolean;
-  url?: string;
-  linkedAt?: string;
-  botUsername?: string;
-}
+export type { TelegramStatus, TelegramLinkResponse } from './types';
 
 export const telegram = {
   getStatus: () => fetchApi<TelegramStatus>('/api/telegram/status'),
@@ -610,28 +580,7 @@ export const telegram = {
   disconnect: () => fetchApi<{ success: boolean }>('/api/telegram/link', { method: 'DELETE' }),
 };
 
-// Settings (admin only)
-export interface StripePriceMapping {
-  envVar: string;
-  planType: string;
-  label: string;
-  priceId: string | null;
-  isConfigured: boolean;
-}
-
-export interface StripePricesResponse {
-  prices: StripePriceMapping[];
-  summary: {
-    total: number;
-    configured: number;
-    missing: number;
-  };
-}
-
-export interface WebhookUrlResponse {
-  url: string;
-  events: string[];
-}
+export type { StripePriceMapping, StripePricesResponse, WebhookUrlResponse } from './types';
 
 export const settings = {
   getStripePrices: () => fetchApi<StripePricesResponse>('/api/settings/stripe-prices'),
@@ -639,18 +588,7 @@ export const settings = {
   testStripeConnection: () => fetchApi<{ success: boolean; message: string }>('/api/settings/test-stripe', { method: 'POST' }),
 };
 
-// Email Templates (admin only)
-export interface WelcomeEmailTemplate {
-  subject: string;
-  heading: string;
-  body: string;
-  buttonText: string;
-  footer: string;
-}
-
-export interface EmailTemplates {
-  welcome: WelcomeEmailTemplate;
-}
+export type { WelcomeEmailTemplate, EmailTemplates } from './types';
 
 export const emailTemplates = {
   get: () => fetchApi<EmailTemplates>('/api/app-settings/email-templates'),
@@ -694,23 +632,11 @@ export const chats = {
     }),
   removeParticipant: (chatId: string, userId: string) =>
     fetchApi<{ success: boolean }>(`/api/chats/${chatId}/participants/${userId}`, { method: 'DELETE' }),
-  uploadAttachment: async (chatId: string, file: File, messageContent?: string) => {
+  uploadAttachment: (chatId: string, file: File, messageContent?: string) => {
     const formData = new FormData();
     formData.append('file', file);
     if (messageContent) formData.append('messageContent', messageContent);
-
-    const res = await fetch(`${API_BASE}/api/chats/${chatId}/attachments`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: 'Upload failed' }));
-      throw new Error(error.error || 'Upload failed');
-    }
-
-    return res.json() as Promise<import('./types').ChatMessage>;
+    return fetchApiFormData<import('./types').ChatMessage>(`/api/chats/${chatId}/attachments`, formData);
   },
   getAttachmentUrl: (storageKey: string) => `${API_BASE}/api/chats/attachments/${storageKey}`,
   getAttachmentSignedUrl: (storageKey: string) =>
@@ -725,24 +651,7 @@ export const chats = {
     }),
 };
 
-// Support
-export interface BugReportData {
-  action: string;
-  actual: string;
-  errorMessage?: string;
-  steps: string;
-  browser: string;
-  device: string;
-  urgency: 'blocking' | 'annoying' | 'minor';
-  screenshotUrl?: string;
-}
-
-export interface FeatureRequestData {
-  title: string;
-  description: string;
-  useCase: string;
-  priority: 'nice_to_have' | 'would_help' | 'important';
-}
+export type { BugReportData, FeatureRequestData } from './types';
 
 export const support = {
   submitBugReport: (data: BugReportData) =>
@@ -780,4 +689,4 @@ export const gifs = {
     fetchApi<GifResponse>(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=${limit}`),
 };
 
-export { API_BASE };
+export { API_BASE, fetchApi };

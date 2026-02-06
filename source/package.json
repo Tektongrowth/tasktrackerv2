@@ -11,7 +11,7 @@
     "db:local:start": "docker compose up -d",
     "db:local:stop": "docker compose down",
     "db:local:reset": "docker compose down -v && docker compose up -d",
-    "db:local:setup": "npm run db:local:start && sleep 3 && cd server && npx dotenv -e .env.local -- npx prisma db push && npx dotenv -e .env.local -- npm run db:seed:local",
+    "db:local:setup": "docker compose up -d --wait && cd server && npx dotenv -e .env.local -- npx prisma db push && npx dotenv -e .env.local -- npm run db:seed:local",
     "build": "npm run build:client && npm run build:server && npm run db:deploy",
     "build:server": "cd server && npm run build",
     "build:client": "cd client && npm run build",

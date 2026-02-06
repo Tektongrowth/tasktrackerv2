@@ -1,6 +1,6 @@
 import { prisma } from '../db/client.js';
 
-export type NotificationType = 'taskAssignment' | 'mentions' | 'chatMessages';
+export type NotificationType = 'taskAssignment' | 'mentions' | 'chatMessages' | 'taskUpdates';
 export type NotificationChannel = 'email' | 'push' | 'telegram';
 
 export interface ChannelPrefs {
@@ -13,6 +13,7 @@ export interface NotificationChannelPreferences {
   taskAssignment: ChannelPrefs;
   mentions: ChannelPrefs;
   chatMessages: ChannelPrefs;
+  taskUpdates: ChannelPrefs;
 }
 
 // Default preferences for new users
@@ -20,6 +21,7 @@ export const defaultChannelPrefs: NotificationChannelPreferences = {
   taskAssignment: { email: true, push: true, telegram: true },
   mentions: { email: true, push: true, telegram: true },
   chatMessages: { email: false, push: true, telegram: true },
+  taskUpdates: { email: false, push: true, telegram: true },
 };
 
 /**
@@ -36,7 +38,7 @@ export function normalizePreferences(
   const p = prefs as Record<string, unknown>;
   const result: NotificationChannelPreferences = { ...defaultChannelPrefs };
 
-  for (const type of ['taskAssignment', 'mentions', 'chatMessages'] as const) {
+  for (const type of ['taskAssignment', 'mentions', 'chatMessages', 'taskUpdates'] as const) {
     const value = p[type];
 
     if (value === undefined) {

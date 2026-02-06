@@ -8,6 +8,7 @@ import passport from 'passport';
 import rateLimit from 'express-rate-limit';
 import { config } from 'dotenv';
 import path from 'path';
+import { doubleCsrf } from 'csrf-csrf';
 import { initializeSocket } from './socket.js';
 
 import { configurePassport } from './middleware/auth.js';
@@ -145,12 +146,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration with PostgreSQL store
 const PgSession = connectPgSimple(session);
+const sessionStore: import('express-session').Store = isProduction
+  ? new PgSession({
+      conString: process.env.DATABASE_URL,
+      tableName: 'user_sessions',
+      createTableIfMissing: true
+    })
+  : new session.MemoryStore();
+
 app.use(session({
-  store: isProduction ? new PgSession({
-    conString: process.env.DATABASE_URL,
-    tableName: 'user_sessions',
-    createTableIfMissing: true
-  }) : undefined,
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'development-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
@@ -160,7 +165,7 @@ app.use(session({
     secure: isProduction,
     httpOnly: true,
     sameSite: isProduction ? 'none' : 'lax',
-    domain: isProduction ? 'tektongrowth.com' : undefined,
+    domain: isProduction ? 'api.tektongrowth.com' : undefined,
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));
@@ -169,6 +174,43 @@ app.use(session({
 configurePassport();
 app.use(passport.initialize());
 app.use(passport.session());
+
+// CSRF protection using double-submit cookie pattern
+const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
+  getSecret: () => process.env.SESSION_SECRET || 'development-secret-change-in-production',
+  getSessionIdentifier: (req) => (req as any).sessionID || '',
+  cookieName: '__csrf',
+  cookieOptions: {
+    secure: isProduction,
+    sameSite: isProduction ? 'none' as const : 'lax' as const,
+    httpOnly: true,
+  },
+  getCsrfTokenFromRequest: (req) =>
+    req.headers['x-csrf-token'] as string,
+});
+
+// CSRF token endpoint
+app.get('/api/csrf-token', (req, res) => {
+  const token = generateCsrfToken(req, res);
+  res.json({ token });
+});
+
+// Apply CSRF protection to state-changing routes, excluding webhooks and auth callbacks
+app.use((req, res, next) => {
+  // Skip CSRF for safe methods
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  // Skip CSRF for webhook routes (they use their own verification)
+  if (req.path.startsWith('/webhooks/')) {
+    return next();
+  }
+  // Skip CSRF for auth OAuth callbacks
+  if (req.path.startsWith('/auth/google')) {
+    return next();
+  }
+  doubleCsrfProtection(req, res, next);
+});
 
 // Prevent browser caching of API responses - let client-side React Query handle caching
 app.use('/api', (_req, res, next) => {
@@ -191,7 +233,11 @@ app.get('/health', async (_req, res) => {
     res.json({ status: 'healthy', database: 'connected' });
   } catch (error) {
     console.error('Health check failed:', error);
-    res.status(503).json({ status: 'unhealthy', database: 'disconnected', error: String(error) });
+    res.status(503).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      ...(isProduction ? {} : { error: String(error) })
+    });
   }
 });
 
@@ -266,8 +312,8 @@ if (process.env.NODE_ENV === 'production') {
 // Error handler
 app.use(errorHandler);
 
-// Initialize Socket.IO
-const io = initializeSocket(httpServer, getAllowedOrigins());
+// Initialize Socket.IO with session store for auth
+const io = initializeSocket(httpServer, getAllowedOrigins(), sessionStore);
 
 // Store io instance for use in routes
 app.set('io', io);

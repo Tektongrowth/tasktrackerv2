@@ -25,3 +25,6 @@ Thumbs.db
 # Prisma
 *.db
 *.db-journal
+
+# Secrets
+client_secret*.json

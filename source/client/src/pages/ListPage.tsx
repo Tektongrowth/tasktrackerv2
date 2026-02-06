@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { tasks as tasksApi, projects, users } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useFilters } from '@/hooks/useFilters';
-import { useUpdateTaskStatus, useCreateTask } from '@/hooks/useTasks';
+import { useTasks, useUpdateTaskStatus, useCreateTask } from '@/hooks/useTasks';
 import { useRunningTimer, useStopTimer } from '@/hooks/useTimeEntries';
 import { TaskListView } from '@/components/TaskListView';
 import { TaskDetailPanel } from '@/components/TaskDetailPanel';
@@ -155,12 +155,10 @@ export function ListPage() {
   if (selectedClientId) params.clientId = selectedClientId;
   if (statusFilter !== 'all') params.status = statusFilter;
 
-  const { data: activeTasks } = useQuery({
-    queryKey: ['tasks', params],
-    queryFn: () => tasksApi.list(Object.keys(params).length > 0 ? params : undefined),
-    enabled: !!user, // Wait for auth before fetching
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
-  });
+  const { data: activeTasks } = useTasks(
+    Object.keys(params).length > 0 ? params : undefined,
+    { enabled: !!user }
+  );
   const safeActiveTasks = activeTasks ?? [];
 
   const { data: archivedTasks = [] } = useQuery({

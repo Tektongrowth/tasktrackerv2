@@ -136,6 +136,15 @@ router.get('/status', isAuthenticated, async (req: Request, res: Response) => {
  * This endpoint is registered separately in index.ts without auth
  */
 export async function handleTelegramWebhook(req: Request, res: Response) {
+  // Verify Telegram webhook secret token
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const token = req.headers['x-telegram-bot-api-secret-token'];
+    if (token !== webhookSecret) {
+      return res.sendStatus(403);
+    }
+  }
+
   try {
     const update: TelegramUpdate = req.body;
 

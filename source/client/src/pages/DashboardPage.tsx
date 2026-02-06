@@ -24,7 +24,7 @@ import {
 import { formatDate, getTagColor, isOverdue, sanitizeText } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { darkenColor } from '@/lib/theme';
+import { darkenColor, lightenColor } from '@/lib/theme';
 
 function getTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -169,16 +169,6 @@ function DonutChart({
       </div>
     </div>
   );
-}
-
-// Lighten a hex color
-function lightenColor(hex: string, percent: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.min((num >> 16) + amt, 255);
-  const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
-  const B = Math.min((num & 0x0000FF) + amt, 255);
-  return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }
 
 export function DashboardPage() {

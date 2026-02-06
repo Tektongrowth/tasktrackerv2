@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useUpdateTask, useCreateTask } from '@/hooks/useTasks';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useUpdateTask } from '@/hooks/useTasks';
 import { useRunningTimer, useStartTimer, useStopTimer, useCreateTimeEntry, useDeleteTimeEntry } from '@/hooks/useTimeEntries';
+import { useWatchers, useAddWatcher, useRemoveWatcher, useToggleMute } from '@/hooks/useWatchers';
+import { useSubtaskMutations, useCommentMutations, useArchiveTask } from '@/hooks/useTaskDetailMutations';
 import { useAuth } from '@/hooks/useAuth';
-import { users, tasks as tasksApi, subtasks as subtasksApi, comments as commentsApi, roles as rolesApi, projects } from '@/lib/api';
+import { users, tasks as tasksApi, roles as rolesApi } from '@/lib/api';
 import { toast } from '@/components/ui/toaster';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -12,14 +14,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon, ListPlus, Archive } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { X, Clock, Mail, Phone, Flag, Calendar, Plus, Trash2, CheckSquare, MessageSquare, Send, Play, Square, Timer, FileText, ExternalLink, Paperclip, ImageIcon, ListPlus, Archive, Eye, EyeOff, Bell, BellOff, UserPlus } from 'lucide-react';
 import { UserAvatar } from '@/components/UserAvatar';
 import { MentionInput } from '@/components/MentionInput';
 import { GifPicker } from '@/components/GifPicker';
 import { ReactionPicker, ReactionDisplay } from '@/components/reactions';
+import { CreateTaskDialog } from '@/components/CreateTaskDialog';
+import { CommentAttachmentDisplay } from '@/components/CommentAttachmentDisplay';
 import { cn, formatDate, formatDateTime, formatDuration, getTagColor, linkifyText } from '@/lib/utils';
-import type { Task, TaskPriority, TaskStatus, EmojiKey } from '@/lib/types';
+import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
 import { priorityConfig } from './TaskCard';
 
 interface TaskDetailPanelProps {
@@ -73,121 +76,6 @@ const formatActivityAction = (action: string, details?: Record<string, unknown>)
   }
 };
 
-// Component to display comment attachments with proper authentication
-function CommentAttachmentDisplay({
-  attachment,
-  taskId,
-  commentId
-}: {
-  attachment: import('@/lib/types').CommentAttachment;
-  taskId: string;
-  commentId: string;
-}) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [showLightbox, setShowLightbox] = useState(false);
-  const isImage = attachment.fileType.startsWith('image/');
-
-  useEffect(() => {
-    if (!isImage) {
-      setLoading(false);
-      return;
-    }
-
-    // Get signed URL from API
-    commentsApi.getAttachmentSignedUrl(taskId, commentId, attachment.id)
-      .then(({ url }) => {
-        setImageUrl(url);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
-  }, [taskId, commentId, attachment.id, isImage]);
-
-  const handleClick = async () => {
-    if (imageUrl) {
-      setShowLightbox(true);
-    } else {
-      // Try to get signed URL
-      try {
-        const { url } = await commentsApi.getAttachmentSignedUrl(taskId, commentId, attachment.id);
-        setImageUrl(url);
-        setShowLightbox(true);
-      } catch {
-        // Fallback: open redirect URL in new tab
-        window.open(commentsApi.getAttachmentUrl(taskId, commentId, attachment.id), '_blank');
-      }
-    }
-  };
-
-  if (isImage) {
-    return (
-      <>
-        <div
-          className="cursor-pointer"
-          onClick={handleClick}
-        >
-          {loading ? (
-            <div className="w-48 h-32 bg-muted rounded-md animate-pulse flex items-center justify-center">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
-              <ImageIcon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{attachment.fileName}</span>
-              <span className="text-xs text-muted-foreground">(click to view)</span>
-            </div>
-          ) : (
-            <img
-              src={imageUrl!}
-              alt={attachment.fileName}
-              className="max-w-xs max-h-48 rounded-md border hover:opacity-90 transition-opacity"
-            />
-          )}
-        </div>
-        {/* Lightbox modal */}
-        {showLightbox && imageUrl && (
-          <div
-            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setShowLightbox(false)}
-          >
-            <button
-              className="absolute top-4 right-4 text-white hover:text-gray-300 z-50"
-              onClick={() => setShowLightbox(false)}
-            >
-              <X className="h-8 w-8" />
-            </button>
-            <img
-              src={imageUrl}
-              alt={attachment.fileName}
-              className="max-w-full max-h-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
-      </>
-    );
-  }
-
-  return (
-    <a
-      href={commentsApi.getAttachmentUrl(taskId, commentId, attachment.id)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit"
-    >
-      <Paperclip className="h-4 w-4 text-muted-foreground" />
-      <span className="text-sm">{attachment.fileName}</span>
-      <span className="text-xs text-muted-foreground">
-        ({(attachment.fileSize / 1024).toFixed(0)} KB)
-      </span>
-    </a>
-  );
-}
-
 export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelProps) {
   const { user: currentUser, isAdmin, isProjectManager } = useAuth();
   const queryClient = useQueryClient();
@@ -205,64 +93,21 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
   // Create task from comment state
   const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
-  const [createTaskContent, setCreateTaskContent] = useState('');
   const [createTaskTitle, setCreateTaskTitle] = useState('');
+  const [createTaskContent, setCreateTaskContent] = useState('');
   const [createTaskProjectId, setCreateTaskProjectId] = useState('');
-  const [createTaskAssigneeIds, setCreateTaskAssigneeIds] = useState<string[]>([]);
-  const createTask = useCreateTask();
-
-  // Fetch all projects for task creation
-  const { data: allProjects = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: projects.list,
-    enabled: showCreateTaskDialog,
-  });
 
   // Handler to open create task dialog from a comment
   const handleCreateTaskFromComment = (comment: { content?: string; user?: { name?: string } | null; userName?: string }) => {
     const authorName = comment.user?.name || comment.userName || 'Unknown';
     const content = comment.content || '';
-    // Generate a title from the first line or first ~50 chars
     const firstLine = content.split('\n')[0].slice(0, 50);
     const suggestedTitle = firstLine.length < content.length ? `${firstLine}...` : firstLine;
 
     setCreateTaskTitle(suggestedTitle);
     setCreateTaskContent(`From comment by ${authorName}:\n\n${content}`);
     setCreateTaskProjectId(task.projectId);
-    setCreateTaskAssigneeIds([]);
     setShowCreateTaskDialog(true);
-  };
-
-  // Handle creating the task
-  const handleCreateTask = () => {
-    if (!createTaskTitle.trim() || !createTaskProjectId) {
-      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
-      return;
-    }
-
-    createTask.mutate(
-      {
-        title: createTaskTitle.trim(),
-        description: createTaskContent.trim(),
-        projectId: createTaskProjectId,
-        status: 'todo',
-        priority: 'medium',
-        assigneeIds: createTaskAssigneeIds.length > 0 ? createTaskAssigneeIds : undefined,
-      },
-      {
-        onSuccess: () => {
-          toast({ title: 'Task created successfully' });
-          setShowCreateTaskDialog(false);
-          setCreateTaskTitle('');
-          setCreateTaskContent('');
-          setCreateTaskProjectId('');
-          setCreateTaskAssigneeIds([]);
-        },
-        onError: (error: Error) => {
-          toast({ title: 'Failed to create task', description: error.message, variant: 'destructive' });
-        },
-      }
-    );
   };
 
   // Time tracking
@@ -386,95 +231,32 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     queryFn: rolesApi.list,
   });
 
+  // Watchers
+  const { data: taskWatchers = [] } = useWatchers(task.id);
+  const addWatcher = useAddWatcher(task.id);
+  const removeWatcher = useRemoveWatcher(task.id);
+  const toggleMute = useToggleMute(task.id);
+
+  const isWatching = taskWatchers.some(w => w.userId === currentUser?.id);
+  const isMuted = taskWatchers.find(w => w.userId === currentUser?.id)?.muted ?? false;
+
   // Subtask mutations
-  const createSubtask = useMutation({
-    mutationFn: (title: string) => subtasksApi.create(task.id, { title }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  const { createSubtask, updateSubtask, deleteSubtask } = useSubtaskMutations(task.id, {
+    onSubtaskCreated: () => {
       setNewSubtaskTitle('');
       setIsAddingSubtask(false);
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to create subtask', description: error.message, variant: 'destructive' });
-      setIsAddingSubtask(false);
-    },
-  });
-
-  const updateSubtask = useMutation({
-    mutationFn: ({ subtaskId, data }: { subtaskId: string; data: { title?: string; completed?: boolean } }) =>
-      subtasksApi.update(task.id, subtaskId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to update subtask', description: error.message, variant: 'destructive' });
-    },
-  });
-
-  const deleteSubtask = useMutation({
-    mutationFn: (subtaskId: string) => subtasksApi.delete(task.id, subtaskId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to delete subtask', description: error.message, variant: 'destructive' });
     },
   });
 
   // Comment mutations
-  const createComment = useMutation({
-    mutationFn: ({ content, file }: { content: string; file: File | null }) => {
-      if (file) {
-        return commentsApi.createWithAttachment(task.id, content, file);
-      }
-      return commentsApi.create(task.id, { content });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  const { createComment, deleteComment, toggleReaction } = useCommentMutations(task.id, {
+    onCommentCreated: () => {
       setNewComment('');
       setAttachedFile(null);
     },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to post comment', description: error.message, variant: 'destructive' });
-    },
   });
 
-  const deleteComment = useMutation({
-    mutationFn: (commentId: string) => commentsApi.delete(task.id, commentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to delete comment', description: error.message, variant: 'destructive' });
-    },
-  });
-
-  const toggleReaction = useMutation({
-    mutationFn: ({ commentId, emoji }: { commentId: string; emoji: EmojiKey }) =>
-      commentsApi.toggleReaction(task.id, commentId, emoji),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to react', description: error.message, variant: 'destructive' });
-    },
-  });
-
-  const archiveTask = useMutation({
-    mutationFn: () => tasksApi.archive(task.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast({ title: 'Task archived' });
-      onClose();
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Failed to archive task', description: error.message, variant: 'destructive' });
-    },
-  });
+  const archiveTask = useArchiveTask(task.id, onClose);
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
@@ -607,6 +389,54 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 </>
               )}
             </Button>
+            {/* Watch/Unwatch Button */}
+            <Button
+              variant={isWatching ? 'default' : 'outline'}
+              size="sm"
+              className={cn(
+                'h-9 px-3 gap-2 font-medium transition-all',
+                isWatching
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'hover:bg-slate-100'
+              )}
+              onClick={() => {
+                if (isWatching) {
+                  removeWatcher.mutate(currentUser!.id);
+                } else {
+                  addWatcher.mutate(undefined);
+                }
+              }}
+              disabled={addWatcher.isPending || removeWatcher.isPending}
+              title={isWatching ? 'Stop watching this task' : 'Watch this task for updates'}
+            >
+              {isWatching ? (
+                <>
+                  <EyeOff className="h-3.5 w-3.5" />
+                  <span>Unwatch</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Watch</span>
+                </>
+              )}
+            </Button>
+            {/* Mute Button (only when watching) */}
+            {isWatching && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleMute.mutate(!isMuted)}
+                disabled={toggleMute.isPending}
+                className={cn(
+                  'hover:bg-slate-200 rounded-full transition-colors',
+                  isMuted && 'text-orange-500'
+                )}
+                title={isMuted ? 'Unmute notifications' : 'Mute notifications'}
+              >
+                {isMuted ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+              </Button>
+            )}
             {/* Archive Button */}
             <Button
               variant="ghost"
@@ -788,6 +618,77 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 ) : null;
               })}
             </div>
+          )}
+        </div>
+
+        {/* Watchers */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Watchers
+            {taskWatchers.length > 0 && (
+              <span className="text-xs text-muted-foreground">({taskWatchers.length})</span>
+            )}
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {taskWatchers.map((watcher) => (
+              <div
+                key={watcher.id}
+                className="flex items-center gap-2 bg-slate-100 rounded-full pl-1 pr-2 py-1"
+              >
+                <UserAvatar
+                  name={watcher.user?.name || 'Unknown'}
+                  avatarUrl={watcher.user?.avatarUrl}
+                  size="sm"
+                />
+                <span className="text-sm">{watcher.user?.name}</span>
+                {watcher.muted && (
+                  <span title="Muted">
+                    <BellOff className="h-3 w-3 text-orange-500" />
+                  </span>
+                )}
+                {(isAdmin || isProjectManager || watcher.userId === currentUser?.id) && (
+                  <button
+                    type="button"
+                    onClick={() => removeWatcher.mutate(watcher.userId)}
+                    className="hover:bg-slate-300 rounded-full p-0.5 transition-colors"
+                    title="Remove watcher"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {taskWatchers.length === 0 && (
+              <p className="text-sm text-muted-foreground">No watchers yet</p>
+            )}
+          </div>
+          {(isAdmin || isProjectManager) && (
+            <Select
+              value=""
+              onValueChange={(userId) => {
+                if (userId && !taskWatchers.some(w => w.userId === userId)) {
+                  addWatcher.mutate(userId);
+                }
+              }}
+            >
+              <SelectTrigger className="w-48 h-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>Add watcher...</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {allUsers?.filter(u => u.active && !u.archived && !taskWatchers.some(w => w.userId === u.id)).map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    <div className="flex items-center gap-2">
+                      <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
+                      {user.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
 
@@ -1435,96 +1336,13 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     </div>
 
     {/* Create Task from Comment Dialog */}
-    <Dialog open={showCreateTaskDialog} onOpenChange={setShowCreateTaskDialog}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ListPlus className="h-5 w-5" />
-            Create Task from Comment
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 pt-2">
-          <div className="space-y-2">
-            <Label htmlFor="newTaskTitle">Task Title</Label>
-            <Input
-              id="newTaskTitle"
-              value={createTaskTitle}
-              onChange={(e) => setCreateTaskTitle(e.target.value)}
-              placeholder="Enter task title..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="newTaskProject">Project</Label>
-            <Select value={createTaskProjectId} onValueChange={setCreateTaskProjectId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project..." />
-              </SelectTrigger>
-              <SelectContent>
-                {allProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Assign To</Label>
-            <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
-              {allUsers?.filter(u => u.active && !u.archived).map((user) => (
-                <div key={user.id} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`create-task-assignee-${user.id}`}
-                    checked={createTaskAssigneeIds.includes(user.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setCreateTaskAssigneeIds(prev => [...prev, user.id]);
-                      } else {
-                        setCreateTaskAssigneeIds(prev => prev.filter(id => id !== user.id));
-                      }
-                    }}
-                  />
-                  <label
-                    htmlFor={`create-task-assignee-${user.id}`}
-                    className="flex items-center gap-2 text-sm cursor-pointer flex-1"
-                  >
-                    <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
-                    {user.name}
-                  </label>
-                </div>
-              ))}
-              {(!allUsers || allUsers.filter(u => u.active && !u.archived).length === 0) && (
-                <p className="text-sm text-muted-foreground">No users available</p>
-              )}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="newTaskDescription">Description</Label>
-            <Textarea
-              id="newTaskDescription"
-              value={createTaskContent}
-              onChange={(e) => setCreateTaskContent(e.target.value)}
-              rows={4}
-              className="text-sm"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateTaskDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateTask}
-              disabled={!createTaskTitle.trim() || !createTaskProjectId || createTask.isPending}
-            >
-              {createTask.isPending ? 'Creating...' : 'Create Task'}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <CreateTaskDialog
+      open={showCreateTaskDialog}
+      onOpenChange={setShowCreateTaskDialog}
+      defaultTitle={createTaskTitle}
+      defaultDescription={createTaskContent}
+      defaultProjectId={createTaskProjectId}
+    />
     </>
   );
 }

@@ -1,5 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createContext, useContext, type ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { timeEntries } from '@/lib/api';
+import type { TimeEntry } from '@/lib/types';
 
 export function useTimeEntries(params?: Record<string, string>) {
   return useQuery({
@@ -8,7 +10,22 @@ export function useTimeEntries(params?: Record<string, string>) {
   });
 }
 
+const RunningTimerContext = createContext<UseQueryResult<TimeEntry | null, Error> | null>(null);
+
+export function RunningTimerProvider({ children }: { children: ReactNode }) {
+  const query = useQuery({
+    queryKey: ['timeEntries', 'running'],
+    queryFn: timeEntries.getRunning,
+    refetchInterval: 1000,
+  });
+
+  return <RunningTimerContext.Provider value={query}>{children}</RunningTimerContext.Provider>;
+}
+
 export function useRunningTimer() {
+  const ctx = useContext(RunningTimerContext);
+  if (ctx) return ctx;
+  // Fallback for use outside provider (backwards-compatible)
   return useQuery({
     queryKey: ['timeEntries', 'running'],
     queryFn: timeEntries.getRunning,

@@ -1,14 +1,17 @@
 import { Router } from 'express';
+import { isAuthenticated } from '../middleware/auth.js';
 
 const router = Router();
 
 // Giphy API configuration
-// Using public beta key for now - replace with production key via env var
-const GIPHY_API_KEY = process.env.GIPHY_API_KEY || 'dc6zaTOxFJmzC';
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY;
 const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
 // Get trending GIFs
-router.get('/trending', async (req, res) => {
+router.get('/trending', isAuthenticated, async (req, res) => {
+  if (!GIPHY_API_KEY) {
+    return res.status(503).json({ error: 'Giphy API not configured' });
+  }
   try {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
     const offset = parseInt(req.query.offset as string) || 0;
@@ -31,7 +34,10 @@ router.get('/trending', async (req, res) => {
 });
 
 // Search GIFs
-router.get('/search', async (req, res) => {
+router.get('/search', isAuthenticated, async (req, res) => {
+  if (!GIPHY_API_KEY) {
+    return res.status(503).json({ error: 'Giphy API not configured' });
+  }
   try {
     const query = req.query.q as string;
     if (!query) {

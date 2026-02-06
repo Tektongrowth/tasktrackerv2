@@ -10,8 +10,7 @@ import { useRunningTimer, useStartTimer, useStopTimer } from '@/hooks/useTimeEnt
 import { toast } from '@/components/ui/toaster';
 import type { Task, TaskStatus } from '@/lib/types';
 
-// Store column widths outside component to persist across renders
-const storedColumnWidths = {
+const defaultColumnWidths = {
   task: 280,
   progress: 120,
   tags: 120,
@@ -38,7 +37,8 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
 
 export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListViewProps) {
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
-  const [columnWidths, setColumnWidths] = useState(storedColumnWidths);
+  const storedColumnWidths = useRef({ ...defaultColumnWidths });
+  const [columnWidths, setColumnWidths] = useState(storedColumnWidths.current);
   const [resizing, setResizing] = useState<string | null>(null);
   const startX = useRef(0);
   const startLeftWidth = useRef(0);
@@ -79,7 +79,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
             [resizing]: newLeftWidth,
             [rightColumn.current!]: newRightWidth
           };
-          Object.assign(storedColumnWidths, updated);
+          Object.assign(storedColumnWidths.current, updated);
           return updated;
         });
       }

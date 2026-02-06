@@ -467,3 +467,124 @@ export interface Chat {
   messages?: ChatMessage[];
   unreadCount?: number;
 }
+
+export interface TaskWatcher {
+  id: string;
+  taskId: string;
+  userId: string;
+  muted: boolean;
+  createdAt: string;
+  user?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>;
+}
+
+// Notification Channel Preferences (for core notification types)
+export interface ChannelPrefs {
+  email: boolean;
+  push: boolean;
+  telegram: boolean;
+}
+
+// Notification Preferences
+export interface NotificationPreferences {
+  // Legacy notification types (email-only, boolean)
+  projectAssignment: boolean;
+  taskMovedToReview: boolean;
+  taskCompleted: boolean;
+  taskOverdue: boolean;
+  taskDueSoon: boolean;
+  dailyDigest: boolean;
+  weeklyDigest: boolean;
+  // Core notification types with per-channel preferences
+  taskAssignment: ChannelPrefs;
+  mentions: ChannelPrefs;
+  chatMessages: ChannelPrefs;
+  taskUpdates: ChannelPrefs;
+}
+
+export interface MentionNotification {
+  id: string;
+  readAt: string | null;
+  createdAt: string;
+  commentId: string;
+  commentContent: string;
+  mentionedBy: { id: string; name: string; avatarUrl: string | null };
+  task: {
+    id: string;
+    title: string;
+    project: {
+      id: string;
+      name: string;
+      client: { id: string; name: string } | null;
+    } | null;
+  };
+}
+
+// Telegram integration
+export interface TelegramStatus {
+  configured: boolean;
+  connected: boolean;
+  linkedAt?: string;
+  botUsername?: string;
+}
+
+export interface TelegramLinkResponse {
+  connected: boolean;
+  url?: string;
+  linkedAt?: string;
+  botUsername?: string;
+}
+
+// Settings (admin only)
+export interface StripePriceMapping {
+  envVar: string;
+  planType: string;
+  label: string;
+  priceId: string | null;
+  isConfigured: boolean;
+}
+
+export interface StripePricesResponse {
+  prices: StripePriceMapping[];
+  summary: {
+    total: number;
+    configured: number;
+    missing: number;
+  };
+}
+
+export interface WebhookUrlResponse {
+  url: string;
+  events: string[];
+}
+
+// Email Templates (admin only)
+export interface WelcomeEmailTemplate {
+  subject: string;
+  heading: string;
+  body: string;
+  buttonText: string;
+  footer: string;
+}
+
+export interface EmailTemplates {
+  welcome: WelcomeEmailTemplate;
+}
+
+// Support
+export interface BugReportData {
+  action: string;
+  actual: string;
+  errorMessage?: string;
+  steps: string;
+  browser: string;
+  device: string;
+  urgency: 'blocking' | 'annoying' | 'minor';
+  screenshotUrl?: string;
+}
+
+export interface FeatureRequestData {
+  title: string;
+  description: string;
+  useCase: string;
+  priority: 'nice_to_have' | 'would_help' | 'important';
+}

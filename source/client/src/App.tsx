@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { useTheme } from './hooks/useTheme';
+import { RunningTimerProvider } from './hooks/useTimeEntries';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoginPage } from './pages/LoginPage';
@@ -69,12 +70,14 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <GuideProvider>
-                <Layout />
-                <WelcomeWizard />
-                <SpotlightTour />
-                <HelpButton />
-              </GuideProvider>
+              <RunningTimerProvider>
+                <GuideProvider>
+                  <Layout />
+                  <WelcomeWizard />
+                  <SpotlightTour />
+                  <HelpButton />
+                </GuideProvider>
+              </RunningTimerProvider>
             </ProtectedRoute>
           }
         >

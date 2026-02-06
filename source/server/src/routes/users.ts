@@ -87,9 +87,28 @@ router.get('/chat-list', isAuthenticated, async (req: Request, res: Response, ne
 // List all users (all authenticated users)
 router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const currentUser = req.user as Express.User;
+
+    if (currentUser.role === 'admin') {
+      const users = await prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          jobRole: true
+        }
+      });
+      return res.json(users);
+    }
+
+    // Non-admin users get minimal fields only
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        role: true,
+        jobRoleId: true,
         jobRole: true
       }
     });

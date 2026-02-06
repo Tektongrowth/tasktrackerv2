@@ -1,109 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { MessageCircle, Plus, Search, Users, Paperclip, Send, File, X, Check, CheckCheck, AtSign, ChevronDown, ChevronRight, ListPlus, ArrowLeft } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { MessageCircle, Plus, Search, Users, Paperclip, Send, Check, CheckCheck, AtSign, ChevronDown, ChevronRight, ListPlus, ArrowLeft } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { Chat, ChatMessage } from '../lib/types';
-import { chats as chatsApi, users as usersApi, notifications as notificationsApi, projects as projectsApi, type MentionNotification } from '../lib/api';
-import { useCreateTask } from '../hooks/useTasks';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
-import { Label } from '../components/ui/label';
-import { Checkbox } from '../components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { toast } from '../components/ui/toaster';
-import { UserAvatar } from '../components/UserAvatar';
+import { chats as chatsApi, users as usersApi, notifications as notificationsApi, type MentionNotification } from '../lib/api';
 import { GifPicker } from '../components/GifPicker';
-import { linkifyText } from '../lib/utils';
-
-// Minimal user type for chat list (returned by /api/users/chat-list)
-type ChatUser = { id: string; name: string; email: string; avatarUrl: string | null };
-
-// Component to display chat attachments with signed URLs
-function ChatAttachmentDisplay({
-  attachment,
-}: {
-  attachment: { id: string; fileName: string; fileType: string; storageKey: string };
-}) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const isImage = attachment.fileType.startsWith('image/');
-  const isPdf = attachment.fileType === 'application/pdf';
-
-  useEffect(() => {
-    if (!isImage) {
-      setLoading(false);
-      return;
-    }
-
-    // Get signed URL from API
-    chatsApi.getAttachmentSignedUrl(attachment.storageKey)
-      .then(({ url }) => {
-        setImageUrl(url);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
-  }, [attachment.storageKey, isImage]);
-
-  const handleClick = async () => {
-    if (isImage && imageUrl) {
-      window.open(imageUrl, '_blank');
-    } else {
-      // For non-images or if URL not loaded yet, fetch and open
-      try {
-        const { url } = await chatsApi.getAttachmentSignedUrl(attachment.storageKey);
-        window.open(url, '_blank');
-      } catch {
-        // Fallback to redirect URL
-        window.open(chatsApi.getAttachmentUrl(attachment.storageKey), '_blank');
-      }
-    }
-  };
-
-  if (isImage) {
-    return (
-      <div className="cursor-pointer" onClick={handleClick}>
-        {loading ? (
-          <div className="w-48 h-32 bg-black/10 rounded animate-pulse flex items-center justify-center">
-            <File className="h-6 w-6 opacity-50" />
-          </div>
-        ) : error ? (
-          <div className="w-48 h-32 bg-black/10 rounded flex items-center justify-center">
-            <span className="text-sm opacity-70">Failed to load image</span>
-          </div>
-        ) : (
-          <img
-            src={imageUrl || ''}
-            alt={attachment.fileName}
-            className="max-w-full max-h-64 rounded cursor-pointer hover:opacity-90 transition-opacity"
-          />
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={handleClick}
-      className="flex items-center gap-2 p-2 bg-black/10 rounded hover:bg-black/20 transition-colors text-left"
-    >
-      <File className={`w-4 h-4 ${isPdf ? 'text-red-500' : ''}`} />
-      <span className="text-sm truncate">{attachment.fileName}</span>
-      {isPdf && <span className="text-xs opacity-70">(click to view)</span>}
-    </button>
-  );
-}
-
+import { ChatAttachmentDisplay } from '../components/ChatAttachmentDisplay';
+import { NewChatDialog } from '../components/NewChatDialog';
+import { CreateTaskDialog } from '../components/CreateTaskDialog';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
 import { ReactionPicker, ReactionDisplay } from '../components/reactions';
+import { linkifyText } from '../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+
+type ChatUser = { id: string; name: string; email: string; avatarUrl: string | null };
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -119,10 +31,8 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
-  const [allUsers, setAllUsers] = useState<ChatUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
-  const [mentions, setMentions] = useState<MentionNotification[]>([]);
   const [showMentions, setShowMentions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -130,16 +40,6 @@ export default function ChatPage() {
   const [showCreateTaskDialog, setShowCreateTaskDialog] = useState(false);
   const [createTaskContent, setCreateTaskContent] = useState('');
   const [createTaskTitle, setCreateTaskTitle] = useState('');
-  const [createTaskProjectId, setCreateTaskProjectId] = useState('');
-  const [createTaskAssigneeIds, setCreateTaskAssigneeIds] = useState<string[]>([]);
-  const createTask = useCreateTask();
-
-  // Fetch all projects for task creation
-  const { data: allProjects = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: projectsApi.list,
-    enabled: showCreateTaskDialog,
-  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -250,7 +150,6 @@ export default function ChatPage() {
     async function loadChats() {
       try {
         const chats = await chatsApi.list();
-        console.log('Loaded chats with unread counts:', chats.map(c => ({ name: c.name, unreadCount: c.unreadCount })));
         // Sort chats: unread first, then by updatedAt
         const sortedChats = [...chats].sort((a, b) => {
           const aUnread = a.unreadCount || 0;
@@ -272,30 +171,16 @@ export default function ChatPage() {
   }, [user?.id]);
 
   // Load users for new chat dialog
-  useEffect(() => {
-    async function loadUsers() {
-      try {
-        const users = await usersApi.listForChat();
-        setAllUsers(users);
-      } catch (error) {
-        console.error('Could not load users list:', error);
-      }
-    }
-    loadUsers();
-  }, [user?.id]);
+  const { data: allUsers = [] } = useQuery<ChatUser[]>({
+    queryKey: ['users', 'chat-list'],
+    queryFn: usersApi.listForChat,
+  });
 
   // Load task mentions
-  useEffect(() => {
-    async function loadMentions() {
-      try {
-        const mentionsList = await notificationsApi.getMentions();
-        setMentions(mentionsList);
-      } catch (error) {
-        console.error('Failed to load mentions:', error);
-      }
-    }
-    loadMentions();
-  }, []);
+  const { data: mentions = [] } = useQuery<MentionNotification[]>({
+    queryKey: ['mentions'],
+    queryFn: notificationsApi.getMentions,
+  });
 
   // Load active chat
   useEffect(() => {
@@ -535,68 +420,31 @@ export default function ChatPage() {
     return name.includes(searchQuery.toLowerCase());
   });
 
+  const queryClient = useQueryClient();
+
   const handleMentionClick = useCallback(async (mention: MentionNotification) => {
-    // Mark as read if not already
     if (!mention.readAt) {
       try {
         await notificationsApi.markMentionsAsRead([mention.id]);
-        setMentions((prev) =>
-          prev.map((m) => (m.id === mention.id ? { ...m, readAt: new Date().toISOString() } : m))
-        );
+        queryClient.invalidateQueries({ queryKey: ['mentions'] });
       } catch (error) {
         console.error('Failed to mark mention as read:', error);
       }
     }
-    // Navigate to the task in the kanban view
     navigate(`/kanban?taskId=${mention.task.id}`);
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   // Handler to open create task dialog from a message
   const handleCreateTaskFromMessage = useCallback((message: ChatMessage) => {
     const authorName = message.sender?.name || 'Unknown';
     const content = message.content || '';
-    // Generate a title from the first line or first ~50 chars
     const firstLine = content.split('\n')[0].slice(0, 50);
     const suggestedTitle = firstLine.length < content.length ? `${firstLine}...` : firstLine;
 
     setCreateTaskTitle(suggestedTitle);
     setCreateTaskContent(`From chat message by ${authorName}:\n\n${content}`);
-    setCreateTaskProjectId('');
-    setCreateTaskAssigneeIds([]);
     setShowCreateTaskDialog(true);
   }, []);
-
-  // Handle creating the task from message
-  const handleCreateTask = useCallback(() => {
-    if (!createTaskTitle.trim() || !createTaskProjectId) {
-      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
-      return;
-    }
-
-    createTask.mutate(
-      {
-        title: createTaskTitle.trim(),
-        description: createTaskContent.trim(),
-        projectId: createTaskProjectId,
-        status: 'todo',
-        priority: 'medium',
-        assigneeIds: createTaskAssigneeIds.length > 0 ? createTaskAssigneeIds : undefined,
-      },
-      {
-        onSuccess: () => {
-          toast({ title: 'Task created successfully' });
-          setShowCreateTaskDialog(false);
-          setCreateTaskTitle('');
-          setCreateTaskContent('');
-          setCreateTaskProjectId('');
-          setCreateTaskAssigneeIds([]);
-        },
-        onError: (error: Error) => {
-          toast({ title: 'Failed to create task', description: error.message, variant: 'destructive' });
-        },
-      }
-    );
-  }, [createTaskTitle, createTaskContent, createTaskProjectId, createTaskAssigneeIds, createTask]);
 
   const unreadMentionCount = mentions.filter((m) => !m.readAt).length;
 
@@ -622,6 +470,7 @@ export default function ChatPage() {
               onClick={() => setShowNewChatDialog(true)}
               className="p-2 hover:bg-muted rounded-full transition-colors"
               title="New chat"
+              aria-label="New chat"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -784,6 +633,7 @@ export default function ChatPage() {
                 <button
                   onClick={() => setActiveChatId(null)}
                   className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors"
+                  aria-label="Back to chat list"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -912,6 +762,7 @@ export default function ChatPage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
                 title="Attach file"
+                aria-label="Attach file"
               >
                 <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
               </button>
@@ -950,6 +801,7 @@ export default function ChatPage() {
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || isSending}
                 className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                aria-label="Send message"
               >
                 <Send className="w-4 h-4 md:w-5 md:h-5" />
               </button>
@@ -975,230 +827,13 @@ export default function ChatPage() {
       )}
 
       {/* Create Task from Message Dialog */}
-      <Dialog open={showCreateTaskDialog} onOpenChange={setShowCreateTaskDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ListPlus className="h-5 w-5" />
-              Create Task from Message
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="newTaskTitle">Task Title</Label>
-              <Input
-                id="newTaskTitle"
-                value={createTaskTitle}
-                onChange={(e) => setCreateTaskTitle(e.target.value)}
-                placeholder="Enter task title..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newTaskProject">Project</Label>
-              <Select value={createTaskProjectId} onValueChange={setCreateTaskProjectId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a project..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {allProjects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Assign To</Label>
-              <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
-                {allUsers.map((chatUser) => (
-                  <div key={chatUser.id} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`create-task-assignee-${chatUser.id}`}
-                      checked={createTaskAssigneeIds.includes(chatUser.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setCreateTaskAssigneeIds(prev => [...prev, chatUser.id]);
-                        } else {
-                          setCreateTaskAssigneeIds(prev => prev.filter(id => id !== chatUser.id));
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor={`create-task-assignee-${chatUser.id}`}
-                      className="flex items-center gap-2 text-sm cursor-pointer flex-1"
-                    >
-                      <UserAvatar name={chatUser.name} avatarUrl={chatUser.avatarUrl} size="sm" />
-                      {chatUser.name}
-                    </label>
-                  </div>
-                ))}
-                {allUsers.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No users available</p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newTaskDescription">Description</Label>
-              <Textarea
-                id="newTaskDescription"
-                value={createTaskContent}
-                onChange={(e) => setCreateTaskContent(e.target.value)}
-                rows={4}
-                className="text-sm"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateTaskDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateTask}
-                disabled={!createTaskTitle.trim() || !createTaskProjectId || createTask.isPending}
-              >
-                {createTask.isPending ? 'Creating...' : 'Create Task'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function NewChatDialog({
-  users,
-  onClose,
-  onCreate,
-}: {
-  users: ChatUser[];
-  onClose: () => void;
-  onCreate: (participantIds: string[], isGroup: boolean, name?: string) => void;
-}) {
-  const [isGroup, setIsGroup] = useState(false);
-  const [groupName, setGroupName] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleCreate = () => {
-    if (selectedUsers.length === 0) return;
-    onCreate(selectedUsers, isGroup, isGroup ? groupName : undefined);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg shadow-lg w-full max-w-md mx-4">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h3 className="text-lg font-semibold">New Chat</h3>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isGroup}
-              onChange={(e) => setIsGroup(e.target.checked)}
-              className="rounded"
-            />
-            <span>Create group chat</span>
-          </label>
-
-          {isGroup && (
-            <input
-              type="text"
-              placeholder="Group name"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              className="w-full px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          )}
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="max-h-60 overflow-y-auto space-y-1">
-            {filteredUsers.map((u) => (
-              <label
-                key={u.id}
-                className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
-                  selectedUsers.includes(u.id) ? 'bg-primary/10' : 'hover:bg-muted'
-                }`}
-              >
-                <input
-                  type={isGroup ? 'checkbox' : 'radio'}
-                  name="participant"
-                  checked={selectedUsers.includes(u.id)}
-                  onChange={(e) => {
-                    if (isGroup) {
-                      setSelectedUsers((prev) =>
-                        e.target.checked
-                          ? [...prev, u.id]
-                          : prev.filter((id) => id !== u.id)
-                      );
-                    } else {
-                      setSelectedUsers([u.id]);
-                    }
-                  }}
-                  className="rounded"
-                />
-                {u.avatarUrl ? (
-                  <img
-                    src={u.avatarUrl}
-                    alt={u.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary font-medium text-sm">
-                      {u.name[0].toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{u.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-4 border-t flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm hover:bg-muted rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={selectedUsers.length === 0 || (isGroup && !groupName.trim())}
-            className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Create Chat
-          </button>
-        </div>
-      </div>
+      <CreateTaskDialog
+        open={showCreateTaskDialog}
+        onOpenChange={setShowCreateTaskDialog}
+        defaultTitle={createTaskTitle}
+        defaultDescription={createTaskContent}
+        users={allUsers.map(u => ({ id: u.id, name: u.name, avatarUrl: u.avatarUrl }))}
+      />
     </div>
   );
 }
