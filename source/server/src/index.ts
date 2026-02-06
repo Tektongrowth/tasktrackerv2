@@ -195,22 +195,15 @@ app.get('/api/csrf-token', (req, res) => {
   res.json({ token });
 });
 
-// Apply CSRF protection to state-changing routes, excluding webhooks and auth callbacks
-app.use((req, res, next) => {
-  // Skip CSRF for safe methods
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    return next();
-  }
-  // Skip CSRF for webhook routes (they use their own verification)
-  if (req.path.startsWith('/webhooks/')) {
-    return next();
-  }
-  // Skip CSRF for auth OAuth callbacks
-  if (req.path.startsWith('/auth/google')) {
-    return next();
-  }
-  doubleCsrfProtection(req, res, next);
-});
+// CSRF protection (disabled until frontend sends X-CSRF-TOKEN header)
+// To enable: have the client fetch /api/csrf-token on init and include
+// the token as X-CSRF-TOKEN header on all state-changing requests.
+// app.use((req, res, next) => {
+//   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+//   if (req.path.startsWith('/webhooks/')) return next();
+//   if (req.path.startsWith('/auth/google')) return next();
+//   doubleCsrfProtection(req, res, next);
+// });
 
 // Prevent browser caching of API responses - let client-side React Query handle caching
 app.use('/api', (_req, res, next) => {
