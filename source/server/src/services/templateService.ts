@@ -83,7 +83,7 @@ export async function applyTemplateSetToProject(
     }
 
     const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + template.dueInDays);
+    dueDate.setDate(dueDate.getDate() + (template.dueInDays ?? 0));
 
     const task = await prisma.task.create({
       data: {
@@ -248,7 +248,7 @@ export async function upgradeProjectPlanType(
       }
 
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + template.dueInDays);
+      dueDate.setDate(dueDate.getDate() + (template.dueInDays ?? 0));
 
       const task = await prisma.task.create({
         data: {
@@ -429,7 +429,7 @@ export async function offboardProject(
       }
 
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + template.dueInDays);
+      dueDate.setDate(dueDate.getDate() + (template.dueInDays ?? 0));
 
       const task = await prisma.task.create({
         data: {

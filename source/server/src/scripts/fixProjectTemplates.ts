@@ -188,7 +188,7 @@ async function fixProjectTemplates() {
         }
 
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + template.dueInDays);
+        dueDate.setDate(dueDate.getDate() + (template.dueInDays ?? 0));
 
         const task = await prisma.task.create({
           data: {

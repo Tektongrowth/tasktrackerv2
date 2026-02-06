@@ -176,7 +176,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // CSRF protection using double-submit cookie pattern
-const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
+const { doubleCsrfProtection, generateToken } = doubleCsrf({
   getSecret: () => process.env.SESSION_SECRET || 'development-secret-change-in-production',
   getSessionIdentifier: (req) => (req as any).sessionID || '',
   cookieName: '__csrf',
@@ -185,13 +185,13 @@ const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
     sameSite: isProduction ? 'none' as const : 'lax' as const,
     httpOnly: true,
   },
-  getCsrfTokenFromRequest: (req) =>
+  getTokenFromRequest: (req) =>
     req.headers['x-csrf-token'] as string,
 });
 
 // CSRF token endpoint
 app.get('/api/csrf-token', (req, res) => {
-  const token = generateCsrfToken(req, res);
+  const token = generateToken(req, res);
   res.json({ token });
 });
 
