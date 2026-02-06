@@ -2,10 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-
-// Giphy public beta key - replace with your own for production
-const GIPHY_API_KEY = 'dc6zaTOxFJmzC';
-const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
+import { gifs as gifsApi } from '../lib/api';
 
 interface GifResult {
   id: string;
@@ -72,10 +69,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=pg-13`
-      );
-      const data = await response.json();
+      const data = await gifsApi.trending(20);
       setGifs(data.data || []);
     } catch {
       setError('Failed to load GIFs');
@@ -88,10 +82,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=pg-13`
-      );
-      const data = await response.json();
+      const data = await gifsApi.search(query, 20);
       setGifs(data.data || []);
     } catch {
       setError('Failed to search GIFs');

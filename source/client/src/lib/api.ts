@@ -757,4 +757,27 @@ export const support = {
     }),
 };
 
+// GIF API types
+interface GifResult {
+  id: string;
+  title: string;
+  images: {
+    fixed_height: { url: string; width: string; height: string };
+    fixed_height_small: { url: string; width: string; height: string };
+    original: { url: string };
+  };
+}
+
+interface GifResponse {
+  data: GifResult[];
+  pagination: { total_count: number; count: number; offset: number };
+}
+
+export const gifs = {
+  trending: (limit = 20) =>
+    fetchApi<GifResponse>(`/api/gifs/trending?limit=${limit}`),
+  search: (query: string, limit = 20) =>
+    fetchApi<GifResponse>(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+};
+
 export { API_BASE };
