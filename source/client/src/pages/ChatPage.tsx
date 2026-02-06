@@ -899,8 +899,8 @@ export default function ChatPage() {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 pr-6 md:pr-4 border-t">
-            <div className="flex items-center gap-2 relative">
+          <div className="p-2 md:p-4 border-t">
+            <div className="flex items-center gap-1 md:gap-2 relative">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -910,18 +910,18 @@ export default function ChatPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
+                className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
                 title="Attach file"
               >
-                <Paperclip className="w-5 h-5" />
+                <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
               </button>
-              <div className="relative">
+              <div className="relative flex-shrink-0">
                 <button
                   onClick={() => setShowGifPicker(!showGifPicker)}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                  className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors"
                   title="Send GIF"
                 >
-                  <span className="text-sm font-bold">GIF</span>
+                  <span className="text-xs md:text-sm font-bold">GIF</span>
                 </button>
                 {showGifPicker && (
                   <GifPicker
@@ -944,14 +944,14 @@ export default function ChatPage() {
                     handleSendMessage();
                   }
                 }}
-                className="flex-1 px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 min-w-0 px-3 md:px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm md:text-base"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || isSending}
-                className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
           </div>
