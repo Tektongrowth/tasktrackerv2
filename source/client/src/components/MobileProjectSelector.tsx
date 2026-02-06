@@ -102,7 +102,7 @@ export function MobileProjectSelector() {
   };
 
   return (
-    <div className="px-4 py-2 bg-white border-b md:hidden">
+    <div className="px-4 py-2 bg-white border-b md:hidden sticky top-0 z-40">
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg border bg-background hover:bg-muted transition-colors">
