@@ -20,6 +20,8 @@ If deployment seems stuck:
 
 - **Always ask before pushing to production** - Never push to main/deploy without explicit user approval
 - Test changes locally first using `npm run dev:local` (see memory.md for local dev setup)
+- **Check bugs first** - At session start, query the "Bug Reports & Feature Requests" project (Internal client, project `aa309c25`) for open bug tasks before working on anything else
+- **Use agent teams for parallel work** - When fixing multiple bugs or working on multi-layered tasks (frontend + backend changes), spawn agent teams to work in parallel rather than fixing sequentially
 
 ## Future Architecture (Roadmap)
 

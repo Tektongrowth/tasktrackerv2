@@ -1819,13 +1819,17 @@ router.post('/:taskId/comments/:commentId/reactions', isAuthenticated, async (re
 });
 
 // Upload attachment to a comment
-router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, commentUpload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, commentUpload.array('files', 10), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const taskId = req.params.taskId as string;
     const commentId = req.params.commentId as string;
     const user = req.user as Express.User;
 
-    if (!req.file) {
+    const files = req.files as Express.Multer.File[] | undefined;
+    const singleFile = req.file;
+    const uploadFiles = files?.length ? files : singleFile ? [singleFile] : [];
+
+    if (uploadFiles.length === 0) {
       throw new AppError('No file uploaded', 400);
     }
 
@@ -1855,33 +1859,39 @@ router.post('/:taskId/comments/:commentId/attachments', isAuthenticated, comment
       throw new AppError('Permission denied', 403);
     }
 
-    // Upload to R2
-    const storageKey = generateStorageKey('comments', req.file.originalname);
-    await uploadFile(storageKey, req.file.buffer, req.file.mimetype);
+    // Upload all files to R2 and create attachment records
+    const attachments = await Promise.all(uploadFiles.map(async (file) => {
+      const storageKey = generateStorageKey('comments', file.originalname);
+      await uploadFile(storageKey, file.buffer, file.mimetype);
 
-    // Create attachment record
-    const attachment = await prisma.commentAttachment.create({
-      data: {
-        commentId,
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
-        fileType: req.file.mimetype,
-        storageKey
-      }
-    });
+      return prisma.commentAttachment.create({
+        data: {
+          commentId,
+          fileName: file.originalname,
+          fileSize: file.size,
+          fileType: file.mimetype,
+          storageKey
+        }
+      });
+    }));
 
-    res.status(201).json(attachment);
+    res.status(201).json(attachments);
   } catch (error) {
     next(error);
   }
 });
 
 // Create comment with attachment (combined endpoint)
-router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.array('files', 10), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const taskId = req.params.taskId as string;
     const user = req.user as Express.User;
     const content = req.body.content ? validateComment(req.body.content) : '';
+
+    // Support both multi-file (files) and legacy single-file (file)
+    const files = req.files as Express.Multer.File[] | undefined;
+    const singleFile = req.file;
+    const uploadFiles = files?.length ? files : singleFile ? [singleFile] : [];
 
     // Verify task exists
     const task = await prisma.task.findUnique({
@@ -1908,39 +1918,41 @@ router.post('/:taskId/comments-with-attachment', isAuthenticated, commentUpload.
       throw new AppError('Permission denied', 403);
     }
 
-    // Require either content or file
-    if (!content && !req.file) {
+    // Require either content or file(s)
+    if (!content && uploadFiles.length === 0) {
       throw new AppError('Comment must have content or an attachment', 400);
     }
 
-    // Check storage is configured if uploading file
-    if (req.file && !isStorageConfigured()) {
+    // Check storage is configured if uploading files
+    if (uploadFiles.length > 0 && !isStorageConfigured()) {
       throw new AppError('Cloud storage not configured', 500);
     }
 
-    // Upload file to R2 if present
-    let storageKey: string | undefined;
-    if (req.file) {
-      storageKey = generateStorageKey('comments', req.file.originalname);
-      await uploadFile(storageKey, req.file.buffer, req.file.mimetype);
+    // Upload all files to R2
+    const uploadedFiles: { fileName: string; fileSize: number; fileType: string; storageKey: string }[] = [];
+    for (const file of uploadFiles) {
+      const storageKey = generateStorageKey('comments', file.originalname);
+      await uploadFile(storageKey, file.buffer, file.mimetype);
+      uploadedFiles.push({
+        fileName: file.originalname,
+        fileSize: file.size,
+        fileType: file.mimetype,
+        storageKey
+      });
     }
 
-    // Create comment with optional attachment
+    // Create comment with optional attachments
+    const fileNames = uploadFiles.map(f => f.originalname).join(', ');
     const commentData: Prisma.TaskCommentCreateInput = {
       task: { connect: { id: taskId } },
       user: { connect: { id: user.id } },
       userName: user.name,
-      content: content || (req.file ? `Shared a file: ${req.file.originalname}` : '')
+      content: content || (uploadFiles.length > 0 ? `Shared ${uploadFiles.length === 1 ? 'a file' : `${uploadFiles.length} files`}: ${fileNames}` : '')
     };
 
-    if (req.file && storageKey) {
+    if (uploadedFiles.length > 0) {
       commentData.attachments = {
-        create: {
-          fileName: req.file.originalname,
-          fileSize: req.file.size,
-          fileType: req.file.mimetype,
-          storageKey
-        }
+        create: uploadedFiles
       };
     }
 
@@ -2290,7 +2302,12 @@ router.post('/:id/watchers', isAuthenticated, async (req: Request, res: Response
 
     // Check if already watching
     const existing = await prisma.taskWatcher.findUnique({
-      where: { taskId_userId: { taskId: id, userId: targetUserId } }
+      where: { taskId_userId: { taskId: id, userId: targetUserId } },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true }
+        }
+      }
     });
     if (existing) {
       return res.json(existing);
@@ -2314,37 +2331,7 @@ router.post('/:id/watchers', isAuthenticated, async (req: Request, res: Response
   }
 });
 
-// Remove watcher from a task
-router.delete('/:id/watchers/:userId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = req.params.id as string;
-    const targetUserId = req.params.userId as string;
-    const user = req.user as Express.User;
-
-    // Only admin/PM can remove others, or user can remove themselves
-    if (targetUserId !== user.id && !hasElevatedAccess(user)) {
-      throw new AppError('Permission denied', 403);
-    }
-
-    const task = await prisma.task.findUnique({
-      where: { id },
-      select: { id: true }
-    });
-    if (!task) {
-      throw new AppError('Task not found', 404);
-    }
-
-    await prisma.taskWatcher.deleteMany({
-      where: { taskId: id, userId: targetUserId }
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Toggle mute for current user
+// Toggle mute for current user (must be before /:id/watchers/:userId to avoid param matching)
 router.patch('/:id/watchers/mute', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
@@ -2377,6 +2364,36 @@ router.patch('/:id/watchers/mute', isAuthenticated, async (req: Request, res: Re
     });
 
     res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Remove watcher from a task
+router.delete('/:id/watchers/:userId', isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const targetUserId = req.params.userId as string;
+    const user = req.user as Express.User;
+
+    // Only admin/PM can remove others, or user can remove themselves
+    if (targetUserId !== user.id && !hasElevatedAccess(user)) {
+      throw new AppError('Permission denied', 403);
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+      select: { id: true }
+    });
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    await prisma.taskWatcher.deleteMany({
+      where: { taskId: id, userId: targetUserId }
+    });
+
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

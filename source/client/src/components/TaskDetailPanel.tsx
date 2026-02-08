@@ -88,7 +88,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   // Comment state
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [showGifPicker, setShowGifPicker] = useState(false);
 
   // Create task from comment state
@@ -252,7 +252,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const { createComment, deleteComment, toggleReaction } = useCommentMutations(task.id, {
     onCommentCreated: () => {
       setNewComment('');
-      setAttachedFile(null);
+      setAttachedFiles([]);
     },
   });
 
@@ -1101,34 +1101,38 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               value={newComment}
               onChange={setNewComment}
               onSubmit={() => {
-                if (newComment.trim() || attachedFile) {
-                  createComment.mutate({ content: newComment.trim(), file: attachedFile });
+                if (newComment.trim() || attachedFiles.length > 0) {
+                  createComment.mutate({ content: newComment.trim(), files: attachedFiles });
                 }
               }}
               placeholder="Add a comment... Use @name to mention someone"
               className="text-sm"
               disabled={createComment.isPending}
             />
-            {/* Attached file preview */}
-            {attachedFile && (
-              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                {attachedFile.type.startsWith('image/') ? (
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Paperclip className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="text-sm truncate flex-1">{attachedFile.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {(attachedFile.size / 1024).toFixed(0)} KB
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => setAttachedFile(null)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+            {/* Attached files preview */}
+            {attachedFiles.length > 0 && (
+              <div className="space-y-1">
+                {attachedFiles.map((file, index) => (
+                  <div key={`${file.name}-${index}`} className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                    {file.type.startsWith('image/') ? (
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="text-sm truncate flex-1">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {(file.size / 1024).toFixed(0)} KB
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
             <div className="flex justify-between items-center">
@@ -1138,15 +1142,16 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     type="file"
                     className="hidden"
                     accept="image/*,.pdf"
+                    multiple
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
+                      const newFiles = Array.from(e.target.files || []);
+                      for (const file of newFiles) {
                         if (file.size > 10 * 1024 * 1024) {
-                          toast({ title: 'File too large', description: 'Maximum file size is 10MB', variant: 'destructive' });
+                          toast({ title: 'File too large', description: `${file.name} exceeds 10MB limit`, variant: 'destructive' });
                           return;
                         }
-                        setAttachedFile(file);
                       }
+                      setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 10));
                       e.target.value = '';
                     }}
                     disabled={createComment.isPending}
@@ -1169,7 +1174,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                   {showGifPicker && (
                     <GifPicker
                       onSelect={(gifUrl) => {
-                        createComment.mutate({ content: gifUrl, file: null });
+                        createComment.mutate({ content: gifUrl, files: [] });
                         setShowGifPicker(false);
                       }}
                       onClose={() => setShowGifPicker(false)}
@@ -1179,10 +1184,10 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               </div>
               <Button
                 size="sm"
-                disabled={(!newComment.trim() && !attachedFile) || createComment.isPending}
+                disabled={(!newComment.trim() && attachedFiles.length === 0) || createComment.isPending}
                 onClick={() => {
-                  if (newComment.trim() || attachedFile) {
-                    createComment.mutate({ content: newComment.trim(), file: attachedFile });
+                  if (newComment.trim() || attachedFiles.length > 0) {
+                    createComment.mutate({ content: newComment.trim(), files: attachedFiles });
                   }
                 }}
               >

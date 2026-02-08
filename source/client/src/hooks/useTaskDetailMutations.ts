@@ -48,9 +48,9 @@ export function useCommentMutations(taskId: string, callbacks?: { onCommentCreat
   const queryClient = useQueryClient();
 
   const createComment = useMutation({
-    mutationFn: ({ content, file }: { content: string; file: File | null }) => {
-      if (file) {
-        return commentsApi.createWithAttachment(taskId, content, file);
+    mutationFn: ({ content, files }: { content: string; files: File[] }) => {
+      if (files.length > 0) {
+        return commentsApi.createWithAttachment(taskId, content, files);
       }
       return commentsApi.create(taskId, { content });
     },

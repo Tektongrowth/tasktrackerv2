@@ -245,10 +245,12 @@ export const comments = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  createWithAttachment: (taskId: string, content: string, file: File) => {
+  createWithAttachment: (taskId: string, content: string, files: File[]) => {
     const formData = new FormData();
     formData.append('content', content);
-    formData.append('file', file);
+    for (const file of files) {
+      formData.append('files', file);
+    }
     return fetchApiFormData<import('./types').TaskComment>(`/api/tasks/${taskId}/comments-with-attachment`, formData);
   },
   update: (taskId: string, commentId: string, data: { content: string }) =>
@@ -632,9 +634,11 @@ export const chats = {
     }),
   removeParticipant: (chatId: string, userId: string) =>
     fetchApi<{ success: boolean }>(`/api/chats/${chatId}/participants/${userId}`, { method: 'DELETE' }),
-  uploadAttachment: (chatId: string, file: File, messageContent?: string) => {
+  uploadAttachment: (chatId: string, files: File[], messageContent?: string) => {
     const formData = new FormData();
-    formData.append('file', file);
+    for (const file of files) {
+      formData.append('files', file);
+    }
     if (messageContent) formData.append('messageContent', messageContent);
     return fetchApiFormData<import('./types').ChatMessage>(`/api/chats/${chatId}/attachments`, formData);
   },

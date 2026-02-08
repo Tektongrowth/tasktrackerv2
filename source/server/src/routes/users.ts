@@ -384,7 +384,7 @@ router.post('/:id/resend-invite', isAuthenticated, isAdmin, async (req: Request,
 
 // Valid notification preference keys with channel support
 // Core notification types that support per-channel preferences
-const CHANNEL_NOTIFICATION_TYPES = ['taskAssignment', 'mentions', 'chatMessages'] as const;
+const CHANNEL_NOTIFICATION_TYPES = ['taskAssignment', 'mentions', 'chatMessages', 'taskUpdates'] as const;
 
 // Legacy notification keys (email-only)
 const LEGACY_NOTIFICATION_KEYS = [
@@ -461,6 +461,7 @@ router.get('/me/notifications', isAuthenticated, async (req: Request, res: Respo
       taskAssignment: { email: true, push: true, telegram: true },
       mentions: { email: true, push: true, telegram: true },
       chatMessages: { email: false, push: true, telegram: true },
+      taskUpdates: { email: false, push: true, telegram: true },
     };
 
     // Default legacy preferences (email-only)

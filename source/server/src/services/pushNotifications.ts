@@ -53,7 +53,7 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
     });
 
     if (subscriptions.length === 0) {
-      console.log(`No push subscriptions for user ${userId}`);
+      console.warn(`No push subscriptions found for user ${userId} — push notification skipped (tag: ${payload.tag || 'none'})`);
       return;
     }
 

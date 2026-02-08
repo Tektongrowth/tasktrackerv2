@@ -552,13 +552,18 @@ router.delete('/:id/participants/:userId', isAuthenticated, async (req: Request,
 });
 
 // Upload attachment
-router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/attachments', isAuthenticated, upload.array('files', 10), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user as Express.User;
     const id = req.params.id as string;
     const messageContent = typeof req.body.messageContent === 'string' ? req.body.messageContent : undefined;
 
-    if (!req.file) {
+    // Support both multi-file (files) and legacy single-file (file)
+    const files = req.files as Express.Multer.File[] | undefined;
+    const singleFile = req.file;
+    const uploadFiles = files?.length ? files : singleFile ? [singleFile] : [];
+
+    if (uploadFiles.length === 0) {
       throw new AppError('No file uploaded', 400);
     }
 
@@ -577,23 +582,28 @@ router.post('/:id/attachments', isAuthenticated, upload.single('file'), async (r
       throw new AppError('Not a participant of this chat', 403);
     }
 
-    // Upload to R2
-    const storageKey = generateStorageKey('chat', req.file.originalname);
-    await uploadFile(storageKey, req.file.buffer, req.file.mimetype);
+    // Upload all files to R2
+    const uploadedFiles: { fileName: string; fileSize: number; fileType: string; storageKey: string }[] = [];
+    for (const file of uploadFiles) {
+      const storageKey = generateStorageKey('chat', file.originalname);
+      await uploadFile(storageKey, file.buffer, file.mimetype);
+      uploadedFiles.push({
+        fileName: file.originalname,
+        fileSize: file.size,
+        fileType: file.mimetype,
+        storageKey
+      });
+    }
 
-    // Create message with attachment
+    // Create message with attachments
+    const fileNames = uploadFiles.map(f => f.originalname).join(', ');
     const message = await prisma.chatMessage.create({
       data: {
         chatId: id,
         senderId: user.id,
-        content: messageContent || `Shared a file: ${req.file.originalname}`,
+        content: messageContent || `Shared ${uploadFiles.length === 1 ? 'a file' : `${uploadFiles.length} files`}: ${fileNames}`,
         attachments: {
-          create: {
-            fileName: req.file.originalname,
-            fileSize: req.file.size,
-            fileType: req.file.mimetype,
-            storageKey
-          }
+          create: uploadedFiles
         }
       },
       include: {

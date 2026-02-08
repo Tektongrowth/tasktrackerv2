@@ -336,12 +336,11 @@ export default function ChatPage() {
   }, [activeChatId, isSending, user, sendSocketMessage]);
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !activeChatId) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0 || !activeChatId) return;
 
     try {
-      const message = await chatsApi.uploadAttachment(activeChatId, file);
-      // Add locally for immediate feedback - onNewMessage will ignore duplicates by ID
+      const message = await chatsApi.uploadAttachment(activeChatId, files);
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === message.id);
         if (exists) return prev;
@@ -757,6 +756,7 @@ export default function ChatPage() {
                 onChange={handleFileUpload}
                 className="hidden"
                 accept="image/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                multiple
               />
               <button
                 onClick={() => fileInputRef.current?.click()}

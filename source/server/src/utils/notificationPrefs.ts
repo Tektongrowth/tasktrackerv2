@@ -84,7 +84,11 @@ export async function shouldNotify(
     }
 
     const prefs = normalizePreferences(user.notificationPreferences);
-    return prefs[type][channel];
+    const enabled = prefs[type][channel];
+    if (!enabled) {
+      console.log(`Notification suppressed: user ${userId} has ${type}.${channel} disabled`);
+    }
+    return enabled;
   } catch (error) {
     console.error('Error checking notification preferences:', error);
     // Default to sending on error to avoid missing important notifications
