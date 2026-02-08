@@ -456,7 +456,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className={`${isMobile ? 'h-[calc(100vh-5rem)]' : 'h-[calc(100vh-8rem)]'} flex glass-card !rounded-lg overflow-hidden relative`}>
+    <div className={`${isMobile ? 'h-[calc(100vh-5rem)]' : 'h-[calc(100vh-8rem)] glass-card !rounded-lg'} flex overflow-hidden relative`}>
       {/* Chat List Sidebar */}
       <div className={`w-full md:w-80 border-r flex flex-col ${isMobile && activeChat ? 'hidden' : ''}`}>
         <div className="p-4 border-b">
@@ -623,7 +623,7 @@ export default function ChatPage() {
 
       {/* Chat Area */}
       {activeChat ? (
-        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-[rgba(10,10,20,0.98)] backdrop-blur-xl pb-[4.5rem]' : ''}`}>
+        <div className={`flex-1 flex flex-col ${isMobile ? 'absolute inset-0 z-50 bg-[rgba(10,10,20,0.98)] pb-[4.5rem]' : ''}`}>
           {/* Chat Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
