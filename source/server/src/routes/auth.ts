@@ -57,7 +57,11 @@ router.post('/logout', (req: Request, res: Response) => {
 });
 
 // Get current user
-router.get('/me', isAuthenticated, (req: Request, res: Response) => {
+router.get('/me', (req: Request, res: Response) => {
+  console.log('[Auth] /me called - sessionID:', req.sessionID, 'hasUser:', !!req.user, 'isAuth:', req.isAuthenticated(), 'cookies:', Object.keys(req.cookies || {}), 'hasCookieHeader:', !!req.headers.cookie);
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   res.json({ user: req.user });
 });
 
