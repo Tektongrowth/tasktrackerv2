@@ -58,16 +58,12 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
   const isMoreActive = moreItems.some(item => location.pathname === item.to) || location.pathname === '/help';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--theme-sidebar)] border-t border-white/10 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[rgba(5,5,16,0.95)] backdrop-blur-2xl border-t border-white/10 md:hidden">
       <div className="flex items-center justify-around h-16 px-2">
         {mainNavItems.map((item) => {
           const isActive = location.pathname === item.to;
           // Show badge if there are unread messages OR always for testing
           const showBadge = item.to === '/chat' && unreadMessageCount > 0;
-          // Debug: log the unread count
-          if (item.to === '/chat') {
-            console.log('MobileBottomNav unread count:', unreadMessageCount);
-          }
 
           return (
             <NavLink
@@ -83,7 +79,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
               <div className="relative">
                 <item.icon className={cn('h-5 w-5', isActive && 'text-[var(--theme-accent)]')} />
                 {showBadge && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[var(--theme-sidebar)]" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[rgba(5,5,16,0.95)]" />
                 )}
               </div>
               <span className={cn('text-[10px] mt-1', isActive && 'font-medium')}>{item.label}</span>

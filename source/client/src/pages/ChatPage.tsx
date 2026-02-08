@@ -456,7 +456,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex glass-card !rounded-lg overflow-hidden relative">
+    <div className={`${isMobile ? 'h-[calc(100vh-5rem)]' : 'h-[calc(100vh-8rem)]'} flex glass-card !rounded-lg overflow-hidden relative`}>
       {/* Chat List Sidebar */}
       <div className={`w-full md:w-80 border-r flex flex-col ${isMobile && activeChat ? 'hidden' : ''}`}>
         <div className="p-4 border-b">
@@ -623,7 +623,7 @@ export default function ChatPage() {
 
       {/* Chat Area */}
       {activeChat ? (
-        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-[rgba(10,10,20,0.95)] backdrop-blur-xl pb-16' : ''}`}>
+        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-[rgba(10,10,20,0.98)] backdrop-blur-xl pb-[4.5rem]' : ''}`}>
           {/* Chat Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -800,10 +800,10 @@ export default function ChatPage() {
               <button
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || isSending}
-                className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                className="p-2.5 md:p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 aria-label="Send message"
               >
-                <Send className="w-4 h-4 md:w-5 md:h-5" />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>

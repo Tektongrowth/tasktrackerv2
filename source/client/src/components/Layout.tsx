@@ -383,7 +383,7 @@ export function Layout() {
       )}
 
       {/* Main content - always show scrollbar to prevent layout shift */}
-      <main id="main-content" className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-20 md:pb-0 bg-orbs">
+      <main id="main-content" className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-16 md:pb-0 bg-orbs">
         {/* Mobile Project Selector */}
         {showProjectSidebar && isMobile && <MobileProjectSelector />}
         <div className="flex-1 relative z-10">

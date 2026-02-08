@@ -177,6 +177,7 @@ Key env vars (set in Railway):
 - Telegram webhook endpoint is `/telegram/webhook` (not under /api)
 - Stripe webhook endpoint is `/webhooks/stripe` (not under /api)
 - Socket.io requires CORS config matching client origin
+- Session cookie domain must be `.tektongrowth.com` (parent domain) for cross-subdomain auth between `tasks.` and `api.` subdomains. Using `SameSite=None; Secure` since Railway serves them as separate origins.
 - File uploads max 10MB, stored locally (not S3)
 
 ## Code Style
