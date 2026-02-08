@@ -30,17 +30,19 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-honeycomb">
+      <div className="hex-float hex-float-1" />
+      <div className="hex-float hex-float-3" />
+      <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Task Tracker</CardTitle>
+          <CardTitle className="text-2xl text-gradient">Task Tracker</CardTitle>
           <CardDescription>
             Sign in to access your tasks and time tracking
           </CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+            <div className="mb-4 p-3 bg-red-500/10 text-red-400 rounded-md text-sm">
               {error === 'auth_failed'
                 ? 'Authentication failed. You may not have been invited to this application.'
                 : 'An error occurred. Please try again.'}

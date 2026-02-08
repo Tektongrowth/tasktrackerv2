@@ -219,12 +219,12 @@ export function ListPage() {
   return (
     <div>
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4 sticky top-0 z-40 min-h-[73px]">
+      <div className="bg-white/[0.06] border-b px-6 py-4 sticky top-0 z-40 min-h-[73px]">
         <div className="flex items-center justify-between">
           {/* Left: Title + Description */}
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Task List</h1>
-            <p className="text-muted-foreground text-sm hidden md:block">
+            <p className="text-white/60 text-sm hidden md:block">
               View and manage all tasks across projects
             </p>
           </div>
@@ -239,7 +239,7 @@ export function ListPage() {
                     "h-8 px-3 text-sm border rounded-md transition-colors flex md:hidden items-center gap-1.5",
                     (quickFilter !== 'all' || showArchived || statusFilter !== 'all')
                       ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                      : "bg-white text-gray-700 border-gray-300"
+                      : "bg-white/[0.06] text-white border-white/10"
                   )}
                 >
                   <Filter className="h-4 w-4" />
@@ -331,7 +331,7 @@ export function ListPage() {
                 "h-8 px-3 text-sm border rounded transition-colors hidden md:block",
                 quickFilter === 'all' && !showArchived
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
               )}
             >
               All Tasks
@@ -345,7 +345,7 @@ export function ListPage() {
                 "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
                 quickFilter === 'unassigned' && !showArchived
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
               )}
             >
               <UserX className="h-4 w-4" />
@@ -353,7 +353,7 @@ export function ListPage() {
               {counts.unassigned > 0 && (
                 <Badge variant="secondary" className={cn(
                   "ml-1 h-5 px-1.5",
-                  quickFilter === 'unassigned' && !showArchived ? "bg-white/20 text-white" : "bg-orange-100 text-orange-700"
+                  quickFilter === 'unassigned' && !showArchived ? "bg-white/20 text-white" : "bg-orange-500/15 text-orange-400"
                 )}>
                   {counts.unassigned}
                 </Badge>
@@ -368,7 +368,7 @@ export function ListPage() {
                 "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
                 quickFilter === 'overdue' && !showArchived
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
               )}
             >
               <AlertTriangle className="h-4 w-4" />
@@ -376,7 +376,7 @@ export function ListPage() {
               {counts.overdue > 0 && (
                 <Badge variant="secondary" className={cn(
                   "ml-1 h-5 px-1.5",
-                  quickFilter === 'overdue' && !showArchived ? "bg-white/20 text-white" : "bg-red-100 text-red-700"
+                  quickFilter === 'overdue' && !showArchived ? "bg-white/20 text-white" : "bg-red-500/15 text-red-400"
                 )}>
                   {counts.overdue}
                 </Badge>
@@ -393,7 +393,7 @@ export function ListPage() {
                 "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
                 showArchived
                   ? "bg-amber-500 text-white border-amber-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-amber-500 hover:text-white hover:border-amber-500"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-amber-500 hover:border-amber-500"
               )}
             >
               <Archive className="h-4 w-4" />
@@ -451,7 +451,7 @@ export function ListPage() {
                   <div className="space-y-2">
                     <Label>Project *</Label>
                     {allProjects.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-2">No projects available. Create a project first.</p>
+                      <p className="text-sm text-white/60 py-2">No projects available. Create a project first.</p>
                     ) : (
                       <Select value={newTaskProjectId} onValueChange={setNewTaskProjectId}>
                         <SelectTrigger>

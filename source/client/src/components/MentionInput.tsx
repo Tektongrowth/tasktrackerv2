@@ -157,9 +157,9 @@ export function MentionInput({
       {showSuggestions && filteredUsers.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-64 mt-1 bg-white border rounded-lg shadow-lg overflow-hidden"
+          className="absolute z-50 w-64 mt-1 bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-lg shadow-lg overflow-hidden"
         >
-          <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b bg-slate-50">
+          <div className="px-3 py-1.5 text-xs font-medium text-white/60 border-b bg-white/[0.03]">
             Mention someone
           </div>
           {filteredUsers.map((user: MentionableUser, index: number) => (
@@ -167,7 +167,7 @@ export function MentionInput({
               key={user.id}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors',
-                index === suggestionIndex ? 'bg-primary/10' : 'hover:bg-muted'
+                index === suggestionIndex ? 'bg-primary/10' : 'hover:bg-white/[0.04]'
               )}
               onClick={() => insertMention(user)}
               onMouseEnter={() => setSuggestionIndex(index)}
@@ -175,18 +175,18 @@ export function MentionInput({
               <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-xs text-white/60 truncate">{user.email}</p>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground mt-1">
-        <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-xs">@</kbd> to mention
+      <p className="text-xs text-white/60 mt-1">
+        <kbd className="px-1 py-0.5 rounded bg-white/[0.04] font-mono text-xs">@</kbd> to mention
         {onSubmit && (
           <span className="ml-2">
-            <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-xs">Cmd</kbd> + <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-xs">Enter</kbd> to send
+            <kbd className="px-1 py-0.5 rounded bg-white/[0.04] font-mono text-xs">Cmd</kbd> + <kbd className="px-1 py-0.5 rounded bg-white/[0.04] font-mono text-xs">Enter</kbd> to send
           </span>
         )}
       </p>

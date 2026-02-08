@@ -53,12 +53,12 @@ function DashboardCard({
   'data-guide'?: string;
 }) {
   return (
-    <div className="rounded-lg overflow-hidden shadow-sm border border-slate-200 bg-white" data-guide={dataGuide}>
-      <div className="bg-[var(--theme-primary-dark)] px-4 py-3 flex items-center justify-between">
+    <div className="glass-card-glow overflow-hidden" data-guide={dataGuide}>
+      <div className="bg-white/[0.03] border-b border-white/[0.06] px-4 py-3 flex items-center justify-between relative z-10">
         <h3 className="font-semibold text-white">{title}</h3>
         {badge}
       </div>
-      <div className={cn("bg-white p-4", onClick && "cursor-pointer")} onClick={onClick}>
+      <div className={cn("p-4 relative z-10", onClick && "cursor-pointer")} onClick={onClick}>
         {children}
       </div>
     </div>
@@ -95,7 +95,7 @@ function DonutChart({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-slate-400">0</span>
+            <span className="text-3xl font-bold text-white/40">0</span>
           </div>
         </div>
       </div>
@@ -303,23 +303,23 @@ export function DashboardPage() {
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: chartColors.todo }} />
-                  <span className="text-sm text-muted-foreground">To Do</span>
+                  <span className="text-sm text-white/60">To Do</span>
                   <span className="ml-auto font-semibold">{stats?.tasks.todo || 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: chartColors.inReview }} />
-                  <span className="text-sm text-muted-foreground">In Review</span>
+                  <span className="text-sm text-white/60">In Review</span>
                   <span className="ml-auto font-semibold">{stats?.tasks.inReview || 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: chartColors.completed }} />
-                  <span className="text-sm text-muted-foreground">Completed</span>
+                  <span className="text-sm text-white/60">Completed</span>
                   <span className="ml-auto font-semibold">{stats?.tasks.completed || 0}</span>
                 </div>
                 {(stats?.tasks.overdue || 0) > 0 && (
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: chartColors.overdue }} />
-                    <span className="text-sm text-muted-foreground">Overdue</span>
+                    <span className="text-sm text-white/60">Overdue</span>
                     <span className="ml-auto font-semibold text-[var(--theme-error)]">{stats?.tasks.overdue || 0}</span>
                   </div>
                 )}
@@ -332,36 +332,36 @@ export function DashboardPage() {
             <DashboardCard title="Needs Attention">
               <div className="space-y-3">
                 <div
-                  className="flex items-center justify-between p-3 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 border border-orange-200 transition-colors"
+                  className="flex items-center justify-between p-3 bg-orange-500/10 rounded-lg cursor-pointer hover:bg-orange-500/15 border border-orange-500/20 transition-colors"
                   onClick={() => navigate('/list?filter=unassigned')}
                 >
                   <div className="flex items-center gap-3">
-                    <UserX className="h-5 w-5 text-orange-600" />
+                    <UserX className="h-5 w-5 text-orange-400" />
                     <span className="text-sm font-medium">Unassigned Tasks</span>
                   </div>
-                  <span className="text-lg font-bold text-orange-600">{incompleteTasks.counts.unassigned}</span>
+                  <span className="text-lg font-bold text-orange-400">{incompleteTasks.counts.unassigned}</span>
                 </div>
                 <div
-                  className="flex items-center justify-between p-3 bg-amber-50 rounded-lg cursor-pointer hover:bg-amber-100 border border-amber-200 transition-colors"
+                  className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg cursor-pointer hover:bg-amber-500/15 border border-amber-500/20 transition-colors"
                   onClick={() => navigate('/list?filter=no-due-date')}
                 >
                   <div className="flex items-center gap-3">
-                    <CalendarX className="h-5 w-5 text-amber-600" />
+                    <CalendarX className="h-5 w-5 text-amber-400" />
                     <span className="text-sm font-medium">No Due Date</span>
                   </div>
-                  <span className="text-lg font-bold text-amber-600">{incompleteTasks.counts.noDueDate}</span>
+                  <span className="text-lg font-bold text-amber-400">{incompleteTasks.counts.noDueDate}</span>
                 </div>
               </div>
             </DashboardCard>
           ) : (
             <DashboardCard title="Tasks Status">
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span className="text-sm font-medium text-green-700">All tasks assigned</span>
+                <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
+                  <span className="text-sm font-medium text-green-400">All tasks assigned</span>
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span className="text-sm font-medium text-green-700">All have due dates</span>
+                <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
+                  <span className="text-sm font-medium text-green-400">All have due dates</span>
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
               </div>
@@ -371,27 +371,27 @@ export function DashboardPage() {
           {/* Quick Stats */}
           <DashboardCard title="Quick Stats" data-guide="quick-stats">
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="h-5 w-5 text-red-500" />
                   <span className="text-sm font-medium">Overdue Tasks</span>
                 </div>
-                <span className="text-lg font-bold text-red-600">{overdueTasks.length}</span>
+                <span className="text-lg font-bold text-red-400">{overdueTasks.length}</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-amber-500" />
                   <span className="text-sm font-medium">Due Today</span>
                 </div>
-                <span className="text-lg font-bold text-amber-600">{dueTodayTasks.length}</span>
+                <span className="text-lg font-bold text-amber-400">{dueTodayTasks.length}</span>
               </div>
               {isAdmin && (
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-slate-500" />
+                    <Users className="h-5 w-5 text-white/50" />
                     <span className="text-sm font-medium">Team Members</span>
                   </div>
-                  <span className="text-lg font-bold text-slate-600">{allUsers.length}</span>
+                  <span className="text-lg font-bold text-white/70">{allUsers.length}</span>
                 </div>
               )}
             </div>
@@ -423,8 +423,8 @@ export function DashboardPage() {
                   <div
                     key={task.id}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-slate-50 border border-transparent",
-                      taskOverdue && "bg-red-50 hover:bg-red-100 border-red-200"
+                      "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-white/[0.04] border border-transparent",
+                      taskOverdue && "bg-red-500/10 hover:bg-red-500/15 border-red-500/20"
                     )}
                     onClick={() => setSelectedTask(task as Task)}
                   >
@@ -437,7 +437,7 @@ export function DashboardPage() {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{task.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-white/60 truncate">
                         {task.project?.client?.name}
                       </p>
                     </div>
@@ -450,7 +450,7 @@ export function DashboardPage() {
                       {task.dueDate && (
                         <span className={cn(
                           "text-xs",
-                          taskOverdue ? "text-red-600 font-medium" : "text-muted-foreground"
+                          taskOverdue ? "text-red-400 font-medium" : "text-white/60"
                         )}>
                           {formatDate(task.dueDate)}
                         </span>
@@ -460,7 +460,7 @@ export function DashboardPage() {
                 );
               })}
               {safeUpcomingTasks.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-white/60">
                   <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
                   <p>All caught up!</p>
                 </div>
@@ -481,8 +481,8 @@ export function DashboardPage() {
               >
               <div className="space-y-3 max-h-[1280px] overflow-y-auto">
                 {recentActivity.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <div className="text-center py-8 text-white/60">
+                    <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white/10" />
                     <p>No activity yet</p>
                     <p className="text-xs mt-1">Comments on tasks will appear here</p>
                   </div>
@@ -492,7 +492,7 @@ export function DashboardPage() {
                     return (
                       <div
                         key={activity.id}
-                        className="flex gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                        className="flex gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
                       >
                         <UserAvatar
                           name={activity.user?.name || 'Unknown'}
@@ -503,13 +503,13 @@ export function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-xs">{activity.user?.name}</span>
-                            <span className="text-xs text-muted-foreground">{timeAgo}</span>
+                            <span className="text-xs text-white/60">{timeAgo}</span>
                           </div>
                           <p
-                            className="text-sm text-slate-700 line-clamp-2"
+                            className="text-sm text-white/80 line-clamp-2"
                             dangerouslySetInnerHTML={{ __html: sanitizeText(activity.content) }}
                           />
-                          <p className="text-xs text-muted-foreground mt-1 truncate">
+                          <p className="text-xs text-white/60 mt-1 truncate">
                             {activity.task?.title}
                           </p>
                         </div>
@@ -532,23 +532,23 @@ export function DashboardPage() {
             {safeCompletedTasks.slice(0, 9).map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100 cursor-pointer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors border border-white/[0.06] cursor-pointer"
                 onClick={() => setSelectedTask(task as Task)}
               >
                 <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: chartColors.completed }} />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{task.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-white/60 truncate">
                     {task.project?.client?.name}
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground shrink-0">
+                <span className="text-xs text-white/60 shrink-0">
                   {task.completedAt && formatDate(task.completedAt)}
                 </span>
               </div>
             ))}
             {safeCompletedTasks.length === 0 && (
-              <div className="col-span-full text-center py-8 text-muted-foreground">
+              <div className="col-span-full text-center py-8 text-white/60">
                 <p>No completed tasks yet</p>
               </div>
             )}
@@ -569,9 +569,9 @@ export function DashboardPage() {
             <div className="space-y-3">
               {leaderboardData.leaderboard.map((entry, index) => {
                 const isCurrentUser = entry.id === user?.id;
-                const rankColors = ['bg-yellow-100 border-yellow-300', 'bg-slate-100 border-slate-300', 'bg-amber-100 border-amber-300'];
-                const rankBg = index < 3 ? rankColors[index] : 'bg-slate-50 border-slate-200';
-                const trophyColors = ['text-yellow-500', 'text-slate-400', 'text-amber-600'];
+                const rankColors = ['bg-yellow-500/15 border-yellow-500/20', 'bg-white/[0.06] border-white/10', 'bg-amber-500/15 border-amber-500/20'];
+                const rankBg = index < 3 ? rankColors[index] : 'bg-white/[0.03] border-white/[0.08]';
+                const trophyColors = ['text-yellow-500', 'text-white/40', 'text-amber-400'];
 
                 return (
                   <div
@@ -587,7 +587,7 @@ export function DashboardPage() {
                       {index < 3 ? (
                         <Trophy className={cn("h-6 w-6", trophyColors[index])} />
                       ) : (
-                        <span className="text-lg font-bold text-slate-500">#{entry.rank}</span>
+                        <span className="text-lg font-bold text-white/50">#{entry.rank}</span>
                       )}
                     </div>
 
@@ -601,9 +601,9 @@ export function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
                           {entry.name}
-                          {isCurrentUser && <span className="text-muted-foreground ml-1">(you)</span>}
+                          {isCurrentUser && <span className="text-white/60 ml-1">(you)</span>}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-white/60">
                           <span>{entry.tasksCompleted} tasks</span>
                           <span>·</span>
                           <span>{entry.onTimeRate}% on time</span>
@@ -622,7 +622,7 @@ export function DashboardPage() {
                       <p className="text-lg font-bold" style={{ color: 'var(--theme-primary)' }}>
                         {entry.points}
                       </p>
-                      <p className="text-xs text-muted-foreground">points</p>
+                      <p className="text-xs text-white/60">points</p>
                     </div>
 
                     {/* Badges */}
@@ -638,7 +638,7 @@ export function DashboardPage() {
                           </span>
                         ))}
                         {entry.badges.length > 3 && (
-                          <span className="text-xs text-muted-foreground">+{entry.badges.length - 3}</span>
+                          <span className="text-xs text-white/60">+{entry.badges.length - 3}</span>
                         )}
                       </div>
                     )}
@@ -657,7 +657,7 @@ export function DashboardPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-3">By Team Member</h4>
+                <h4 className="font-medium text-sm text-white/60 mb-3">By Team Member</h4>
                 <div className="space-y-3">
                   {timeSummary.byContractor.slice(0, 5).map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
@@ -669,7 +669,7 @@ export function DashboardPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">{item.name}</span>
-                          <span className="text-sm text-muted-foreground">{item.totalHours}h</span>
+                          <span className="text-sm text-white/60">{item.totalHours}h</span>
                         </div>
                         <Progress
                           value={(item.totalMinutes / (timeSummary.totalMinutes || 1)) * 100}
@@ -681,13 +681,13 @@ export function DashboardPage() {
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-3">By Project</h4>
+                <h4 className="font-medium text-sm text-white/60 mb-3">By Project</h4>
                 <div className="space-y-3">
                   {timeSummary.byProject.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                    <div key={item.id} className="flex items-center justify-between p-2 bg-white/[0.03] rounded">
                       <div>
                         <p className="text-sm font-medium">{item.clientName}</p>
-                        <p className="text-xs text-muted-foreground">{item.projectName}</p>
+                        <p className="text-xs text-white/60">{item.projectName}</p>
                       </div>
                       <span className="font-semibold">{item.totalHours}h</span>
                     </div>

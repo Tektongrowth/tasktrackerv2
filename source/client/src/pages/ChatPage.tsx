@@ -456,7 +456,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex bg-card rounded-lg border overflow-hidden relative">
+    <div className="h-[calc(100vh-8rem)] flex glass-card !rounded-lg overflow-hidden relative">
       {/* Chat List Sidebar */}
       <div className={`w-full md:w-80 border-r flex flex-col ${isMobile && activeChat ? 'hidden' : ''}`}>
         <div className="p-4 border-b">
@@ -467,7 +467,7 @@ export default function ChatPage() {
             </h2>
             <button
               onClick={() => setShowNewChatDialog(true)}
-              className="p-2 hover:bg-muted rounded-full transition-colors"
+              className="p-2 hover:bg-white/[0.04] rounded-full transition-colors"
               title="New chat"
               aria-label="New chat"
             >
@@ -475,20 +475,20 @@ export default function ChatPage() {
             </button>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
             <input
               type="text"
               placeholder="Search chats..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-9 pr-4 py-2 bg-white/[0.04] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {filteredChats.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
+            <div className="p-4 text-center text-white/60">
               {searchQuery ? 'No chats found' : 'No conversations yet'}
             </div>
           ) : (
@@ -496,11 +496,11 @@ export default function ChatPage() {
               <button
                 key={chat.id}
                 onClick={() => setActiveChatId(chat.id)}
-                className={`w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors border-l-4 ${
+                className={`w-full p-4 flex items-start gap-3 hover:bg-white/[0.03] transition-colors border-l-4 ${
                   activeChatId === chat.id
-                    ? 'bg-muted border-l-transparent'
+                    ? 'bg-white/[0.04] border-l-transparent'
                     : (chat.unreadCount || 0) > 0
-                      ? 'bg-red-50 border-l-red-500 dark:bg-red-900/30'
+                      ? 'bg-red-500/10 border-l-red-500'
                       : 'border-l-transparent'
                 }`}
               >
@@ -509,13 +509,13 @@ export default function ChatPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium truncate">{getChatName(chat)}</span>
                     {chat.messages?.[0] && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-white/60">
                         {formatDistanceToNow(new Date(chat.messages[0].createdAt), { addSuffix: true })}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-sm text-white/60 truncate">
                       {chat.messages?.[0]?.content || 'No messages yet'}
                     </p>
                     {(chat.unreadCount || 0) > 0 && (
@@ -534,7 +534,7 @@ export default function ChatPage() {
         <div className="border-t">
           <button
             onClick={() => setShowMentions(!showMentions)}
-            className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-white/[0.03] transition-colors"
           >
             <div className="flex items-center gap-2">
               <AtSign className="w-4 h-4 text-primary" />
@@ -546,15 +546,15 @@ export default function ChatPage() {
               )}
             </div>
             {showMentions ? (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-4 h-4 text-white/60" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <ChevronRight className="w-4 h-4 text-white/60" />
             )}
           </button>
           {showMentions && (
             <div className="max-h-60 overflow-y-auto">
               {mentions.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground text-sm">
+                <div className="p-4 text-center text-white/60 text-sm">
                   No mentions yet
                 </div>
               ) : (
@@ -562,8 +562,8 @@ export default function ChatPage() {
                   <button
                     key={mention.id}
                     onClick={() => handleMentionClick(mention)}
-                    className={`w-full p-3 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left ${
-                      !mention.readAt ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    className={`w-full p-3 flex items-start gap-3 hover:bg-white/[0.03] transition-colors text-left ${
+                      !mention.readAt ? 'bg-blue-500/10' : ''
                     }`}
                   >
                     {mention.mentionedBy.avatarUrl ? (
@@ -582,17 +582,17 @@ export default function ChatPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 text-xs">
                         <span className="font-medium truncate">{mention.mentionedBy.name}</span>
-                        <span className="text-muted-foreground">mentioned you</span>
+                        <span className="text-white/60">mentioned you</span>
                       </div>
                       <p className="text-sm font-medium text-primary truncate mt-0.5">
                         {mention.task.title}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-white/60 truncate">
                         {mention.commentContent.length > 60
                           ? mention.commentContent.substring(0, 60) + '...'
                           : mention.commentContent}
                       </p>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-white/60">
                         {formatDistanceToNow(new Date(mention.createdAt), { addSuffix: true })}
                       </span>
                     </div>
@@ -606,7 +606,7 @@ export default function ChatPage() {
           )}
         </div>
 
-        <div className="p-2 border-t text-xs text-center text-muted-foreground">
+        <div className="p-2 border-t text-xs text-center text-white/60">
           {isConnected ? (
             <span className="flex items-center justify-center gap-1">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -623,7 +623,7 @@ export default function ChatPage() {
 
       {/* Chat Area */}
       {activeChat ? (
-        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-card pb-16' : ''}`}>
+        <div className={`flex-1 flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-[rgba(10,10,20,0.95)] backdrop-blur-xl pb-16' : ''}`}>
           {/* Chat Header */}
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -631,7 +631,7 @@ export default function ChatPage() {
               {isMobile && (
                 <button
                   onClick={() => setActiveChatId(null)}
-                  className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors"
+                  className="p-2 -ml-2 hover:bg-white/[0.04] rounded-full transition-colors"
                   aria-label="Back to chat list"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -640,7 +640,7 @@ export default function ChatPage() {
               {getChatAvatar(activeChat)}
               <div>
                 <h3 className="font-medium">{getChatName(activeChat)}</h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60">
                   {activeChat.participants?.length} participants
                 </p>
               </div>
@@ -667,11 +667,11 @@ export default function ChatPage() {
                             className="w-6 h-6 rounded-full"
                           />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs">
+                          <div className="w-6 h-6 rounded-full bg-white/[0.04] flex items-center justify-center text-xs">
                             {(message.sender?.name || 'U')[0].toUpperCase()}
                           </div>
                         )}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-white/60">
                           {message.sender?.name}
                         </span>
                       </div>
@@ -680,7 +680,7 @@ export default function ChatPage() {
                       className={`rounded-lg px-4 py-2 ${
                         isOwn
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          : 'bg-white/[0.04]'
                       }`}
                     >
                       <p
@@ -703,21 +703,21 @@ export default function ChatPage() {
                       <div className="opacity-0 group-hover/message:opacity-100 transition-opacity flex items-center gap-1">
                         <button
                           onClick={() => handleCreateTaskFromMessage(message)}
-                          className="p-1 hover:bg-muted rounded transition-colors"
+                          className="p-1 hover:bg-white/[0.04] rounded transition-colors"
                           title="Create task from message"
                         >
-                          <ListPlus className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                          <ListPlus className="h-4 w-4 text-white/60 hover:text-white" />
                         </button>
                         <ReactionPicker
                           onSelect={(emoji) => activeChatId && toggleReaction(activeChatId, message.id, emoji)}
                           className="h-5 w-5"
                         />
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-white/60">
                         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                       </span>
                       {isOwn && (
-                        <span className="ml-1 text-xs text-muted-foreground">
+                        <span className="ml-1 text-xs text-white/60">
                           {isRead ? (
                             <CheckCheck className="w-3 h-3 text-primary" />
                           ) : (
@@ -740,7 +740,7 @@ export default function ChatPage() {
               );
             })}
             {typingUsers[activeChatId!]?.size > 0 && (
-              <div className="text-sm text-muted-foreground italic">
+              <div className="text-sm text-white/60 italic">
                 Someone is typing...
               </div>
             )}
@@ -760,7 +760,7 @@ export default function ChatPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                className="p-1.5 md:p-2 hover:bg-white/[0.04] rounded-full transition-colors flex-shrink-0"
                 title="Attach file"
                 aria-label="Attach file"
               >
@@ -769,7 +769,7 @@ export default function ChatPage() {
               <div className="relative flex-shrink-0">
                 <button
                   onClick={() => setShowGifPicker(!showGifPicker)}
-                  className="p-1.5 md:p-2 hover:bg-muted rounded-full transition-colors"
+                  className="p-1.5 md:p-2 hover:bg-white/[0.04] rounded-full transition-colors"
                   title="Send GIF"
                 >
                   <span className="text-xs md:text-sm font-bold">GIF</span>
@@ -795,7 +795,7 @@ export default function ChatPage() {
                     handleSendMessage();
                   }
                 }}
-                className="flex-1 min-w-0 px-3 md:px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base"
+                className="flex-1 min-w-0 px-3 md:px-4 py-2 bg-white/[0.04] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base"
               />
               <button
                 onClick={handleSendMessage}
@@ -809,7 +809,7 @@ export default function ChatPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 hidden md:flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 hidden md:flex items-center justify-center text-white/60">
           <div className="text-center">
             <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Select a chat or start a new conversation</p>

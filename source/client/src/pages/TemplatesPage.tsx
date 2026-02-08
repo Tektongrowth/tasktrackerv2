@@ -66,7 +66,7 @@ function SortableSubtaskItem({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground touch-none"
+          className="cursor-grab active:cursor-grabbing p-1 text-white/60 hover:text-white touch-none"
           {...attributes}
           {...listeners}
         >
@@ -89,7 +89,7 @@ function SortableSubtaskItem({
         </Button>
       </div>
       <div className="flex items-center gap-2 ml-7">
-        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+        <FileText className="h-4 w-4 text-white/60 shrink-0" />
         <Input
           value={value.sopUrl || ''}
           onChange={(e) => onChange({ ...value, sopUrl: e.target.value })}
@@ -559,17 +559,17 @@ export function TemplatesPage() {
                         'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                         tsTriggerType === trigger.value
                           ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/5'
-                          : 'border-slate-200 hover:border-slate-300'
+                          : 'border-white/[0.08] hover:border-white/10'
                       )}
                       onClick={() => setTsTriggerType(trigger.value)}
                     >
                       <Icon className={cn(
                         'h-5 w-5 mt-0.5',
-                        tsTriggerType === trigger.value ? 'text-[var(--theme-primary)]' : 'text-slate-400'
+                        tsTriggerType === trigger.value ? 'text-[var(--theme-primary)]' : 'text-white/40'
                       )} />
                       <div>
                         <p className="text-sm font-medium">{trigger.label}</p>
-                        <p className="text-xs text-muted-foreground">{trigger.description}</p>
+                        <p className="text-xs text-white/60">{trigger.description}</p>
                       </div>
                     </div>
                   );
@@ -579,9 +579,9 @@ export function TemplatesPage() {
 
             {/* Trigger Rules based on type */}
             {tsTriggerType === 'new_project' && (
-              <div className="space-y-2 p-3 bg-slate-50 rounded-lg">
+              <div className="space-y-2 p-3 bg-white/[0.03] rounded-lg">
                 <Label className="text-sm font-medium">Trigger Rules</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60">
                   Select which plan types should trigger this set when a project is created.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -600,9 +600,9 @@ export function TemplatesPage() {
             )}
 
             {tsTriggerType === 'schedule' && (
-              <div className="space-y-2 p-3 bg-slate-50 rounded-lg">
+              <div className="space-y-2 p-3 bg-white/[0.03] rounded-lg">
                 <Label className="text-sm font-medium">Schedule</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60">
                   Configure when this template set should run automatically.
                 </p>
                 <Select
@@ -621,10 +621,10 @@ export function TemplatesPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
               <div>
                 <Label className="text-sm font-medium">Active</Label>
-                <p className="text-xs text-muted-foreground">Enable or disable this template set</p>
+                <p className="text-xs text-white/60">Enable or disable this template set</p>
               </div>
               <Switch checked={tsActive} onCheckedChange={setTsActive} />
             </div>
@@ -705,7 +705,7 @@ export function TemplatesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 Assign to a template set to include in auto-triggers or manual application
               </p>
             </div>
@@ -747,7 +747,7 @@ export function TemplatesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 All contractors with this role will be automatically assigned to tasks created from this template
               </p>
             </div>
@@ -773,7 +773,7 @@ export function TemplatesPage() {
                 ))}
               </div>
               {defaultAssigneeEmails.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60">
                   {defaultAssigneeEmails.length} additional assignee{defaultAssigneeEmails.length !== 1 ? 's' : ''} selected
                 </p>
               )}
@@ -793,7 +793,7 @@ export function TemplatesPage() {
               <Label>Tags</Label>
               <div className="flex flex-wrap gap-2">
                 {allTags.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/60">
                     No tags available. Create tags in Settings &gt; Tag Management.
                   </p>
                 ) : (
@@ -832,7 +832,7 @@ export function TemplatesPage() {
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 Link to a Google Doc or other SOP document for this template
               </p>
             </div>
@@ -860,7 +860,7 @@ export function TemplatesPage() {
         {/* Template Sets Section */}
         {allTemplateSets.length > 0 && (
           <div className="mb-6" data-guide="template-sets">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+            <h3 className="text-sm font-medium text-white/60 uppercase tracking-wide mb-3">
               Template Sets
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -874,7 +874,7 @@ export function TemplatesPage() {
                         <div className="flex items-center gap-2">
                           <div className={cn(
                             'p-2 rounded-lg',
-                            set.active ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]' : 'bg-slate-100 text-slate-400'
+                            set.active ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]' : 'bg-white/[0.06] text-white/40'
                           )}>
                             <Icon className="h-4 w-4" />
                           </div>
@@ -912,7 +912,7 @@ export function TemplatesPage() {
                     </CardHeader>
                     <CardContent className="pt-0">
                       {set.description && (
-                        <p className="text-sm text-muted-foreground mb-2">{set.description}</p>
+                        <p className="text-sm text-white/60 mb-2">{set.description}</p>
                       )}
                       <div className="flex items-center justify-between">
                         <Badge variant={set.active ? 'default' : 'secondary'}>
@@ -1036,12 +1036,12 @@ export function TemplatesPage() {
                 </SelectContent>
               </Select>
               {allProjects.length === 0 && (
-                <p className="text-sm text-muted-foreground">No projects available.</p>
+                <p className="text-sm text-white/60">No projects available.</p>
               )}
             </div>
 
             {applyingSet && applyingSet.planTypes.length > 0 && selectedProjectId && (
-              <div className="text-xs text-muted-foreground p-2 bg-slate-50 rounded">
+              <div className="text-xs text-white/60 p-2 bg-white/[0.03] rounded">
                 <strong>Note:</strong> This template set is configured for plan types:{' '}
                 {applyingSet.planTypes.map(p => p.replace('_', ' ')).join(', ')}.
                 Make sure the project's plan type matches.
@@ -1156,7 +1156,7 @@ function TemplateList({
 
   if (templates.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-8 bg-white rounded-lg border">
+      <div className="text-center text-white/60 py-8 bg-white/[0.06] rounded-lg border">
         No templates in this category
       </div>
     );
@@ -1180,7 +1180,7 @@ function TemplateList({
   );
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+    <div className="bg-white/[0.06] rounded-lg border shadow-sm overflow-hidden">
       <table className="w-full" style={{ tableLayout: 'fixed' }}>
         <colgroup>
           <col style={{ width: columnWidths.title }} />
@@ -1219,7 +1219,7 @@ function TemplateList({
           {templates.map((template) => (
             <tr
               key={template.id}
-              className="border-b last:border-b-0 hover:bg-slate-50 transition-colors"
+              className="border-b last:border-b-0 hover:bg-white/[0.04] transition-colors"
             >
               <td className="px-4 py-3 overflow-hidden">
                 <div>
@@ -1249,12 +1249,12 @@ function TemplateList({
                     )}
                   </div>
                   {template.description && (
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-white/60 truncate">
                       {template.description}
                     </p>
                   )}
                   {template.subtasks && template.subtasks.length > 0 && (
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="mt-1 text-xs text-white/60">
                       {template.subtasks.length} subtask{template.subtasks.length !== 1 ? 's' : ''}
                       {template.subtasks.some(s => s.sopUrl) && (
                         <span className="ml-1 text-[var(--theme-primary)]">
@@ -1274,7 +1274,7 @@ function TemplateList({
                   ))}
                 </div>
               </td>
-              <td className="px-4 py-3 text-sm text-muted-foreground overflow-hidden">
+              <td className="px-4 py-3 text-sm text-white/60 overflow-hidden">
                 <div className="flex flex-wrap gap-1">
                   {template.defaultRoleId && (
                     (() => {
@@ -1300,11 +1300,11 @@ function TemplateList({
                     })
                   )}
                   {!template.defaultRoleId && (!template.defaultAssigneeEmails || template.defaultAssigneeEmails.length === 0) && (
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-white/60">-</span>
                   )}
                 </div>
               </td>
-              <td className="px-4 py-3 text-sm text-muted-foreground">
+              <td className="px-4 py-3 text-sm text-white/60">
                 {template.dueInDays} days
               </td>
               <td className="px-4 py-3 overflow-hidden">

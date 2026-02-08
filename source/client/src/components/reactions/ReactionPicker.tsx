@@ -49,7 +49,7 @@ export function ReactionPicker({ onSelect, disabled, className }: ReactionPicker
         <Button
           variant="ghost"
           size="icon"
-          className={cn('h-6 w-6 text-muted-foreground hover:text-foreground', className)}
+          className={cn('h-6 w-6 text-white/60 hover:text-white', className)}
           disabled={disabled}
         >
           <Smile className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function ReactionPicker({ onSelect, disabled, className }: ReactionPicker
             <button
               key={key}
               onClick={() => handleSelect(key)}
-              className="p-1.5 hover:bg-muted rounded-md transition-colors text-lg"
+              className="p-1.5 hover:bg-white/[0.04] rounded-md transition-colors text-lg"
               title={EMOJI_LABELS[key]}
             >
               {EMOJI_MAP[key]}

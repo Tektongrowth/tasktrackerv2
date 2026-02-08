@@ -87,7 +87,7 @@ export function HelpButton() {
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button
-            className="w-14 h-14 bg-slate-600 hover:bg-slate-700 rounded-full flex items-center justify-center shadow-lg transition-colors relative"
+            className="w-14 h-14 bg-white/60 hover:bg-white/70 rounded-full flex items-center justify-center shadow-lg transition-colors relative"
             aria-label="Help and guides"
           >
             <span className="text-white text-2xl font-bold">?</span>
@@ -170,7 +170,7 @@ export function HelpButton() {
           <DropdownMenuSeparator />
 
           {/* Reset option */}
-          <DropdownMenuItem onClick={handleReset} className="text-slate-500">
+          <DropdownMenuItem onClick={handleReset} className="text-white/50">
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset all guides
           </DropdownMenuItem>

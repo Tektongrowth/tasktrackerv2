@@ -35,11 +35,11 @@ export function ClientPortalLogin() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="h-6 w-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="h-6 w-6 text-green-400" />
             </div>
             <CardTitle>Check Your Email</CardTitle>
             <CardDescription className="mt-2">
@@ -47,7 +47,7 @@ export function ClientPortalLogin() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-white/60 mb-4">
               The link will expire in 24 hours and can only be used once.
             </p>
             <Button variant="outline" onClick={() => { setSubmitted(false); setEmail(''); }}>
@@ -61,7 +61,7 @@ export function ClientPortalLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Client Portal</CardTitle>
@@ -81,7 +81,7 @@ export function ClientPortalLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 Use the email associated with your subscription
               </p>
             </div>

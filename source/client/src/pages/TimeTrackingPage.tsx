@@ -304,9 +304,9 @@ export function TimeTrackingPage() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border rounded-lg shadow-lg p-3">
+        <div className="bg-white/[0.06] border rounded-lg shadow-lg p-3">
           <p className="font-medium">{label}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/60">
             {payload[0].value} hours ({formatDuration(payload[0].payload.minutes || payload[0].value * 60)})
           </p>
         </div>
@@ -559,37 +559,37 @@ export function TimeTrackingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {contractorReports.map((report) => (
                 <Card key={report.id} className="overflow-hidden">
-                  <CardHeader className="bg-slate-50 pb-3">
+                  <CardHeader className="bg-white/[0.03] pb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-[var(--theme-primary)] flex items-center justify-center text-white font-semibold">
                         {report.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <CardTitle className="text-base">{report.name}</CardTitle>
-                        <p className="text-xs text-muted-foreground">{report.entriesCount} time entries</p>
+                        <p className="text-xs text-white/60">{report.entriesCount} time entries</p>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4">
                     {/* Current Month Hours */}
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">This Month</span>
+                      <span className="text-sm text-white/60">This Month</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xl font-bold font-mono">{formatDuration(report.currentMonthMinutes)}</span>
                         {report.trend === 'up' && (
-                          <div className="flex items-center text-green-600 text-sm">
+                          <div className="flex items-center text-green-400 text-sm">
                             <TrendingUp className="h-4 w-4 mr-0.5" />
                             <span>+{report.percentChange}%</span>
                           </div>
                         )}
                         {report.trend === 'down' && (
-                          <div className="flex items-center text-red-600 text-sm">
+                          <div className="flex items-center text-red-400 text-sm">
                             <TrendingDown className="h-4 w-4 mr-0.5" />
                             <span>{report.percentChange}%</span>
                           </div>
                         )}
                         {report.trend === 'stable' && (
-                          <div className="flex items-center text-slate-500 text-sm">
+                          <div className="flex items-center text-white/50 text-sm">
                             <Minus className="h-4 w-4 mr-0.5" />
                             <span>{report.percentChange}%</span>
                           </div>
@@ -610,10 +610,10 @@ export function TimeTrackingPage() {
                           return (
                             <div key={i} className="flex-1 flex flex-col items-center gap-1">
                               <div
-                                className={`w-full rounded-t transition-all ${i === 2 ? 'bg-[var(--theme-primary)]' : 'bg-slate-300'}`}
+                                className={`w-full rounded-t transition-all ${i === 2 ? 'bg-[var(--theme-primary)]' : 'bg-white/10'}`}
                                 style={{ height: `${Math.max(height, 4)}%` }}
                               />
-                              <span className="text-[10px] text-muted-foreground">{bar.label}</span>
+                              <span className="text-[10px] text-white/60">{bar.label}</span>
                             </div>
                           );
                         })}
@@ -623,15 +623,15 @@ export function TimeTrackingPage() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t">
                       <div>
-                        <p className="text-xs text-muted-foreground">Last Month</p>
+                        <p className="text-xs text-white/60">Last Month</p>
                         <p className="font-mono font-medium">{formatDuration(report.lastMonthMinutes)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Avg/Day</p>
+                        <p className="text-xs text-white/60">Avg/Day</p>
                         <p className="font-mono font-medium">{formatDuration(report.avgDailyMinutes)}</p>
                       </div>
                       <div className="col-span-2">
-                        <p className="text-xs text-muted-foreground">All Time Total</p>
+                        <p className="text-xs text-white/60">All Time Total</p>
                         <p className="font-mono font-medium">{formatDuration(report.totalMinutes)}</p>
                       </div>
                     </div>

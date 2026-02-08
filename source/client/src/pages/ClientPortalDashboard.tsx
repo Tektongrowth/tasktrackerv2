@@ -24,9 +24,9 @@ import {
 import { cn, formatDate } from '@/lib/utils';
 
 const statusColors = {
-  todo: 'bg-slate-100 text-slate-800',
-  in_review: 'bg-amber-100 text-amber-800',
-  completed: 'bg-green-100 text-green-800',
+  todo: 'bg-white/[0.06] text-white/90',
+  in_review: 'bg-amber-500/15 text-amber-400',
+  completed: 'bg-green-500/15 text-green-400',
 };
 
 const statusIcons = {
@@ -42,15 +42,15 @@ function SubmissionsList() {
   });
 
   const statusColors: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
+    pending: 'bg-amber-500/15 text-amber-400',
+    approved: 'bg-green-500/15 text-green-400',
+    rejected: 'bg-red-500/15 text-red-400',
   };
 
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
+        <CardContent className="py-8 text-center text-white/60">
           Loading submissions...
         </CardContent>
       </Card>
@@ -73,11 +73,11 @@ function SubmissionsList() {
         {submissions.map((submission: any) => (
           <div
             key={submission.id}
-            className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+            className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
           >
             <div>
               <p className="font-medium">{submission.title}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/60">
                 Submitted {formatDate(submission.createdAt)}
               </p>
             </div>
@@ -172,14 +172,14 @@ export function ClientPortalDashboard() {
   const { client, projects, viewers, stats } = data;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white/[0.03]">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white/[0.06] border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold">{client.name}</h1>
-              <p className="text-sm text-muted-foreground">{client.email}</p>
+              <p className="text-sm text-white/60">{client.email}</p>
             </div>
             <Button variant="outline" onClick={() => logout.mutate()}>
               <LogOut className="h-4 w-4 mr-2" />
@@ -195,12 +195,12 @@ export function ClientPortalDashboard() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <ListTodo className="h-5 w-5 text-slate-600" />
+                <div className="p-2 bg-white/[0.06] rounded-lg">
+                  <ListTodo className="h-5 w-5 text-white/70" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.todoTasks}</p>
-                  <p className="text-sm text-muted-foreground">To Do</p>
+                  <p className="text-sm text-white/60">To Do</p>
                 </div>
               </div>
             </CardContent>
@@ -208,12 +208,12 @@ export function ClientPortalDashboard() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Clock className="h-5 w-5 text-amber-600" />
+                <div className="p-2 bg-amber-500/15 rounded-lg">
+                  <Clock className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.inReviewTasks}</p>
-                  <p className="text-sm text-muted-foreground">In Review</p>
+                  <p className="text-sm text-white/60">In Review</p>
                 </div>
               </div>
             </CardContent>
@@ -221,12 +221,12 @@ export function ClientPortalDashboard() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-green-500/15 rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.completedTasks}</p>
-                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-sm text-white/60">Completed</p>
                 </div>
               </div>
             </CardContent>
@@ -234,12 +234,12 @@ export function ClientPortalDashboard() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
+                <div className="p-2 bg-red-500/15 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.upcomingDue}</p>
-                  <p className="text-sm text-muted-foreground">Due Soon</p>
+                  <p className="text-sm text-white/60">Due Soon</p>
                 </div>
               </div>
             </CardContent>
@@ -257,9 +257,9 @@ export function ClientPortalDashboard() {
             {projects.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
-                  <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <FolderOpen className="h-12 w-12 text-white/60 mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No Projects Yet</h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-white/60">
                     Your projects will appear here once they're created.
                   </p>
                 </CardContent>
@@ -282,7 +282,7 @@ export function ClientPortalDashboard() {
                   </CardHeader>
                   <CardContent>
                     {project.tasks.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">No tasks for this project yet.</p>
+                      <p className="text-white/60 text-sm">No tasks for this project yet.</p>
                     ) : (
                       <div className="space-y-2">
                         {project.tasks.map((task) => {
@@ -295,28 +295,28 @@ export function ClientPortalDashboard() {
                           return (
                             <div
                               key={task.id}
-                              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                              className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
                             >
                               <div className="flex items-center gap-3">
                                 <StatusIcon
                                   className={cn(
                                     'h-5 w-5',
-                                    task.status === 'completed' && 'text-green-600',
-                                    task.status === 'in_review' && 'text-amber-600',
-                                    task.status === 'todo' && 'text-slate-400'
+                                    task.status === 'completed' && 'text-green-400',
+                                    task.status === 'in_review' && 'text-amber-400',
+                                    task.status === 'todo' && 'text-white/40'
                                   )}
                                 />
                                 <div>
                                   <p className={cn(
                                     'font-medium',
-                                    task.status === 'completed' && 'line-through text-muted-foreground'
+                                    task.status === 'completed' && 'line-through text-white/60'
                                   )}>
                                     {task.title}
                                   </p>
                                   {task.dueDate && (
                                     <p className={cn(
                                       'text-xs',
-                                      isOverdue ? 'text-red-600' : 'text-muted-foreground'
+                                      isOverdue ? 'text-red-400' : 'text-white/60'
                                     )}>
                                       Due: {new Date(task.dueDate).toLocaleDateString()}
                                       {isOverdue && ' (Overdue)'}
@@ -417,7 +417,7 @@ export function ClientPortalDashboard() {
               </CardHeader>
               <CardContent>
                 {viewers.length === 0 ? (
-                  <p className="text-muted-foreground text-sm text-center py-8">
+                  <p className="text-white/60 text-sm text-center py-8">
                     No additional viewers yet. Add team members to give them view-only access to this dashboard.
                   </p>
                 ) : (
@@ -425,12 +425,12 @@ export function ClientPortalDashboard() {
                     {viewers.map((viewer) => (
                       <div
                         key={viewer.id}
-                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
                       >
                         <div>
                           <p className="font-medium">{viewer.name || viewer.email}</p>
                           {viewer.name && (
-                            <p className="text-sm text-muted-foreground">{viewer.email}</p>
+                            <p className="text-sm text-white/60">{viewer.email}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -440,7 +440,7 @@ export function ClientPortalDashboard() {
                             size="icon"
                             onClick={() => removeViewer.mutate(viewer.id)}
                           >
-                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            <Trash2 className="h-4 w-4 text-white/60" />
                           </Button>
                         </div>
                       </div>

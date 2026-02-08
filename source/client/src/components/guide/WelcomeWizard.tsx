@@ -86,7 +86,7 @@ export function WelcomeWizard() {
               className={`h-2 rounded-full transition-all ${
                 index === currentStep
                   ? 'w-6 bg-[var(--theme-primary)]'
-                  : 'w-2 bg-slate-200 hover:bg-slate-300'
+                  : 'w-2 bg-white/[0.08] hover:bg-white/[0.12]'
               }`}
               aria-label={`Go to step ${index + 1}`}
             />

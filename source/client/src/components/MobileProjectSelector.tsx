@@ -102,18 +102,18 @@ export function MobileProjectSelector() {
   };
 
   return (
-    <div className="px-4 py-2 bg-white border-b md:hidden sticky top-0 z-40">
+    <div className="px-4 py-2 bg-white/[0.06] border-b md:hidden sticky top-0 z-40">
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg border bg-background hover:bg-muted transition-colors">
+          <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg border bg-white/[0.04] hover:bg-white/[0.04] transition-colors">
             <div className="flex items-center gap-2 min-w-0">
-              <FolderKanban className="h-4 w-4 text-muted-foreground shrink-0" />
+              <FolderKanban className="h-4 w-4 text-white/60 shrink-0" />
               <span className="text-sm font-medium truncate">{displayText}</span>
               {hasActiveFilter && (
                 <span className="shrink-0 w-2 h-2 rounded-full bg-[var(--theme-accent)]" />
               )}
             </div>
-            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+            <ChevronDown className="h-4 w-4 text-white/60 shrink-0 ml-2" />
           </button>
         </DropdownMenuTrigger>
 
@@ -124,7 +124,7 @@ export function MobileProjectSelector() {
           {/* Search */}
           <div className="p-2 border-b">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/60" />
               <Input
                 placeholder="Search..."
                 value={searchQuery}
@@ -142,7 +142,7 @@ export function MobileProjectSelector() {
               onClick={handleClearFilters}
               className={cn(
                 'flex items-center gap-2',
-                !hasActiveFilter && 'bg-accent'
+                !hasActiveFilter && 'bg-white/[0.06]'
               )}
             >
               {!hasActiveFilter && <Check className="h-4 w-4" />}
@@ -159,7 +159,7 @@ export function MobileProjectSelector() {
                 <DropdownMenuItem
                   className={cn(
                     'flex items-center gap-2',
-                    selectedClientId === client.id && !selectedProjectId && 'bg-accent'
+                    selectedClientId === client.id && !selectedProjectId && 'bg-white/[0.06]'
                   )}
                   onClick={() => handleSelectClient(client.id)}
                 >
@@ -171,7 +171,7 @@ export function MobileProjectSelector() {
 
                   {client.projects && client.projects.length > 0 ? (
                     <button
-                      className="p-0.5 -ml-1 hover:bg-muted rounded"
+                      className="p-0.5 -ml-1 hover:bg-white/[0.04] rounded"
                       onClick={(e) => toggleClient(client.id, e)}
                     >
                       {expandedClients.has(client.id) ? (
@@ -195,7 +195,7 @@ export function MobileProjectSelector() {
                         key={project.id}
                         className={cn(
                           'flex items-center gap-2 text-sm',
-                          selectedProjectId === project.id && 'bg-accent'
+                          selectedProjectId === project.id && 'bg-white/[0.06]'
                         )}
                         onClick={() => handleSelectProject(project.id)}
                       >
@@ -220,7 +220,7 @@ export function MobileProjectSelector() {
               <div className="p-2">
                 <button
                   onClick={handleClearFilters}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-[var(--theme-accent)] hover:bg-red-50 rounded transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-[var(--theme-accent)] hover:bg-red-500/10 rounded transition-colors"
                 >
                   <X className="h-3.5 w-3.5" />
                   Clear Filter

@@ -55,36 +55,36 @@ export function PushNotificationPrompt({ className }: PushNotificationPromptProp
   if (showIOSInstructions || needsInstall) {
     return (
       <div className={cn(
-        "fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:w-96 bg-white rounded-xl shadow-xl border p-4 z-50",
+        "fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:w-96 bg-white/[0.06] backdrop-blur-xl rounded-xl shadow-xl border border-white/[0.08] p-4 z-50",
         className
       )}>
         <button
           onClick={handleDismiss}
-          className="absolute top-3 right-3 p-1 hover:bg-muted rounded-full"
+          className="absolute top-3 right-3 p-1 hover:bg-white/[0.04] rounded-full"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Share className="h-5 w-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-full bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+            <Share className="h-5 w-5 text-blue-400" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm">Install TaskTracker</h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-white/60 mt-1">
               To receive notifications on iOS, add this app to your home screen:
             </p>
-            <ol className="mt-3 space-y-2 text-xs text-muted-foreground">
+            <ol className="mt-3 space-y-2 text-xs text-white/60">
               <li className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium">1</span>
+                <span className="w-5 h-5 rounded-full bg-white/[0.04] flex items-center justify-center text-[10px] font-medium">1</span>
                 Tap the <Share className="h-3 w-3 inline mx-1" /> Share button
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium">2</span>
+                <span className="w-5 h-5 rounded-full bg-white/[0.04] flex items-center justify-center text-[10px] font-medium">2</span>
                 Scroll and tap "Add to Home Screen" <Plus className="h-3 w-3 inline mx-1" />
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium">3</span>
+                <span className="w-5 h-5 rounded-full bg-white/[0.04] flex items-center justify-center text-[10px] font-medium">3</span>
                 Open the app from your home screen
               </li>
             </ol>
@@ -105,12 +105,12 @@ export function PushNotificationPrompt({ className }: PushNotificationPromptProp
   // Regular push notification prompt
   return (
     <div className={cn(
-      "fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:w-80 bg-white rounded-xl shadow-xl border p-4 z-50",
+      "fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:w-80 bg-white/[0.06] backdrop-blur-xl rounded-xl shadow-xl border border-white/[0.08] p-4 z-50",
       className
     )}>
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 p-1 hover:bg-muted rounded-full"
+        className="absolute top-3 right-3 p-1 hover:bg-white/[0.04] rounded-full"
       >
         <X className="h-4 w-4" />
       </button>
@@ -121,7 +121,7 @@ export function PushNotificationPrompt({ className }: PushNotificationPromptProp
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-sm">Enable Notifications</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-white/60 mt-1">
             Get notified when you receive messages or are mentioned in comments.
           </p>
           {error && (
@@ -165,7 +165,7 @@ export function PushNotificationSettings() {
 
   if (!isSupported) {
     return (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-white/60">
         Push notifications are not supported in this browser.
       </div>
     );
@@ -173,7 +173,7 @@ export function PushNotificationSettings() {
 
   if (permission === 'denied') {
     return (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-white/60">
         <BellOff className="h-4 w-4 inline mr-2" />
         Notifications are blocked. Please enable them in your browser settings.
       </div>
@@ -182,7 +182,7 @@ export function PushNotificationSettings() {
 
   if (needsInstall) {
     return (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-white/60">
         <Bell className="h-4 w-4 inline mr-2" />
         Add this app to your home screen to enable notifications on iOS.
       </div>
@@ -195,7 +195,7 @@ export function PushNotificationSettings() {
         {isSubscribed ? (
           <Bell className="h-4 w-4 text-green-500" />
         ) : (
-          <BellOff className="h-4 w-4 text-muted-foreground" />
+          <BellOff className="h-4 w-4 text-white/60" />
         )}
         <span className="text-sm">
           {isSubscribed ? 'Notifications enabled' : 'Notifications disabled'}

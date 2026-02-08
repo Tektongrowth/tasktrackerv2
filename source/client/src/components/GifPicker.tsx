@@ -98,11 +98,11 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
   };
 
   return (
-    <div className="absolute bottom-full left-0 mb-2 w-80 bg-white rounded-lg shadow-xl border z-50 overflow-hidden">
+    <div className="absolute bottom-full left-0 mb-2 w-80 bg-white/[0.06] backdrop-blur-xl rounded-lg shadow-xl border border-white/[0.08] z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 p-3 border-b bg-slate-50">
+      <div className="flex items-center gap-2 p-3 border-b bg-white/[0.03]">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
           <Input
             ref={inputRef}
             value={search}
@@ -120,14 +120,14 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
       <div className="h-64 overflow-y-auto p-2">
         {loading && gifs.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-white/60" />
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-sm text-white/60">
             {error}
           </div>
         ) : gifs.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-sm text-white/60">
             No GIFs found
           </div>
         ) : (
@@ -141,7 +141,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
                 <img
                   src={gif.images.fixed_height_small.url}
                   alt={gif.title}
-                  className="w-full h-24 object-cover bg-slate-100"
+                  className="w-full h-24 object-cover bg-white/[0.06]"
                   loading="lazy"
                 />
               </button>
@@ -151,7 +151,7 @@ export function GifPicker({ onSelect, onClose }: GifPickerProps) {
       </div>
 
       {/* Giphy Attribution */}
-      <div className="px-3 py-2 border-t bg-slate-50 flex items-center justify-center">
+      <div className="px-3 py-2 border-t bg-white/[0.03] flex items-center justify-center">
         <img
           src="https://giphy.com/static/img/poweredby_giphy.png"
           alt="Powered by GIPHY"

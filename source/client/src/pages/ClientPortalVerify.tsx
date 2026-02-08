@@ -34,7 +34,7 @@ export function ClientPortalVerify() {
 
   if (status === 'verifying') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="flex justify-center mb-4">
@@ -50,12 +50,12 @@ export function ClientPortalVerify() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="h-8 w-8 text-green-400" />
               </div>
             </div>
             <CardTitle>Access Verified</CardTitle>
@@ -67,12 +67,12 @@ export function ClientPortalVerify() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-              <XCircle className="h-8 w-8 text-red-600" />
+            <div className="w-16 h-16 bg-red-500/15 rounded-full flex items-center justify-center">
+              <XCircle className="h-8 w-8 text-red-400" />
             </div>
           </div>
           <CardTitle>Verification Failed</CardTitle>

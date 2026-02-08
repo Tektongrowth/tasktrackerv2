@@ -66,7 +66,7 @@ export function ReactionDisplay({
             'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs transition-colors',
             group.userReacted
               ? 'bg-primary/20 text-primary border border-primary/30'
-              : 'bg-muted hover:bg-muted/80 text-muted-foreground border border-transparent',
+              : 'bg-white/[0.04] hover:bg-white/[0.06] text-white/60 border border-transparent',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
         >

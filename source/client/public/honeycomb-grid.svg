@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="576" viewBox="0 0 300 576">
+  <defs>
+    <pattern id="hex-grid" x="0" y="0" width="60" height="96" patternUnits="userSpaceOnUse">
+      <path d="M30,2 L56,16 L56,46 L30,60 L4,46 L4,16 Z" fill="none" stroke="#1bacbd" stroke-opacity="0.18" stroke-width="0.8"/>
+      <path d="M30,4 L54,17 L54,45 L30,58 L6,45 L6,17 Z" fill="none" stroke="#1bacbd" stroke-opacity="0.05" stroke-width="0.5"/>
+      <path d="M0,50 L26,64 L26,94 L0,108 L-26,94 L-26,64 Z" fill="none" stroke="#1bacbd" stroke-opacity="0.18" stroke-width="0.8"/>
+      <path d="M60,50 L86,64 L86,94 L60,108 L34,94 L34,64 Z" fill="none" stroke="#1bacbd" stroke-opacity="0.18" stroke-width="0.8"/>
+      <!-- Wrap-around: bottom of row 2 from previous tile (shifted up by 96) -->
+      <path d="M0,-46 L26,-32 L26,-2 L0,12 L-26,-2 L-26,-32 Z" fill="none" stroke="#1bacbd" stroke-opacity="0.18" stroke-width="0.8"/>
+      <path d="M60,-46 L86,-32 L86,-2 L60,12 L34,-2 L34,-32 Z" fill="none" stroke="#1bacbd" stroke-opacity="0.18" stroke-width="0.8"/>
+      <circle cx="30" cy="2" r="1.5" fill="#1bacbd" fill-opacity="0.3"/>
+      <circle cx="56" cy="16" r="1.5" fill="#1bacbd" fill-opacity="0.3"/>
+      <circle cx="56" cy="46" r="1.5" fill="#1bacbd" fill-opacity="0.3"/>
+      <circle cx="30" cy="60" r="1.5" fill="#1bacbd" fill-opacity="0.3"/>
+      <circle cx="4" cy="46" r="1.5" fill="#1bacbd" fill-opacity="0.3"/>
+      <circle cx="4" cy="16" r="1.5" fill="#1bacbd" fill-opacity="0.3"/>
+    </pattern>
+    <radialGradient id="hex-glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1bacbd" stop-opacity="0.07"/>
+      <stop offset="80%" stop-color="#1bacbd" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#1bacbd" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hex-glow-bright" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1bacbd" stop-opacity="0.10"/>
+      <stop offset="80%" stop-color="#1bacbd" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#1bacbd" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Grid lines -->
+  <rect width="300" height="576" fill="url(#hex-grid)"/>
+
+</svg>

@@ -157,7 +157,7 @@ export function CreateTaskDialog({
                 </div>
               ))}
               {userList.length === 0 && (
-                <p className="text-sm text-muted-foreground">No users available</p>
+                <p className="text-sm text-white/60">No users available</p>
               )}
             </div>
           </div>

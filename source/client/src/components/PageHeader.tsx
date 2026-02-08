@@ -54,13 +54,13 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
-    <div className="bg-white border-b px-6 py-4 sticky top-0 z-40 min-h-[73px]">
+    <div className="liquid-bar px-6 py-4 sticky top-0 z-40 min-h-[73px]">
       <div className="flex items-center justify-between">
         {/* Left: Title and subtitle */}
         <div>
           <h1 className="text-2xl font-bold">{title}</h1>
           {subtitle && (
-            <p className="text-muted-foreground text-sm">{subtitle}</p>
+            <p className="text-white/60 text-sm">{subtitle}</p>
           )}
         </div>
 

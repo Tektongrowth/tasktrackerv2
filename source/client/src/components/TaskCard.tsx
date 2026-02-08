@@ -17,10 +17,10 @@ interface TaskCardProps {
 }
 
 const priorityConfig: Record<TaskPriority, { color: string; bgColor: string; borderColor: string; label: string }> = {
-  urgent: { color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-l-red-500', label: 'Urgent' },
-  high: { color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-l-orange-500', label: 'High' },
-  medium: { color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-l-blue-500', label: 'Medium' },
-  low: { color: 'text-slate-500', bgColor: 'bg-slate-50', borderColor: 'border-l-slate-300', label: 'Low' },
+  urgent: { color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-l-red-500', label: 'Urgent' },
+  high: { color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-l-orange-500', label: 'High' },
+  medium: { color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-l-blue-500', label: 'Medium' },
+  low: { color: 'text-white/50', bgColor: 'bg-white/[0.03]', borderColor: 'border-l-white/[0.12]', label: 'Low' },
 };
 
 // Tag border colors matching the tag badge colors
@@ -32,9 +32,9 @@ const tagBorderColors: Record<string, string> = {
 };
 
 function getTagBorderColor(tags: string[]): string {
-  if (tags.length === 0) return 'border-l-slate-300';
+  if (tags.length === 0) return 'border-l-white/[0.12]';
   const firstTag = tags[0].toLowerCase();
-  return tagBorderColors[firstTag] || 'border-l-slate-300';
+  return tagBorderColors[firstTag] || 'border-l-white/[0.12]';
 }
 
 function SegmentedProgressBar({
@@ -53,7 +53,7 @@ function SegmentedProgressBar({
           key={i}
           className={cn(
             "flex-1 rounded-sm transition-colors",
-            i < completed ? "bg-green-500" : "bg-slate-200"
+            i < completed ? "bg-green-500" : "bg-white/[0.08]"
           )}
         />
       ))}
@@ -133,22 +133,22 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
       onClick={onClick}
       data-guide={dataGuide}
       className={cn(
-        'bg-white rounded-lg shadow-sm border cursor-pointer group border-l-4',
+        'glass-card !rounded-lg cursor-pointer group border-l-4',
         'transition-all duration-200 ease-out',
-        'hover:shadow-lg hover:-translate-y-0.5 hover:border-slate-300',
+        'hover:-translate-y-1',
         (isDragging || isSortableDragging) && 'opacity-60 shadow-xl rotate-2 scale-105 z-50',
         getTagBorderColor(task.tags),
-        isCompleted && 'opacity-75 bg-slate-50',
+        isCompleted && 'opacity-60',
         isTimerRunningForTask && 'ring-2 ring-[var(--theme-accent)]/30'
       )}
     >
       {/* Drag handle indicator */}
       <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <GripVertical className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 cursor-grab active:cursor-grabbing" />
+        <GripVertical className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 cursor-grab active:cursor-grabbing" />
         <div className="flex-1 min-w-0">
           <h4 className={cn(
             'font-medium text-sm line-clamp-2 leading-tight transition-colors',
-            isCompleted && 'line-through text-muted-foreground'
+            isCompleted && 'line-through text-white/60'
           )}>
             {task.title}
           </h4>
@@ -156,8 +156,8 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
         {showPriorityIndicator && (
           <div className={cn(
             'p-1 rounded-full transition-colors',
-            priority === 'urgent' && 'bg-red-100 animate-pulse',
-            priority === 'high' && 'bg-orange-100'
+            priority === 'urgent' && 'bg-red-500/15 animate-pulse',
+            priority === 'high' && 'bg-orange-500/15'
           )}>
             <Flag className={cn('h-3.5 w-3.5 shrink-0', priorityStyle.color)} />
           </div>
@@ -166,9 +166,9 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
 
       <div className="px-3 pb-3 space-y-3">
         {task.project?.client?.name && (
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-white/60 truncate">
             {task.project.client.name}
-            {task.project?.name && <span className="text-slate-300"> / </span>}
+            {task.project?.name && <span className="text-white/30"> / </span>}
             {task.project?.name && <span>{task.project.name}</span>}
           </p>
         )}
@@ -199,7 +199,7 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+        <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
           <div className="flex items-center gap-2">
             {task.assignees && task.assignees.length > 0 ? (
               <div className="flex -space-x-2">
@@ -209,17 +209,17 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
                     name={assignee.user?.name || '?'}
                     avatarUrl={assignee.user?.avatarUrl}
                     size="sm"
-                    className="ring-2 ring-white"
+                    className="ring-2 ring-white/10"
                   />
                 ))}
                 {task.assignees.length > 3 && (
-                  <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium ring-2 ring-white">
+                  <div className="h-6 w-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium ring-2 ring-white/10">
                     +{task.assignees.length - 3}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="h-6 w-6 rounded-full border-2 border-dashed border-slate-200" />
+              <div className="h-6 w-6 rounded-full border-2 border-dashed border-white/15" />
             )}
             {/* Timer Button */}
             <Button
@@ -229,7 +229,7 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
                 'h-6 px-2 text-xs transition-all duration-200',
                 isTimerRunningForTask
                   ? 'bg-[var(--theme-accent)] hover:bg-[var(--theme-primary)] shadow-sm shadow-[var(--theme-accent)]/25'
-                  : 'opacity-0 group-hover:opacity-100 hover:bg-slate-100'
+                  : 'opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]'
               )}
               onClick={handleTimerToggle}
             >
@@ -251,8 +251,8 @@ export function TaskCard({ task, isDragging, onClick, 'data-guide': dataGuide }:
               className={cn(
                 'flex items-center gap-1 text-xs px-2 py-0.5 rounded',
                 overdue
-                  ? 'text-red-700 bg-red-50 font-medium'
-                  : 'text-muted-foreground bg-slate-50'
+                  ? 'text-red-400 bg-red-500/10 font-medium'
+                  : 'text-white/60 bg-white/[0.03]'
               )}
             >
               {overdue && <AlertTriangle className="h-3 w-3" />}

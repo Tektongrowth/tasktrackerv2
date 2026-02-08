@@ -67,7 +67,7 @@ export function TaskSubmissionForm({ projects, onSuccess }: TaskSubmissionFormPr
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-slate-50">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-white/[0.03]">
       <div className="flex items-center justify-between">
         <h3 className="font-medium">Request a Task</h3>
         <Button

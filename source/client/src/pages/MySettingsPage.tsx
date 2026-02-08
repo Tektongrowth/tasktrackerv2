@@ -59,7 +59,7 @@ function LegacyNotificationSetting({
         </div>
         <div>
           <Label className="text-sm font-medium">{label}</Label>
-          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+          <p className="text-xs text-white/60 mt-0.5">{description}</p>
         </div>
       </div>
       <Switch
@@ -100,13 +100,13 @@ function ChannelNotificationRow({
         </div>
         <div>
           <Label className="text-sm font-medium">{label}</Label>
-          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+          <p className="text-xs text-white/60 mt-0.5">{description}</p>
         </div>
       </div>
       <div className="flex items-center gap-6 ml-11">
         <div className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground w-12">Email</span>
+          <Mail className="h-4 w-4 text-white/60" />
+          <span className="text-xs text-white/60 w-12">Email</span>
           <Switch
             checked={prefs.email}
             onCheckedChange={(checked) => onChannelChange('email', checked)}
@@ -114,8 +114,8 @@ function ChannelNotificationRow({
           />
         </div>
         <div className="flex items-center gap-2">
-          <Smartphone className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground w-12">Push</span>
+          <Smartphone className="h-4 w-4 text-white/60" />
+          <span className="text-xs text-white/60 w-12">Push</span>
           <Switch
             checked={prefs.push}
             onCheckedChange={(checked) => onChannelChange('push', checked)}
@@ -123,8 +123,8 @@ function ChannelNotificationRow({
           />
         </div>
         <div className="flex items-center gap-2">
-          <Send className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground w-12">Telegram</span>
+          <Send className="h-4 w-4 text-white/60" />
+          <span className="text-xs text-white/60 w-12">Telegram</span>
           <Switch
             checked={prefs.telegram}
             onCheckedChange={(checked) => onChannelChange('telegram', checked)}
@@ -320,7 +320,7 @@ export function MySettingsPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {error ? (
-              <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+              <div className="p-4 bg-red-500/10 text-red-400 rounded-lg">
                 <p className="font-medium">Failed to load notification preferences</p>
                 <p className="text-sm mt-1">{(error as Error).message || 'Please try again later.'}</p>
               </div>
@@ -344,7 +344,7 @@ export function MySettingsPage() {
                 ))}
               </div>
             ) : preferences ? (
-              <div className="bg-slate-50 rounded-lg px-4">
+              <div className="bg-white/[0.03] rounded-lg px-4">
                 {channelNotificationSettings.map((setting) => (
                   <ChannelNotificationRow
                     key={setting.id}
@@ -379,10 +379,10 @@ export function MySettingsPage() {
               <>
                 {/* Assignments Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-2">
                     Assignments
                   </h3>
-                  <div className="bg-slate-50 rounded-lg px-4">
+                  <div className="bg-white/[0.03] rounded-lg px-4">
                     {assignmentSettings.map((setting) => (
                       <LegacyNotificationSetting
                         key={setting.id}
@@ -400,10 +400,10 @@ export function MySettingsPage() {
 
                 {/* Task Updates Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-2">
                     Task Updates
                   </h3>
-                  <div className="bg-slate-50 rounded-lg px-4">
+                  <div className="bg-white/[0.03] rounded-lg px-4">
                     {taskSettings.map((setting) => (
                       <LegacyNotificationSetting
                         key={setting.id}
@@ -421,10 +421,10 @@ export function MySettingsPage() {
 
                 {/* Digest Section */}
                 <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wide mb-2">
                     Email Digest
                   </h3>
-                  <div className="bg-slate-50 rounded-lg px-4">
+                  <div className="bg-white/[0.03] rounded-lg px-4">
                     {digestSettings.map((setting) => (
                       <LegacyNotificationSetting
                         key={setting.id}
@@ -480,12 +480,12 @@ export function MySettingsPage() {
               ) : telegramStatus.connected ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                    <div className="p-2 rounded-lg bg-green-500/15 text-green-400">
                       <CheckCircle className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-medium text-green-700">Connected</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-green-400">Connected</p>
+                      <p className="text-sm text-white/60">
                         Linked to @{telegramStatus.botUsername}
                       </p>
                     </div>
@@ -503,7 +503,7 @@ export function MySettingsPage() {
               ) : (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/60">
                       Connect your Telegram account to receive notifications on your phone.
                     </p>
                   </div>

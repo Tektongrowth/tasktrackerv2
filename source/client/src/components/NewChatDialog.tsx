@@ -31,7 +31,7 @@ export function NewChatDialog({ users, onClose, onCreate }: NewChatDialogProps) 
       <div className="bg-card rounded-lg shadow-lg w-full max-w-md mx-4">
         <div className="p-4 border-b flex items-center justify-between">
           <h3 className="text-lg font-semibold">New Chat</h3>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded" aria-label="Close">
+          <button onClick={onClose} className="p-1 hover:bg-white/[0.04] rounded" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -53,18 +53,18 @@ export function NewChatDialog({ users, onClose, onCreate }: NewChatDialogProps) 
               placeholder="Group name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="w-full px-4 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2 bg-white/[0.04] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           )}
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
             <input
               type="text"
               placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-9 pr-4 py-2 bg-white/[0.04] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -73,7 +73,7 @@ export function NewChatDialog({ users, onClose, onCreate }: NewChatDialogProps) 
               <label
                 key={u.id}
                 className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
-                  selectedUsers.includes(u.id) ? 'bg-primary/10' : 'hover:bg-muted'
+                  selectedUsers.includes(u.id) ? 'bg-primary/10' : 'hover:bg-white/[0.04]'
                 }`}
               >
                 <input
@@ -108,7 +108,7 @@ export function NewChatDialog({ users, onClose, onCreate }: NewChatDialogProps) 
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{u.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                  <p className="text-xs text-white/60 truncate">{u.email}</p>
                 </div>
               </label>
             ))}
@@ -118,7 +118,7 @@ export function NewChatDialog({ users, onClose, onCreate }: NewChatDialogProps) 
         <div className="p-4 border-t flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm hover:bg-muted rounded-lg transition-colors"
+            className="px-4 py-2 text-sm hover:bg-white/[0.04] rounded-lg transition-colors"
           >
             Cancel
           </button>

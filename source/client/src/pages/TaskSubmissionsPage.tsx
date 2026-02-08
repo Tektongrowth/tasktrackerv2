@@ -98,21 +98,21 @@ export function TaskSubmissionsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
+    pending: 'bg-amber-500/15 text-amber-400',
+    approved: 'bg-green-500/15 text-green-400',
+    rejected: 'bg-red-500/15 text-red-400',
   };
 
   const priorityColors: Record<string, string> = {
-    low: 'bg-slate-100 text-slate-700',
-    medium: 'bg-blue-100 text-blue-700',
-    high: 'bg-orange-100 text-orange-700',
-    urgent: 'bg-red-100 text-red-700',
+    low: 'bg-white/[0.06] text-white/80',
+    medium: 'bg-blue-500/15 text-blue-400',
+    high: 'bg-orange-500/15 text-orange-400',
+    urgent: 'bg-red-500/15 text-red-400',
   };
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Filter className="h-4 w-4 text-muted-foreground" />
+      <Filter className="h-4 w-4 text-white/60" />
       <Select value={statusFilter} onValueChange={setStatusFilter}>
         <SelectTrigger className="w-40">
           <SelectValue placeholder="Filter by status" />
@@ -137,10 +137,10 @@ export function TaskSubmissionsPage() {
 
       <div className="p-6 space-y-6">
       {isLoading ? (
-        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+        <div className="text-center py-8 text-white/60">Loading...</div>
       ) : submissions.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="py-8 text-center text-white/60">
             <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No task requests found</p>
           </CardContent>
@@ -182,7 +182,7 @@ export function TaskSubmissionsPage() {
               </CardHeader>
               <CardContent>
                 {submission.description && (
-                  <p className="text-sm text-muted-foreground mb-4">{submission.description}</p>
+                  <p className="text-sm text-white/60 mb-4">{submission.description}</p>
                 )}
 
                 {submission.project && (
@@ -200,7 +200,7 @@ export function TaskSubmissionsPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-600"
+                      className="text-red-400 border-red-500/20 hover:bg-red-500/10 hover:text-red-400"
                       onClick={() => handleReject(submission.id)}
                       disabled={rejectMutation.isPending}
                     >
@@ -211,7 +211,7 @@ export function TaskSubmissionsPage() {
                 )}
 
                 {submission.status === 'approved' && submission.task && (
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm text-green-400">
                     Task created: {submission.task.title}
                   </p>
                 )}

@@ -80,7 +80,7 @@ export function EmbedSubmitPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-accent)]" />
       </div>
     );
@@ -89,11 +89,11 @@ export function EmbedSubmitPage() {
   // Error state
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">Invalid Link</h2>
-          <p className="text-slate-600 text-sm">This submission link is invalid or has expired.</p>
+          <h2 className="text-lg font-semibold text-white/90 mb-2">Invalid Link</h2>
+          <p className="text-white/70 text-sm">This submission link is invalid or has expired.</p>
         </div>
       </div>
     );
@@ -102,13 +102,13 @@ export function EmbedSubmitPage() {
   // Success state
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
+          <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="h-8 w-8 text-green-400" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">Request Submitted!</h2>
-          <p className="text-slate-600 mb-6">
+          <h2 className="text-xl font-semibold text-white/90 mb-2">Request Submitted!</h2>
+          <p className="text-white/70 mb-6">
             Your task request has been submitted and will be reviewed shortly.
           </p>
           <Button onClick={resetForm} variant="outline">
@@ -120,18 +120,18 @@ export function EmbedSubmitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 flex flex-col">
+    <div className="min-h-screen bg-white/[0.03] p-4 flex flex-col">
       <div className="max-w-lg mx-auto w-full flex-1">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-xl font-semibold text-slate-800">Submit a Ticket</h1>
-          <p className="text-sm text-slate-600 mt-1">
+          <h1 className="text-xl font-semibold text-white/90">Submit a Ticket</h1>
+          <p className="text-sm text-white/70 mt-1">
             Submit a ticket for {data.clientName}
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white/[0.06] rounded-xl border shadow-sm p-6 space-y-4">
           {/* Your Name (optional) */}
           <div className="space-y-1.5">
             <Label htmlFor="name" className="text-sm">Your Name (optional)</Label>
@@ -206,7 +206,7 @@ export function EmbedSubmitPage() {
 
           {/* Error message */}
           {submitMutation.error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+            <div className="text-red-400 text-sm bg-red-500/10 p-3 rounded-lg">
               {(submitMutation.error as Error).message}
             </div>
           )}
@@ -230,7 +230,7 @@ export function EmbedSubmitPage() {
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-slate-400 mt-4">
+      <p className="text-center text-xs text-white/40 mt-4">
         Powered by Task Tracker
       </p>
     </div>

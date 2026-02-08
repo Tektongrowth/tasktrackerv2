@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function TaskCardSkeleton() {
   return (
-    <div className="bg-white rounded-lg border border-l-4 border-l-slate-200 p-3 space-y-3">
+    <div className="bg-white/[0.06] rounded-lg border border-l-4 border-l-white/[0.08] p-3 space-y-3">
       <div className="flex items-center gap-2">
         <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 flex-1" />
@@ -23,14 +23,14 @@ export function TaskCardSkeleton() {
 export function KanbanColumnSkeleton() {
   return (
     <div className="flex-shrink-0 w-80 flex flex-col">
-      <div className="bg-white rounded-t-xl border border-b-0 p-3">
+      <div className="bg-white/[0.06] rounded-t-xl border border-b-0 p-3">
         <div className="flex items-center gap-3">
           <Skeleton className="w-3 h-3 rounded-full" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-5 w-8 rounded-full ml-auto" />
         </div>
       </div>
-      <div className="flex-1 bg-slate-100/80 rounded-b-xl border border-t-0 p-2 space-y-2 min-h-[200px]">
+      <div className="flex-1 bg-white/[0.05] rounded-b-xl border border-t-0 p-2 space-y-2 min-h-[200px]">
         <TaskCardSkeleton />
         <TaskCardSkeleton />
         <TaskCardSkeleton />
@@ -41,8 +41,8 @@ export function KanbanColumnSkeleton() {
 
 export function TaskListSkeleton() {
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-      <div className="grid grid-cols-[1fr_120px_100px_120px_100px_100px] gap-4 px-4 py-3 border-b bg-slate-50">
+    <div className="bg-white/[0.06] rounded-xl border shadow-sm overflow-hidden">
+      <div className="grid grid-cols-[1fr_120px_100px_120px_100px_100px] gap-4 px-4 py-3 border-b bg-white/[0.03]">
         {[...Array(6)].map((_, i) => (
           <Skeleton key={i} className="h-4 w-full" />
         ))}

@@ -53,21 +53,21 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-2xl font-semibold text-white">
                 Something went wrong
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-white/60">
                 An unexpected error occurred. Please try refreshing the page.
               </p>
             </div>
 
             {import.meta.env.DEV && this.state.error && (
-              <div className="text-left p-4 bg-muted rounded-lg overflow-auto max-h-48">
+              <div className="text-left p-4 bg-white/[0.04] rounded-lg overflow-auto max-h-48">
                 <p className="text-sm font-mono text-destructive">
                   {this.state.error.toString()}
                 </p>
                 {this.state.errorInfo && (
-                  <pre className="text-xs text-muted-foreground mt-2 whitespace-pre-wrap">
+                  <pre className="text-xs text-white/60 mt-2 whitespace-pre-wrap">
                     {this.state.errorInfo.componentStack}
                   </pre>
                 )}

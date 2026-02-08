@@ -179,7 +179,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
     !expandedClients.has(clientName);
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+    <div className="bg-white/[0.06] rounded-xl border shadow-sm overflow-hidden">
       <table className="w-full md:table-fixed">
         {/* Colgroup only on desktop - mobile uses auto layout */}
         <colgroup className="hidden md:table-column-group">
@@ -233,17 +233,17 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
               <tr key={`header-${clientName}`}>
                 <td colSpan={7} className="p-0">
                   <button
-                    className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-slate-50 to-transparent border-b hover:from-slate-100 transition-all text-left group"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-white/[0.06] to-transparent border-b border-white/[0.06] hover:from-white/[0.10] transition-all text-left group"
                     onClick={() => toggleClient(clientName)}
                   >
                     <div className={cn(
                       "transition-transform duration-200",
                       isExpanded(clientName) && "rotate-90"
                     )}>
-                      <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600" />
+                      <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-white/60" />
                     </div>
-                    <span className="font-semibold text-sm text-slate-700">{clientName}</span>
-                    <Badge variant="secondary" className="text-xs bg-slate-200/50 text-slate-600">
+                    <span className="font-semibold text-sm text-white/70">{clientName}</span>
+                    <Badge variant="secondary" className="text-xs bg-white/[0.06] text-white/60">
                       {clientTasks.length} task{clientTasks.length !== 1 ? 's' : ''}
                     </Badge>
                   </button>
@@ -258,8 +258,8 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                   <tr
                     key={task.id}
                     className={cn(
-                      'border-b last:border-b-0 hover:bg-blue-50/50 cursor-pointer transition-all duration-150 group',
-                      task.status === 'completed' && 'bg-slate-50/50',
+                      'border-b last:border-b-0 hover:bg-white/[0.04] cursor-pointer transition-all duration-150 group',
+                      task.status === 'completed' && 'bg-blue-500/[0.06]',
                       runningTimer?.taskId === task.id && 'bg-[var(--theme-accent)]/5 ring-1 ring-inset ring-[var(--theme-accent)]/20'
                     )}
                     onClick={() => onTaskClick(task.id)}
@@ -279,13 +279,13 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                           <p
                             className={cn(
                               'font-medium text-sm truncate',
-                              task.status === 'completed' && 'line-through text-muted-foreground'
+                              task.status === 'completed' && 'line-through text-white/60'
                             )}
                           >
                             {task.title}
                           </p>
                           {task.project?.name && (
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-xs text-white/60 truncate">
                               {task.project.name}
                             </p>
                           )}
@@ -302,12 +302,12 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
                         if (total === 0) {
-                          return <span className="text-xs text-muted-foreground">—</span>;
+                          return <span className="text-xs text-white/60">—</span>;
                         }
 
                         return (
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-white/[0.08] rounded-full overflow-hidden">
                               <div
                                 className={cn(
                                   "h-full rounded-full transition-all duration-300",
@@ -320,7 +320,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
-                            <span className="text-xs font-medium text-slate-600 w-10 text-right">
+                            <span className="text-xs font-medium text-white/60 w-10 text-right">
                               {percentage}%
                             </span>
                           </div>
@@ -349,7 +349,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                             )}
                           </>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-white/60">—</span>
                         )}
                       </div>
                     </td>
@@ -378,7 +378,7 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                       <div
                         className={cn(
                           'flex items-center gap-1 text-xs',
-                          overdue ? 'text-red-600 font-medium' : 'text-muted-foreground'
+                          overdue ? 'text-red-400 font-medium' : 'text-white/60'
                         )}
                       >
                         {task.dueDate && (
@@ -406,13 +406,13 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
                               />
                             ))}
                             {task.assignees.length > 3 && (
-                              <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium ring-2 ring-white">
+                              <div className="h-6 w-6 rounded-full bg-white/[0.08] flex items-center justify-center text-xs font-medium ring-2 ring-white">
                                 +{task.assignees.length - 3}
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="h-6 w-6 rounded-full border-2 border-dashed border-slate-200" />
+                          <div className="h-6 w-6 rounded-full border-2 border-dashed border-white/[0.08]" />
                         )}
                       </div>
                     </td>
@@ -453,11 +453,11 @@ export function TaskListView({ tasks, onTaskClick, onStatusChange }: TaskListVie
 
       {tasks.length === 0 && (
         <div className="text-center py-16">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
-            <Calendar className="h-8 w-8 text-slate-400" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/[0.06] flex items-center justify-center">
+            <Calendar className="h-8 w-8 text-white/40" />
           </div>
-          <p className="text-muted-foreground font-medium">No tasks found</p>
-          <p className="text-sm text-slate-400 mt-1">Try adjusting your filters</p>
+          <p className="text-white/60 font-medium">No tasks found</p>
+          <p className="text-sm text-white/40 mt-1">Try adjusting your filters</p>
         </div>
       )}
     </div>

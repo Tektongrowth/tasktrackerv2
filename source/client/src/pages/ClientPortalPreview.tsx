@@ -59,9 +59,9 @@ const mockViewers = [
 ];
 
 const statusColors: Record<string, string> = {
-  todo: 'bg-slate-100 text-slate-800',
-  in_review: 'bg-amber-100 text-amber-800',
-  completed: 'bg-green-100 text-green-800',
+  todo: 'bg-white/[0.06] text-white/90',
+  in_review: 'bg-amber-500/15 text-amber-400',
+  completed: 'bg-green-500/15 text-green-400',
 };
 
 const statusIcons: Record<string, typeof ListTodo> = {
@@ -74,7 +74,7 @@ export function ClientPortalPreview() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white/[0.03]">
       {/* Preview Banner */}
       <div className="bg-blue-600 text-white px-4 py-2" data-guide="preview-banner">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -94,12 +94,12 @@ export function ClientPortalPreview() {
       </div>
 
       {/* Header */}
-      <div className="bg-white border-b" data-guide="client-header">
+      <div className="bg-white/[0.06] border-b" data-guide="client-header">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold">{mockClient.name}</h1>
-              <p className="text-sm text-muted-foreground">{mockClient.email}</p>
+              <p className="text-sm text-white/60">{mockClient.email}</p>
             </div>
             <Button variant="outline" disabled>
               <LogOut className="h-4 w-4 mr-2" />
@@ -111,13 +111,13 @@ export function ClientPortalPreview() {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Info Card */}
-        <Card className="mb-6 border-blue-200 bg-blue-50">
+        <Card className="mb-6 border-blue-500/20 bg-blue-500/10">
           <CardContent className="py-4">
             <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+              <Info className="h-5 w-5 text-blue-400 mt-0.5" />
               <div>
-                <p className="font-medium text-blue-900">About the Client Portal</p>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="font-medium text-blue-400">About the Client Portal</p>
+                <p className="text-sm text-blue-400 mt-1">
                   This is what your clients see when they access their portal. They can view project progress,
                   request new tasks, and manage who else on their team can view this dashboard.
                   Clients access this via a magic link sent to their email - no password required.
@@ -132,12 +132,12 @@ export function ClientPortalPreview() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <ListTodo className="h-5 w-5 text-slate-600" />
+                <div className="p-2 bg-white/[0.06] rounded-lg">
+                  <ListTodo className="h-5 w-5 text-white/70" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{mockStats.todoTasks}</p>
-                  <p className="text-sm text-muted-foreground">To Do</p>
+                  <p className="text-sm text-white/60">To Do</p>
                 </div>
               </div>
             </CardContent>
@@ -145,12 +145,12 @@ export function ClientPortalPreview() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Clock className="h-5 w-5 text-amber-600" />
+                <div className="p-2 bg-amber-500/15 rounded-lg">
+                  <Clock className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{mockStats.inReviewTasks}</p>
-                  <p className="text-sm text-muted-foreground">In Review</p>
+                  <p className="text-sm text-white/60">In Review</p>
                 </div>
               </div>
             </CardContent>
@@ -158,12 +158,12 @@ export function ClientPortalPreview() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-green-500/15 rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{mockStats.completedTasks}</p>
-                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-sm text-white/60">Completed</p>
                 </div>
               </div>
             </CardContent>
@@ -171,12 +171,12 @@ export function ClientPortalPreview() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
+                <div className="p-2 bg-red-500/15 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{mockStats.upcomingDue}</p>
-                  <p className="text-sm text-muted-foreground">Due Soon</p>
+                  <p className="text-sm text-white/60">Due Soon</p>
                 </div>
               </div>
             </CardContent>
@@ -218,28 +218,28 @@ export function ClientPortalPreview() {
                       return (
                         <div
                           key={task.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <StatusIcon
                               className={cn(
                                 'h-5 w-5',
-                                task.status === 'completed' && 'text-green-600',
-                                task.status === 'in_review' && 'text-amber-600',
-                                task.status === 'todo' && 'text-slate-400'
+                                task.status === 'completed' && 'text-green-400',
+                                task.status === 'in_review' && 'text-amber-400',
+                                task.status === 'todo' && 'text-white/40'
                               )}
                             />
                             <div>
                               <p className={cn(
                                 'font-medium',
-                                task.status === 'completed' && 'line-through text-muted-foreground'
+                                task.status === 'completed' && 'line-through text-white/60'
                               )}>
                                 {task.title}
                               </p>
                               {task.dueDate && (
                                 <p className={cn(
                                   'text-xs',
-                                  isOverdue ? 'text-red-600' : 'text-muted-foreground'
+                                  isOverdue ? 'text-red-400' : 'text-white/60'
                                 )}>
                                   Due: {new Date(task.dueDate).toLocaleDateString()}
                                   {isOverdue && ' (Overdue)'}
@@ -275,7 +275,7 @@ export function ClientPortalPreview() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center text-muted-foreground">
+                <div className="border-2 border-dashed border-white/[0.08] rounded-lg p-8 text-center text-white/60">
                   <p>Task submission form appears here for clients</p>
                   <p className="text-sm mt-2">Requests go to your Task Requests page for review</p>
                 </div>
@@ -304,12 +304,12 @@ export function ClientPortalPreview() {
                   {mockViewers.map((viewer) => (
                     <div
                       key={viewer.id}
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
                     >
                       <div>
                         <p className="font-medium">{viewer.name || viewer.email}</p>
                         {viewer.name && (
-                          <p className="text-sm text-muted-foreground">{viewer.email}</p>
+                          <p className="text-sm text-white/60">{viewer.email}</p>
                         )}
                       </div>
                       <Badge variant="secondary">View Only</Badge>

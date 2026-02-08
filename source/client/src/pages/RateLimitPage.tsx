@@ -27,11 +27,11 @@ export function RateLimitPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white/[0.03] p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <Clock className="h-8 w-8 text-amber-600" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15">
+            <Clock className="h-8 w-8 text-amber-400" />
           </div>
           <CardTitle className="text-2xl">Slow Down There!</CardTitle>
           <CardDescription className="text-base mt-2">
@@ -39,27 +39,27 @@ export function RateLimitPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-slate-50 rounded-lg p-4">
-            <p className="text-sm text-slate-600 mb-2">What happened?</p>
-            <p className="text-sm text-slate-500">
+          <div className="bg-white/[0.03] rounded-lg p-4">
+            <p className="text-sm text-white/70 mb-2">What happened?</p>
+            <p className="text-sm text-white/50">
               Our system limits login attempts to prevent unauthorized access.
               You've temporarily exceeded this limit.
             </p>
           </div>
 
-          <div className="bg-amber-50 rounded-lg p-4">
-            <p className="text-sm text-amber-800 font-medium mb-1">
+          <div className="bg-amber-500/10 rounded-lg p-4">
+            <p className="text-sm text-amber-400 font-medium mb-1">
               Please wait before trying again
             </p>
-            <p className="text-sm text-amber-600">
+            <p className="text-sm text-amber-400">
               The limit resets every 15 minutes. Take a short break and try again.
             </p>
           </div>
 
           {countdown > 0 ? (
             <div className="text-center">
-              <p className="text-sm text-slate-500 mb-2">Suggested wait time:</p>
-              <p className="text-3xl font-bold text-slate-700">
+              <p className="text-sm text-white/50 mb-2">Suggested wait time:</p>
+              <p className="text-3xl font-bold text-white/80">
                 {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
               </p>
             </div>

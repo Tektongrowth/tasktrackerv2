@@ -55,14 +55,14 @@ export function CommentAttachmentDisplay({ attachment, taskId, commentId }: Comm
           onClick={handleClick}
         >
           {loading ? (
-            <div className="w-48 h-32 bg-muted rounded-md animate-pulse flex items-center justify-center">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            <div className="w-48 h-32 bg-white/[0.04] rounded-md animate-pulse flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-white/60" />
             </div>
           ) : error ? (
-            <div className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit">
-              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 p-2 bg-white/[0.04] rounded-md hover:bg-white/[0.06] transition-colors w-fit">
+              <ImageIcon className="h-4 w-4 text-white/60" />
               <span className="text-sm">{attachment.fileName}</span>
-              <span className="text-xs text-muted-foreground">(click to view)</span>
+              <span className="text-xs text-white/60">(click to view)</span>
             </div>
           ) : (
             <img
@@ -101,11 +101,11 @@ export function CommentAttachmentDisplay({ attachment, taskId, commentId }: Comm
       href={commentsApi.getAttachmentUrl(taskId, commentId, attachment.id)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors w-fit"
+      className="flex items-center gap-2 p-2 bg-white/[0.04] rounded-md hover:bg-white/[0.06] transition-colors w-fit"
     >
-      <Paperclip className="h-4 w-4 text-muted-foreground" />
+      <Paperclip className="h-4 w-4 text-white/60" />
       <span className="text-sm">{attachment.fileName}</span>
-      <span className="text-xs text-muted-foreground">
+      <span className="text-xs text-white/60">
         ({(attachment.fileSize / 1024).toFixed(0)} KB)
       </span>
     </a>

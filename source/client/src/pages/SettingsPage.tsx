@@ -2320,7 +2320,7 @@ export function SettingsPage() {
                       <select
                         value={projectClientId}
                         onChange={(e) => setProjectClientId(e.target.value)}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        className="w-full rounded-md border border-input bg-white/[0.04] px-3 py-2 text-sm"
                       >
                         <option value="">Select a client</option>
                         {allClients.map((client) => (
@@ -2334,7 +2334,7 @@ export function SettingsPage() {
                     <select
                       value={projectPlanType}
                       onChange={(e) => setPlanType(e.target.value)}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input bg-white/[0.04] px-3 py-2 text-sm"
                     >
                       <option value="package_one">Package One</option>
                       <option value="package_two">Package Two</option>
@@ -2350,7 +2350,7 @@ export function SettingsPage() {
                       <select
                         value={projectStatus}
                         onChange={(e) => setProjectStatus(e.target.value)}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        className="w-full rounded-md border border-input bg-white/[0.04] px-3 py-2 text-sm"
                       >
                         <option value="active">Active</option>
                         <option value="canceled">Canceled</option>
@@ -2457,7 +2457,7 @@ export function SettingsPage() {
                   <select
                     value={upgradePlanType}
                     onChange={(e) => setUpgradePlanType(e.target.value)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-input bg-white/[0.04] px-3 py-2 text-sm"
                   >
                     <option value="package_one">Package One</option>
                     <option value="package_two">Package Two</option>

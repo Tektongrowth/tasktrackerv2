@@ -162,13 +162,13 @@ export function HelpPage() {
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm">1</span>
                     Connecting Your Account
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
+                  <div className="pl-8 space-y-3 text-white/60">
                     <p>To start receiving Telegram notifications:</p>
                     <ol className="list-decimal list-inside space-y-2 ml-2">
-                      <li>Go to <strong className="text-foreground">My Settings</strong> (click your name in the sidebar)</li>
-                      <li>Find the <strong className="text-foreground">Telegram Notifications</strong> section</li>
-                      <li>Click <strong className="text-foreground">Connect Telegram</strong></li>
-                      <li>Telegram will open - tap <strong className="text-foreground">Start</strong> to complete the connection</li>
+                      <li>Go to <strong className="text-white">My Settings</strong> (click your name in the sidebar)</li>
+                      <li>Find the <strong className="text-white">Telegram Notifications</strong> section</li>
+                      <li>Click <strong className="text-white">Connect Telegram</strong></li>
+                      <li>Telegram will open - tap <strong className="text-white">Start</strong> to complete the connection</li>
                       <li>You'll see a confirmation message in Telegram when connected</li>
                     </ol>
                   </div>
@@ -180,23 +180,23 @@ export function HelpPage() {
                     <Bell className="h-5 w-5 text-primary" />
                     What Notifications Will I Receive?
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
+                  <div className="pl-8 space-y-3 text-white/60">
                     <p>Once connected, you'll receive Telegram notifications when:</p>
                     <ul className="space-y-2 ml-2">
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span><strong className="text-foreground">Someone @mentions you</strong> in a task comment</span>
+                        <span><strong className="text-white">Someone @mentions you</strong> in a task comment</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span><strong className="text-foreground">You're assigned to a task</strong> (new tasks or when added as assignee)</span>
+                        <span><strong className="text-white">You're assigned to a task</strong> (new tasks or when added as assignee)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span><strong className="text-foreground">Someone sends you a chat message</strong> (when you're offline)</span>
+                        <span><strong className="text-white">Someone sends you a chat message</strong> (when you're offline)</span>
                       </li>
                     </ul>
-                    <p className="mt-4 text-sm bg-muted p-3 rounded-lg">
+                    <p className="mt-4 text-sm bg-white/[0.04] p-3 rounded-lg">
                       Notifications include images and documents when attached to comments.
                     </p>
                   </div>
@@ -208,15 +208,15 @@ export function HelpPage() {
                     <Reply className="h-5 w-5 text-primary" />
                     Replying from Telegram
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
-                    <p>You can reply to <strong className="text-foreground">task comments</strong> and <strong className="text-foreground">chat messages</strong> directly from Telegram:</p>
+                  <div className="pl-8 space-y-3 text-white/60">
+                    <p>You can reply to <strong className="text-white">task comments</strong> and <strong className="text-white">chat messages</strong> directly from Telegram:</p>
                     <ol className="list-decimal list-inside space-y-2 ml-2">
-                      <li><strong className="text-foreground">Swipe left</strong> on the notification message (or long-press and tap Reply)</li>
+                      <li><strong className="text-white">Swipe left</strong> on the notification message (or long-press and tap Reply)</li>
                       <li>Type your response</li>
                       <li>Send it - your reply will be posted to the task or chat</li>
                     </ol>
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
-                      <p className="text-sm font-medium text-foreground mb-2">Task Comment Example:</p>
+                    <div className="mt-4 p-4 bg-white/[0.04] rounded-lg">
+                      <p className="text-sm font-medium text-white mb-2">Task Comment Example:</p>
                       <div className="text-sm space-y-2">
                         <p className="bg-background p-2 rounded border">
                           <span className="font-medium">Notification:</span> Alice mentioned you in "Fix login bug": "Hey @Bob can you check this?"
@@ -224,7 +224,7 @@ export function HelpPage() {
                         <p className="bg-background p-2 rounded border">
                           <span className="font-medium">Your reply:</span> "Looks good, I'll merge it"
                         </p>
-                        <p className="text-muted-foreground">
+                        <p className="text-white/60">
                           → Creates comment: "@Alice Looks good, I'll merge it"
                         </p>
                       </div>
@@ -238,20 +238,20 @@ export function HelpPage() {
                     <AtSign className="h-5 w-5 text-primary" />
                     Mentioning Others in Replies
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
+                  <div className="pl-8 space-y-3 text-white/60">
                     <p>By default, your reply automatically mentions the person who tagged you. To mention someone else instead:</p>
                     <ul className="space-y-2 ml-2">
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span>Type <code className="bg-muted px-1 rounded">@name</code> at the start of your reply</span>
+                        <span>Type <code className="bg-white/[0.04] px-1 rounded">@name</code> at the start of your reply</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
                         <span>Use first name or full name (case doesn't matter)</span>
                       </li>
                     </ul>
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
-                      <p className="text-sm font-medium text-foreground mb-2">Examples:</p>
+                    <div className="mt-4 p-4 bg-white/[0.04] rounded-lg">
+                      <p className="text-sm font-medium text-white mb-2">Examples:</p>
                       <ul className="text-sm space-y-1">
                         <li><code className="bg-background px-1 rounded">@mark can you help with this?</code> → Mentions Mark</li>
                         <li><code className="bg-background px-1 rounded">@Sarah Johnson approved!</code> → Mentions Sarah Johnson</li>
@@ -266,12 +266,12 @@ export function HelpPage() {
                     <MessageCircle className="h-5 w-5 text-primary" />
                     Starting Chats from Telegram
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
-                    <p>You can start or continue a personal chat directly from Telegram using the <code className="bg-muted px-1 rounded">/dm</code> command:</p>
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
-                      <p className="text-sm font-medium text-foreground mb-2">Format:</p>
+                  <div className="pl-8 space-y-3 text-white/60">
+                    <p>You can start or continue a personal chat directly from Telegram using the <code className="bg-white/[0.04] px-1 rounded">/dm</code> command:</p>
+                    <div className="mt-4 p-4 bg-white/[0.04] rounded-lg">
+                      <p className="text-sm font-medium text-white mb-2">Format:</p>
                       <p className="text-sm bg-background p-2 rounded border font-mono">/dm @name your message here</p>
-                      <p className="text-sm mt-3 font-medium text-foreground mb-2">Examples:</p>
+                      <p className="text-sm mt-3 font-medium text-white mb-2">Examples:</p>
                       <ul className="text-sm space-y-1">
                         <li><code className="bg-background px-1 rounded">/dm @John Hey, got a minute?</code></li>
                         <li><code className="bg-background px-1 rounded">/dm @Sarah Johnson Can you review this?</code></li>
@@ -287,20 +287,20 @@ export function HelpPage() {
                     <Unlink className="h-5 w-5 text-primary" />
                     Disconnecting Telegram
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
+                  <div className="pl-8 space-y-3 text-white/60">
                     <p>To stop receiving Telegram notifications:</p>
                     <ol className="list-decimal list-inside space-y-2 ml-2">
-                      <li>Go to <strong className="text-foreground">My Settings</strong></li>
-                      <li>Click <strong className="text-foreground">Disconnect</strong> in the Telegram section</li>
+                      <li>Go to <strong className="text-white">My Settings</strong></li>
+                      <li>Click <strong className="text-white">Disconnect</strong> in the Telegram section</li>
                     </ol>
                     <p className="mt-2">You can reconnect at any time by clicking "Connect Telegram" again.</p>
                   </div>
                 </section>
 
                 {/* Tips */}
-                <section className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
-                  <h3 className="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-200">Tips</h3>
-                  <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+                <section className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                  <h3 className="text-lg font-semibold mb-2 text-blue-400">Tips</h3>
+                  <ul className="space-y-2 text-sm text-blue-400">
                     <li className="flex items-start gap-2">
                       <span>💡</span>
                       <span>Keep Telegram notifications enabled on your phone for instant alerts</span>
@@ -336,12 +336,12 @@ export function HelpPage() {
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm">1</span>
                     How It Works
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
+                  <div className="pl-8 space-y-3 text-white/60">
                     <p>The leaderboard tracks your task completion performance each month:</p>
                     <ul className="space-y-2 ml-2">
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span>Complete tasks to earn <strong className="text-foreground">points</strong></span>
+                        <span>Complete tasks to earn <strong className="text-white">points</strong></span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
@@ -349,11 +349,11 @@ export function HelpPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span>Complete tasks on time (or early!) for <strong className="text-foreground">bonus points</strong></span>
+                        <span>Complete tasks on time (or early!) for <strong className="text-white">bonus points</strong></span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span>Earn special <strong className="text-foreground">badges</strong> for achievements</span>
+                        <span>Earn special <strong className="text-white">badges</strong> for achievements</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
@@ -369,57 +369,57 @@ export function HelpPage() {
                     <Target className="h-5 w-5 text-primary" />
                     Point System
                   </h3>
-                  <div className="pl-8 space-y-4 text-muted-foreground">
+                  <div className="pl-8 space-y-4 text-white/60">
                     <div>
-                      <p className="font-medium text-foreground mb-2">Base Points (by task priority):</p>
+                      <p className="font-medium text-white mb-2">Base Points (by task priority):</p>
                       <div className="grid grid-cols-2 gap-2 ml-2">
-                        <div className="flex items-center gap-2 p-2 bg-slate-50 rounded">
-                          <span className="w-3 h-3 rounded-full bg-slate-400"></span>
-                          <span>Low: <strong className="text-foreground">5 points</strong></span>
+                        <div className="flex items-center gap-2 p-2 bg-white/[0.03] rounded">
+                          <span className="w-3 h-3 rounded-full bg-white/40"></span>
+                          <span>Low: <strong className="text-white">5 points</strong></span>
                         </div>
-                        <div className="flex items-center gap-2 p-2 bg-blue-50 rounded">
+                        <div className="flex items-center gap-2 p-2 bg-blue-500/10 rounded">
                           <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                          <span>Medium: <strong className="text-foreground">10 points</strong></span>
+                          <span>Medium: <strong className="text-white">10 points</strong></span>
                         </div>
-                        <div className="flex items-center gap-2 p-2 bg-orange-50 rounded">
+                        <div className="flex items-center gap-2 p-2 bg-orange-500/10 rounded">
                           <span className="w-3 h-3 rounded-full bg-orange-500"></span>
-                          <span>High: <strong className="text-foreground">20 points</strong></span>
+                          <span>High: <strong className="text-white">20 points</strong></span>
                         </div>
-                        <div className="flex items-center gap-2 p-2 bg-red-50 rounded">
+                        <div className="flex items-center gap-2 p-2 bg-red-500/10 rounded">
                           <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                          <span>Urgent: <strong className="text-foreground">50 points</strong></span>
+                          <span>Urgent: <strong className="text-white">50 points</strong></span>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <p className="font-medium text-foreground mb-2">Timing Bonuses:</p>
+                      <p className="font-medium text-white mb-2">Timing Bonuses:</p>
                       <ul className="space-y-2 ml-2">
-                        <li className="flex items-center gap-2 p-2 bg-green-50 rounded">
-                          <span className="text-green-600">🎉</span>
-                          <span><strong className="text-foreground">Early completion:</strong> +50% bonus points</span>
+                        <li className="flex items-center gap-2 p-2 bg-green-500/10 rounded">
+                          <span className="text-green-400">🎉</span>
+                          <span><strong className="text-white">Early completion:</strong> +50% bonus points</span>
                         </li>
-                        <li className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                          <span className="text-blue-600">✓</span>
-                          <span><strong className="text-foreground">On-time completion:</strong> +25% bonus points</span>
+                        <li className="flex items-center gap-2 p-2 bg-blue-500/10 rounded">
+                          <span className="text-blue-400">✓</span>
+                          <span><strong className="text-white">On-time completion:</strong> +25% bonus points</span>
                         </li>
-                        <li className="flex items-center gap-2 p-2 bg-red-50 rounded">
-                          <span className="text-red-600">⚠</span>
-                          <span><strong className="text-foreground">Late completion:</strong> −50% points (still counts!)</span>
+                        <li className="flex items-center gap-2 p-2 bg-red-500/10 rounded">
+                          <span className="text-red-400">⚠</span>
+                          <span><strong className="text-white">Late completion:</strong> −50% points (still counts!)</span>
                         </li>
                       </ul>
                     </div>
 
                     <div>
-                      <p className="font-medium text-foreground mb-2">Extra Bonuses:</p>
+                      <p className="font-medium text-white mb-2">Extra Bonuses:</p>
                       <ul className="space-y-1 ml-2">
                         <li className="flex items-start gap-2">
                           <span className="text-primary mt-1">•</span>
-                          <span><strong className="text-foreground">+2 points</strong> per completed subtask</span>
+                          <span><strong className="text-white">+2 points</strong> per completed subtask</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-primary mt-1">•</span>
-                          <span><strong className="text-foreground">+1 point</strong> per hour of time tracked</span>
+                          <span><strong className="text-white">+1 point</strong> per hour of time tracked</span>
                         </li>
                       </ul>
                     </div>
@@ -432,48 +432,48 @@ export function HelpPage() {
                     <Flame className="h-5 w-5 text-primary" />
                     Achievement Badges
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
+                  <div className="pl-8 space-y-3 text-white/60">
                     <p>Earn these special badges by hitting milestones:</p>
                     <div className="grid gap-3 mt-4">
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg">
                         <span className="text-2xl">🎯</span>
                         <div>
-                          <p className="font-medium text-foreground">Sharpshooter</p>
+                          <p className="font-medium text-white">Sharpshooter</p>
                           <p className="text-sm">90% or more of tasks completed on time</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg">
                         <span className="text-2xl">🌅</span>
                         <div>
-                          <p className="font-medium text-foreground">Early Bird</p>
+                          <p className="font-medium text-white">Early Bird</p>
                           <p className="text-sm">50% or more of tasks completed early</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg">
                         <span className="text-2xl">🔥</span>
                         <div>
-                          <p className="font-medium text-foreground">On Fire</p>
+                          <p className="font-medium text-white">On Fire</p>
                           <p className="text-sm">5+ day completion streak (completed at least 1 task per day)</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg">
                         <span className="text-2xl">⚡</span>
                         <div>
-                          <p className="font-medium text-foreground">Powerhouse</p>
+                          <p className="font-medium text-white">Powerhouse</p>
                           <p className="text-sm">20 or more tasks completed this month</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg">
                         <span className="text-2xl">⏱️</span>
                         <div>
-                          <p className="font-medium text-foreground">Time Lord</p>
+                          <p className="font-medium text-white">Time Lord</p>
                           <p className="text-sm">40+ hours tracked this month</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg">
                         <span className="text-2xl">🔍</span>
                         <div>
-                          <p className="font-medium text-foreground">Detail Master</p>
+                          <p className="font-medium text-white">Detail Master</p>
                           <p className="text-sm">Completed tasks with 50+ subtasks total</p>
                         </div>
                       </div>
@@ -487,20 +487,20 @@ export function HelpPage() {
                     <PlusCircle className="h-5 w-5 text-primary" />
                     Capture Your Work!
                   </h3>
-                  <div className="pl-8 space-y-3 text-muted-foreground">
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="font-medium text-amber-800 mb-2">Important: Create Tasks for All Requests</p>
-                      <p className="text-amber-700">
+                  <div className="pl-8 space-y-3 text-white/60">
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                      <p className="font-medium text-amber-400 mb-2">Important: Create Tasks for All Requests</p>
+                      <p className="text-amber-400">
                         When someone asks you to do something via a <strong>comment</strong> or <strong>chat message</strong>,
                         create a task for it! This ensures your work gets tracked in the monthly leaderboard.
                       </p>
                     </div>
                     <div className="mt-4">
-                      <p className="font-medium text-foreground mb-2">Why create tasks?</p>
+                      <p className="font-medium text-white mb-2">Why create tasks?</p>
                       <ul className="space-y-2 ml-2">
                         <li className="flex items-start gap-2">
                           <span className="text-primary mt-1">•</span>
-                          <span>Work only counts toward the leaderboard when it's a <strong className="text-foreground">completed task</strong></span>
+                          <span>Work only counts toward the leaderboard when it's a <strong className="text-white">completed task</strong></span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-primary mt-1">•</span>
@@ -512,13 +512,13 @@ export function HelpPage() {
                         </li>
                       </ul>
                     </div>
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
-                      <p className="text-sm font-medium text-foreground mb-2">Example:</p>
+                    <div className="mt-4 p-4 bg-white/[0.04] rounded-lg">
+                      <p className="text-sm font-medium text-white mb-2">Example:</p>
                       <div className="text-sm space-y-2">
                         <p className="bg-background p-2 rounded border">
                           <span className="font-medium">Comment received:</span> "Hey, can you update the logo on the homepage?"
                         </p>
-                        <p className="text-muted-foreground">
+                        <p className="text-white/60">
                           → Create a task: "Update homepage logo" → Complete it → Earn points! 🎉
                         </p>
                       </div>
@@ -527,9 +527,9 @@ export function HelpPage() {
                 </section>
 
                 {/* Tips */}
-                <section className="bg-yellow-50 dark:bg-yellow-950/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-900">
-                  <h3 className="text-lg font-semibold mb-2 text-yellow-800 dark:text-yellow-200">Pro Tips</h3>
-                  <ul className="space-y-2 text-sm text-yellow-700 dark:text-yellow-300">
+                <section className="bg-yellow-500/10 p-4 rounded-lg border border-yellow-500/20">
+                  <h3 className="text-lg font-semibold mb-2 text-yellow-400">Pro Tips</h3>
+                  <ul className="space-y-2 text-sm text-yellow-400">
                     <li className="flex items-start gap-2">
                       <span>🏆</span>
                       <span>The monthly winner receives a prize - stay tuned for announcements!</span>
@@ -565,7 +565,7 @@ export function HelpPage() {
                 <div className="text-center py-8">
                   <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                   <h2 className="text-2xl font-bold mb-2">Bug Report Submitted!</h2>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-white/60 mb-6">
                     Thank you for reporting this issue. We'll investigate and get back to you if needed.
                   </p>
                   <Button onClick={resetBugForm}>Submit Another Report</Button>
@@ -685,12 +685,12 @@ export function HelpPage() {
                             'flex items-center gap-3 p-3 rounded-lg border text-left transition-all',
                             bugFormData.urgency === option.value
                               ? 'border-primary bg-primary/5 ring-2 ring-primary'
-                              : 'border-gray-200 hover:border-gray-300'
+                              : 'border-white/[0.08] hover:border-white/10'
                           )}
                         >
                           <div className={cn(
                             'w-4 h-4 rounded-full border-2 flex items-center justify-center',
-                            bugFormData.urgency === option.value ? 'border-primary' : 'border-gray-300'
+                            bugFormData.urgency === option.value ? 'border-primary' : 'border-white/10'
                           )}>
                             {bugFormData.urgency === option.value && (
                               <div className="w-2 h-2 rounded-full bg-primary" />
@@ -699,13 +699,13 @@ export function HelpPage() {
                           <div>
                             <span className={cn(
                               'font-medium',
-                              option.color === 'red' && 'text-red-600',
-                              option.color === 'orange' && 'text-orange-600',
-                              option.color === 'green' && 'text-green-600'
+                              option.color === 'red' && 'text-red-400',
+                              option.color === 'orange' && 'text-orange-400',
+                              option.color === 'green' && 'text-green-400'
                             )}>
                               {option.label}
                             </span>
-                            <span className="text-muted-foreground"> - {option.description}</span>
+                            <span className="text-white/60"> - {option.description}</span>
                           </div>
                         </button>
                       ))}
@@ -740,7 +740,7 @@ export function HelpPage() {
                 <div className="text-center py-8">
                   <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                   <h2 className="text-2xl font-bold mb-2">Feature Request Submitted!</h2>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-white/60 mb-6">
                     Thank you for your suggestion! We'll review it and consider it for future updates.
                   </p>
                   <Button onClick={resetFeatureForm}>Submit Another Request</Button>
@@ -811,12 +811,12 @@ export function HelpPage() {
                             'flex items-center gap-3 p-3 rounded-lg border text-left transition-all',
                             featureFormData.priority === option.value
                               ? 'border-primary bg-primary/5 ring-2 ring-primary'
-                              : 'border-gray-200 hover:border-gray-300'
+                              : 'border-white/[0.08] hover:border-white/10'
                           )}
                         >
                           <div className={cn(
                             'w-4 h-4 rounded-full border-2 flex items-center justify-center',
-                            featureFormData.priority === option.value ? 'border-primary' : 'border-gray-300'
+                            featureFormData.priority === option.value ? 'border-primary' : 'border-white/10'
                           )}>
                             {featureFormData.priority === option.value && (
                               <div className="w-2 h-2 rounded-full bg-primary" />
@@ -825,13 +825,13 @@ export function HelpPage() {
                           <div>
                             <span className={cn(
                               'font-medium',
-                              option.color === 'purple' && 'text-purple-600',
-                              option.color === 'orange' && 'text-orange-600',
-                              option.color === 'green' && 'text-green-600'
+                              option.color === 'purple' && 'text-purple-400',
+                              option.color === 'orange' && 'text-orange-400',
+                              option.color === 'green' && 'text-green-400'
                             )}>
                               {option.label}
                             </span>
-                            <span className="text-muted-foreground"> - {option.description}</span>
+                            <span className="text-white/60"> - {option.description}</span>
                           </div>
                         </button>
                       ))}

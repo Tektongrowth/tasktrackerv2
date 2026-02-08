@@ -94,7 +94,7 @@ export function TourTooltip({
   const tooltipContent = (
     <div
       ref={tooltipRef}
-      className="fixed z-[10000] w-80 rounded-[var(--radius)] bg-white p-4 shadow-xl"
+      className="fixed z-[10000] w-80 rounded-[var(--radius)] bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] p-4 shadow-xl"
       style={{
         top: position?.top ?? -9999,
         left: position?.left ?? -9999,
@@ -112,13 +112,13 @@ export function TourTooltip({
 
       {/* Content */}
       <div className="pr-6">
-        <h3 className="mb-1 font-semibold text-slate-900">{step.title}</h3>
-        <p className="text-sm text-slate-600">{step.description}</p>
+        <h3 className="mb-1 font-semibold text-white/90">{step.title}</h3>
+        <p className="text-sm text-white/60">{step.description}</p>
       </div>
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-white/40">
           {currentStep + 1} of {totalSteps}
         </span>
         <div className="flex gap-2">
@@ -144,7 +144,7 @@ export function TourTooltip({
       {/* Arrow pointer based on position */}
       {position && (
         <div
-          className={`absolute h-3 w-3 rotate-45 bg-white ${
+          className={`absolute h-3 w-3 rotate-45 bg-white/[0.06] ${
             position.placement === 'top'
               ? 'bottom-[-6px] left-1/2 -translate-x-1/2'
               : position.placement === 'bottom'

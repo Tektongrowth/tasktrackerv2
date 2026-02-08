@@ -353,12 +353,12 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl border-l z-[70] flex flex-col animate-in slide-in-from-right duration-300">
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-slate-50/50">
+      <div className="fixed inset-y-0 right-0 w-full max-w-lg shadow-2xl z-[70] flex flex-col animate-in slide-in-from-right duration-300 bg-[rgba(10,10,20,0.92)] backdrop-blur-2xl border-l border-white/[0.08]">
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-white/[0.03]">
           <div className="flex items-center gap-3">
             <h2 className="font-semibold text-lg">Task Details</h2>
             {isSaving && (
-              <span className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+              <span className="flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full">
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
                 Saving...
               </span>
@@ -373,7 +373,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 'h-9 px-3 gap-2 font-medium transition-all',
                 isTimerRunningForTask
                   ? 'bg-[var(--theme-accent)] hover:bg-[var(--theme-primary)] text-white shadow-md'
-                  : 'hover:bg-slate-100 hover:border-[var(--theme-primary)]/30'
+                  : 'hover:bg-white/[0.06] hover:border-[var(--theme-primary)]/30'
               )}
               onClick={handleTimerToggle}
             >
@@ -397,7 +397,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 'h-9 px-3 gap-2 font-medium transition-all',
                 isWatching
                   ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                  : 'hover:bg-slate-100'
+                  : 'hover:bg-white/[0.06]'
               )}
               onClick={() => {
                 if (isWatching) {
@@ -429,7 +429,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 onClick={() => toggleMute.mutate(!isMuted)}
                 disabled={toggleMute.isPending}
                 className={cn(
-                  'hover:bg-slate-200 rounded-full transition-colors',
+                  'hover:bg-white/[0.08] rounded-full transition-colors',
                   isMuted && 'text-orange-500'
                 )}
                 title={isMuted ? 'Unmute notifications' : 'Mute notifications'}
@@ -447,7 +447,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 }
               }}
               disabled={archiveTask.isPending}
-              className="hover:bg-slate-200 rounded-full transition-colors"
+              className="hover:bg-white/[0.08] rounded-full transition-colors"
               title="Archive task"
             >
               <Archive className="h-4 w-4" />
@@ -460,7 +460,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 e.stopPropagation();
                 onClose();
               }}
-              className="hover:bg-slate-200 rounded-full transition-colors"
+              className="hover:bg-white/[0.08] rounded-full transition-colors"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -491,14 +491,14 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
         {/* SOP Link */}
         {task.sopUrl && (
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-            <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-            <span className="text-sm font-medium text-blue-900">Standard Operating Procedure</span>
+          <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <FileText className="h-4 w-4 text-blue-400 shrink-0" />
+            <span className="text-sm font-medium text-white">Standard Operating Procedure</span>
             <a
               href={task.sopUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+              className="ml-auto flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-400 hover:underline"
             >
               View SOP
               <ExternalLink className="h-3.5 w-3.5" />
@@ -564,7 +564,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
             </SelectContent>
           </Select>
           {selectedRoleId && allRoles && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white/60">
               All contractors with this role will be assigned to this task
             </p>
           )}
@@ -597,7 +597,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               </div>
             ))}
             {(!allUsers || allUsers.filter(u => u.active && !u.archived).length === 0) && (
-              <p className="text-sm text-muted-foreground">No users available</p>
+              <p className="text-sm text-white/60">No users available</p>
             )}
           </div>
           {selectedAssigneeIds.length > 0 && (
@@ -610,7 +610,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     <button
                       type="button"
                       onClick={() => setSelectedAssigneeIds(prev => prev.filter(i => i !== id))}
-                      className="ml-1 hover:bg-slate-300 rounded-full p-0.5"
+                      className="ml-1 hover:bg-white/[0.12] rounded-full p-0.5"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -627,14 +627,14 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
             <Eye className="h-4 w-4" />
             Watchers
             {taskWatchers.length > 0 && (
-              <span className="text-xs text-muted-foreground">({taskWatchers.length})</span>
+              <span className="text-xs text-white/60">({taskWatchers.length})</span>
             )}
           </Label>
           <div className="flex flex-wrap gap-2">
             {taskWatchers.map((watcher) => (
               <div
                 key={watcher.id}
-                className="flex items-center gap-2 bg-slate-100 rounded-full pl-1 pr-2 py-1"
+                className="flex items-center gap-2 bg-white/[0.06] rounded-full pl-1 pr-2 py-1"
               >
                 <UserAvatar
                   name={watcher.user?.name || 'Unknown'}
@@ -651,7 +651,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                   <button
                     type="button"
                     onClick={() => removeWatcher.mutate(watcher.userId)}
-                    className="hover:bg-slate-300 rounded-full p-0.5 transition-colors"
+                    className="hover:bg-white/[0.12] rounded-full p-0.5 transition-colors"
                     title="Remove watcher"
                   >
                     <X className="h-3 w-3" />
@@ -660,7 +660,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               </div>
             ))}
             {taskWatchers.length === 0 && (
-              <p className="text-sm text-muted-foreground">No watchers yet</p>
+              <p className="text-sm text-white/60">No watchers yet</p>
             )}
           </div>
           {(isAdmin || isProjectManager) && (
@@ -714,7 +714,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 variant="ghost"
                 size="sm"
                 onClick={() => setDueDate('')}
-                className="text-xs text-muted-foreground"
+                className="text-xs text-white/60"
               >
                 <X className="h-3 w-3 mr-1" />
                 Clear
@@ -731,17 +731,17 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
         {/* Client Info */}
         {task.project?.client && (
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+          <div className="bg-white/[0.03] rounded-lg p-4 space-y-2">
             <h4 className="font-medium text-sm">Client</h4>
             <p className="font-semibold">{task.project.client.name}</p>
             {task.project.client.email && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-white/60">
                 <Mail className="h-3 w-3" />
                 <span data-sensitive>{task.project.client.email}</span>
               </div>
             )}
             {task.project.client.phone && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-white/60">
                 <Phone className="h-3 w-3" />
                 <span data-sensitive>{task.project.client.phone}</span>
               </div>
@@ -810,7 +810,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               <CheckSquare className="h-4 w-4" />
               Subtasks
               {task.subtasks && task.subtasks.length > 0 && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-white/60">
                   ({task.subtasks.filter(s => s.completed).length}/{task.subtasks.length})
                 </span>
               )}
@@ -830,7 +830,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
           {/* Progress bar */}
           {task.subtasks && task.subtasks.length > 0 && (
-            <div className="w-full bg-slate-100 rounded-full h-1.5">
+            <div className="w-full bg-white/[0.06] rounded-full h-1.5">
               <div
                 className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
                 style={{
@@ -845,7 +845,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
             {task.subtasks?.map((subtask) => (
               <div
                 key={subtask.id}
-                className="flex items-center gap-2 group p-2 -mx-2 rounded hover:bg-slate-50"
+                className="flex items-center gap-2 group p-2 -mx-2 rounded hover:bg-white/[0.04]"
               >
                 <Checkbox
                   checked={subtask.completed}
@@ -859,7 +859,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 <span
                   className={cn(
                     'flex-1 text-sm',
-                    subtask.completed && 'line-through text-muted-foreground'
+                    subtask.completed && 'line-through text-white/60'
                   )}
                 >
                   {subtask.title}
@@ -869,7 +869,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     href={subtask.sopUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-6 w-6 flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                    className="h-6 w-6 flex items-center justify-center text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
                     title="View SOP"
                   >
                     <FileText className="h-3.5 w-3.5" />
@@ -878,7 +878,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-white/60 hover:text-destructive"
                   onClick={() => deleteSubtask.mutate(subtask.id)}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -960,7 +960,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
 
           {/* Add manual time entry form */}
           {isAddingTime && (
-            <div className="bg-slate-50 rounded-lg p-4 space-y-3 border">
+            <div className="bg-white/[0.03] rounded-lg p-4 space-y-3 border">
               <div className="space-y-2">
                 <Label className="text-xs">What did you work on?</Label>
                 <Input
@@ -1037,21 +1037,21 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               task.timeEntries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg group hover:bg-slate-100 transition-colors"
+                  className="flex items-start gap-3 p-3 bg-white/[0.03] rounded-lg group hover:bg-white/[0.06] transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                    <Clock className="h-4 w-4 text-slate-500" />
+                  <div className="w-8 h-8 rounded-full bg-white/[0.08] flex items-center justify-center shrink-0">
+                    <Clock className="h-4 w-4 text-white/50" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-medium text-sm">{entry.title}</p>
                         {entry.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                          <p className="text-xs text-white/60 mt-0.5 line-clamp-2">
                             {entry.description}
                           </p>
                         )}
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-white/60 mt-1">
                           {entry.user?.name && <span>{entry.user.name} · </span>}
                           {formatDate(entry.startTime || entry.createdAt)}
                         </p>
@@ -1063,7 +1063,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-white/60 hover:text-destructive"
                           onClick={() => handleDeleteTimeEntry(entry.id)}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -1075,8 +1075,8 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               ))
             ) : (
               !isAddingTime && (
-                <div className="text-center py-6 text-muted-foreground border border-dashed rounded-lg">
-                  <Clock className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                <div className="text-center py-6 text-white/60 border border-dashed rounded-lg">
+                  <Clock className="h-8 w-8 mx-auto mb-2 text-white/30" />
                   <p className="text-sm">No time logged yet</p>
                   <p className="text-xs mt-1">Use the timer or add time manually</p>
                 </div>
@@ -1091,7 +1091,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
             <MessageSquare className="h-4 w-4" />
             Comments
             {task.comments && task.comments.length > 0 && (
-              <span className="text-xs text-muted-foreground">({task.comments.length})</span>
+              <span className="text-xs text-white/60">({task.comments.length})</span>
             )}
           </Label>
 
@@ -1113,14 +1113,14 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
             {attachedFiles.length > 0 && (
               <div className="space-y-1">
                 {attachedFiles.map((file, index) => (
-                  <div key={`${file.name}-${index}`} className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                  <div key={`${file.name}-${index}`} className="flex items-center gap-2 p-2 bg-white/[0.04] rounded-md">
                     {file.type.startsWith('image/') ? (
-                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      <ImageIcon className="h-4 w-4 text-white/60" />
                     ) : (
-                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <Paperclip className="h-4 w-4 text-white/60" />
                     )}
                     <span className="text-sm truncate flex-1">{file.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-white/60">
                       {(file.size / 1024).toFixed(0)} KB
                     </span>
                     <Button
@@ -1215,7 +1215,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-muted-foreground hover:text-foreground"
+                      className="w-full text-white/60 hover:text-white"
                       onClick={() => setShowAllComments(true)}
                     >
                       View all {totalComments} comments
@@ -1234,7 +1234,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm">{displayName}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-white/60">
                             {formatDateTime(comment.createdAt)}
                           </span>
                           <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1265,7 +1265,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                         </div>
                         {comment.content && (
                           <p
-                            className="text-sm text-muted-foreground whitespace-pre-wrap"
+                            className="text-sm text-white/60 whitespace-pre-wrap"
                             dangerouslySetInnerHTML={{ __html: linkifyText(comment.content) }}
                           />
                         )}
@@ -1300,7 +1300,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-muted-foreground hover:text-foreground"
+                      className="w-full text-white/60 hover:text-white"
                       onClick={() => setShowAllComments(false)}
                     >
                       Show less
@@ -1315,20 +1315,20 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
         {/* Activity Log - Only visible to PM and admin */}
         {isProjectManager && task.activities && task.activities.length > 0 && (
           <div className="space-y-3 pt-4 border-t">
-            <Label className="text-muted-foreground">Activity Log</Label>
+            <Label className="text-white/60">Activity Log</Label>
             <div className="space-y-2">
               {task.activities.slice(0, 20).map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-start gap-2 text-xs text-muted-foreground py-1"
+                  className="flex items-start gap-2 text-xs text-white/60 py-1"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/[0.12] mt-1.5 shrink-0" />
                   <span>
-                    <span className="font-medium text-foreground">
+                    <span className="font-medium text-white">
                       {activity.user?.name || 'System'}
                     </span>
                     {' '}{formatActivityAction(activity.action, activity.details)}
-                    <span className="text-slate-400 ml-1">
+                    <span className="text-white/40 ml-1">
                       · {formatDateTime(activity.createdAt)}
                     </span>
                   </span>

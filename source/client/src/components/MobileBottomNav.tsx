@@ -77,7 +77,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
                 'flex flex-col items-center justify-center flex-1 h-full py-2 relative transition-colors',
                 isActive
                   ? 'text-white'
-                  : 'text-gray-400 hover:text-gray-200'
+                  : 'text-white/40 hover:text-white/80'
               )}
             >
               <div className="relative">
@@ -102,7 +102,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
                 'flex flex-col items-center justify-center flex-1 h-full py-2 relative transition-colors',
                 isMoreActive
                   ? 'text-white'
-                  : 'text-gray-400 hover:text-gray-200'
+                  : 'text-white/40 hover:text-white/80'
               )}
             >
               <MoreHorizontal className={cn('h-5 w-5', isMoreActive && 'text-[var(--theme-accent)]')} />
@@ -126,7 +126,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
                 key={item.to}
                 onClick={() => navigate(item.to)}
                 className={cn(
-                  location.pathname === item.to && 'bg-accent'
+                  location.pathname === item.to && 'bg-white/[0.06]'
                 )}
               >
                 <item.icon className="h-4 w-4 mr-2" />
@@ -140,7 +140,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
             <DropdownMenuItem
               onClick={() => navigate('/help')}
               className={cn(
-                location.pathname === '/help' && 'bg-accent'
+                location.pathname === '/help' && 'bg-white/[0.06]'
               )}
             >
               <HelpCircle className="h-4 w-4 mr-2" />
@@ -148,7 +148,7 @@ export function MobileBottomNav({ unreadMessageCount, onSearchClick }: MobileBot
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+            <DropdownMenuItem onClick={handleLogout} className="text-red-400">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </DropdownMenuItem>

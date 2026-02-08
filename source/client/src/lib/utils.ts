@@ -39,12 +39,12 @@ export function isOverdue(dueDate: string | Date): boolean {
 
 export function getTagColor(tag: string): string {
   const colors: Record<string, string> = {
-    web: 'bg-red-100 text-red-800',
-    admin: 'bg-yellow-100 text-yellow-800',
-    gbp: 'bg-green-100 text-green-800',
-    ads: 'bg-blue-100 text-blue-800',
+    web: 'bg-red-500/15 text-red-400',
+    admin: 'bg-yellow-500/15 text-yellow-400',
+    gbp: 'bg-green-500/15 text-green-400',
+    ads: 'bg-blue-500/15 text-blue-400',
   };
-  return colors[tag] || 'bg-gray-100 text-gray-800';
+  return colors[tag] || 'bg-white/[0.06] text-white/80';
 }
 
 /**
@@ -103,7 +103,7 @@ export function linkifyText(text: string): string {
       return `<img src="${hrefUrl}" alt="GIF" class="max-w-full rounded-lg mt-1" style="max-height: 200px;" />`;
     }
 
-    return `<a href="${hrefUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${url}</a>`;
+    return `<a href="${hrefUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-400 hover:underline">${url}</a>`;
   });
 }
 

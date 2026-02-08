@@ -66,20 +66,20 @@ export function ConfirmDialogProvider({ children }: ConfirmDialogProviderProps) 
   const variantConfig = {
     danger: {
       icon: Trash2,
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
+      iconBg: 'bg-red-500/15',
+      iconColor: 'text-red-400',
       actionClass: 'bg-red-600 hover:bg-red-700 text-white',
     },
     warning: {
       icon: AlertTriangle,
-      iconBg: 'bg-amber-100',
-      iconColor: 'text-amber-600',
+      iconBg: 'bg-amber-500/15',
+      iconColor: 'text-amber-400',
       actionClass: 'bg-amber-600 hover:bg-amber-700 text-white',
     },
     info: {
       icon: HelpCircle,
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-500/15',
+      iconColor: 'text-blue-400',
       actionClass: 'bg-blue-600 hover:bg-blue-700 text-white',
     },
   };

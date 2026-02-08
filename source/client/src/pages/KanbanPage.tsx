@@ -434,12 +434,12 @@ export function KanbanPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4 sticky top-0 z-40 min-h-[73px]">
+      <div className="bg-white/[0.06] border-b px-6 py-4 sticky top-0 z-40 min-h-[73px]">
         <div className="flex items-center justify-between">
           {/* Left: Title + Description */}
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Kanban Board</h1>
-            <p className="text-muted-foreground text-sm hidden md:block">
+            <p className="text-white/60 text-sm hidden md:block">
               Drag and drop tasks between columns
             </p>
           </div>
@@ -454,7 +454,7 @@ export function KanbanPage() {
                     "h-8 px-3 text-sm border rounded-md transition-colors flex md:hidden items-center gap-1.5",
                     (showMyTasks || showArchived || selectedAssignees.length > 0 || selectedTags.length > 0)
                       ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                      : "bg-white text-gray-700 border-gray-300"
+                      : "bg-white/[0.06] text-white border-white/10"
                   )}
                 >
                   <Filter className="h-4 w-4" />
@@ -535,7 +535,7 @@ export function KanbanPage() {
                 "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                 showMyTasks
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
               )}
             >
               <User className="h-4 w-4" />
@@ -551,7 +551,7 @@ export function KanbanPage() {
                 "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                 showArchived
                   ? "bg-amber-500 text-white border-amber-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-amber-500 hover:text-white hover:border-amber-500"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-amber-500 hover:border-amber-500"
               )}
             >
               <Archive className="h-4 w-4" />
@@ -566,7 +566,7 @@ export function KanbanPage() {
                         "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                         selectedAssignees.length > 0
                           ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
+                          : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
                       )}
                     >
                       <Users className="h-4 w-4" />
@@ -601,7 +601,7 @@ export function KanbanPage() {
                       "h-8 px-3 text-sm border rounded-md transition-colors hidden md:flex items-center gap-1.5",
                       selectedTags.length > 0
                         ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-[var(--theme-accent)] hover:text-white hover:border-[var(--theme-accent)]"
+                        : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
                     )}
                   >
                     <Tag className="h-4 w-4" />
@@ -633,7 +633,7 @@ export function KanbanPage() {
               </DropdownMenu>
 
             {/* Separator - hidden on mobile */}
-            <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block" />
+            <div className="w-px h-6 bg-white/[0.08] mx-1 hidden md:block" />
 
             {runningTimer && (
               <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-[var(--theme-primary)]/10 border border-[var(--theme-primary)]/30 text-[var(--theme-primary)] rounded-lg">
@@ -698,7 +698,7 @@ export function KanbanPage() {
                   <div className="space-y-2">
                     <Label>Project *</Label>
                     {allProjects.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-2">No projects available. Create a project first.</p>
+                      <p className="text-sm text-white/60 py-2">No projects available. Create a project first.</p>
                     ) : (
                       <Select value={newTaskProjectId} onValueChange={setNewTaskProjectId}>
                         <SelectTrigger>

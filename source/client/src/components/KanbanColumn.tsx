@@ -59,34 +59,34 @@ export function KanbanColumn({ id, title, count, children, onAddTask, isActiveDr
       )}
     >
       <div className={cn(
-        'bg-[var(--theme-primary-dark)] rounded-t-xl p-3 transition-all duration-200',
+        'bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] border-b-0 rounded-t-xl p-3 transition-all duration-200',
         showHighlight && 'shadow-md brightness-125'
       )}>
         <div className="flex items-center gap-2">
           <span className={cn(
             'text-xs font-bold px-2 py-0.5 rounded transition-colors duration-200',
-            count > 0 ? 'bg-white/20 text-white' : 'bg-white/10 text-white/60'
+            count > 0 ? 'bg-white/15 text-white' : 'bg-white/5 text-white/40'
           )}>
             {count}
           </span>
-          <h3 className="font-semibold text-sm text-white uppercase tracking-wide">{title}</h3>
+          <h3 className="font-semibold text-sm text-white/80 uppercase tracking-wide">{title}</h3>
           {headerAction && <div className="ml-auto">{headerAction}</div>}
         </div>
       </div>
 
       <div
         className={cn(
-          'flex-1 bg-slate-100/80 rounded-b-xl border border-slate-200 border-t-0 p-2 space-y-2 min-h-[200px] overflow-y-auto',
+          'flex-1 bg-white/[0.02] rounded-b-xl border border-white/[0.06] border-t-0 p-2 space-y-2 min-h-[200px] overflow-y-auto',
           'transition-all duration-200 ease-out',
-          showHighlight && 'bg-[var(--theme-accent)]/10 border-[var(--theme-accent)]/40 ring-2 ring-[var(--theme-accent)]/20 ring-inset'
+          showHighlight && 'bg-[var(--theme-accent)]/5 border-[var(--theme-accent)]/20 ring-2 ring-[var(--theme-accent)]/10 ring-inset'
         )}
       >
         {children}
 
         {count === 0 && !isAdding && (
-          <div className="flex flex-col items-center justify-center h-24 text-sm text-muted-foreground">
-            <div className="w-12 h-12 rounded-full bg-slate-200/50 flex items-center justify-center mb-2">
-              <Plus className="h-5 w-5 text-slate-400" />
+          <div className="flex flex-col items-center justify-center h-24 text-sm text-white/60">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-2">
+              <Plus className="h-5 w-5 text-white/30" />
             </div>
             <span>No tasks yet</span>
           </div>
@@ -96,7 +96,7 @@ export function KanbanColumn({ id, title, count, children, onAddTask, isActiveDr
         {onAddTask && (
           <div className="pt-1">
             {isAdding ? (
-              <div className="bg-white rounded-lg border border-[var(--theme-accent)]/30 shadow-md p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="glass-card !rounded-lg p-3 animate-in fade-in slide-in-from-top-2 duration-200">
                 <input
                   ref={inputRef}
                   type="text"
@@ -105,11 +105,11 @@ export function KanbanColumn({ id, title, count, children, onAddTask, isActiveDr
                   onKeyDown={handleKeyDown}
                   onBlur={handleBlur}
                   placeholder="What needs to be done?"
-                  className="w-full text-sm border-0 focus:outline-none focus:ring-0 placeholder:text-slate-400 font-medium"
+                  className="w-full text-sm border-0 bg-transparent focus:outline-none focus:ring-0 placeholder:text-white/30 font-medium text-white"
                 />
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
-                  <span className="text-xs text-muted-foreground">
-                    <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-mono">Enter</kbd> to add
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
+                  <span className="text-xs text-white/60">
+                    <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-[10px] font-mono">Enter</kbd> to add
                   </span>
                   <div className="flex gap-2">
                     <button
@@ -117,7 +117,7 @@ export function KanbanColumn({ id, title, count, children, onAddTask, isActiveDr
                         setIsAdding(false);
                         setNewTaskTitle('');
                       }}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-xs text-white/60 hover:text-white transition-colors"
                     >
                       Cancel
                     </button>
@@ -134,7 +134,7 @@ export function KanbanColumn({ id, title, count, children, onAddTask, isActiveDr
             ) : (
               <button
                 onClick={() => setIsAdding(true)}
-                className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white rounded-lg p-2.5 transition-all duration-200 border border-transparent hover:border-slate-200 hover:shadow-sm group"
+                className="w-full flex items-center justify-center gap-2 text-sm text-white/30 hover:text-white/60 hover:bg-white/[0.03] rounded-lg p-2.5 transition-all duration-200 border border-transparent hover:border-white/[0.06] group"
               >
                 <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                 <span>Add task</span>
