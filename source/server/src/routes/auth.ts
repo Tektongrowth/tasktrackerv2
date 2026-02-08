@@ -29,7 +29,8 @@ router.get('/google/callback', (req: Request, res: Response, next: NextFunction)
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
       }
       console.log('[Auth] Session created:', req.sessionID, 'for user:', user.email);
-      return res.redirect(`${clientUrl}/dashboard`);
+      // Debug: include session info in redirect to diagnose login loop
+      return res.redirect(`${clientUrl}/dashboard?_dbg=ok&_sid=${req.sessionID.substring(0, 8)}`);
     });
   })(req, res, next);
 });
