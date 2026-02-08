@@ -147,13 +147,22 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration with PostgreSQL store
 const PgSession = connectPgSimple(session);
-const sessionStore: import('express-session').Store = isProduction
+const pgSessionStore = isProduction
   ? new PgSession({
       conString: process.env.DATABASE_URL,
       tableName: 'user_sessions',
       createTableIfMissing: true
     })
-  : new session.MemoryStore();
+  : null;
+
+if (pgSessionStore) {
+  pgSessionStore.on('error', (error: Error) => {
+    console.error('[Session Store] Error:', error);
+  });
+  console.log('[Session Store] PostgreSQL session store initialized');
+}
+
+const sessionStore: import('express-session').Store = pgSessionStore || new session.MemoryStore();
 
 app.use(session({
   store: sessionStore,
@@ -233,6 +242,28 @@ app.get('/health', async (_req, res) => {
       ...(isProduction ? {} : { error: String(error) })
     });
   }
+});
+
+// Temporary session diagnostic endpoint
+app.get('/debug/session-test', (req, res) => {
+  const visits = ((req.session as any).debugVisits || 0) + 1;
+  (req.session as any).debugVisits = visits;
+  req.session.save((err) => {
+    res.json({
+      sessionID: req.sessionID,
+      visits,
+      saveError: err ? err.message : null,
+      cookie: {
+        secure: req.session.cookie.secure,
+        sameSite: req.session.cookie.sameSite,
+        domain: req.session.cookie.domain,
+        httpOnly: req.session.cookie.httpOnly,
+        maxAge: req.session.cookie.maxAge,
+      },
+      storeType: pgSessionStore ? 'postgresql' : 'memory',
+      isProduction,
+    });
+  });
 });
 
 // Deploy status endpoint - returns whether we're in the post-deploy window
