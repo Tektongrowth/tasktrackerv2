@@ -61,6 +61,35 @@ enum TriggerType {
   offboard // When a project is offboarded
 }
 
+enum SourceTier {
+  tier_1
+  tier_2
+  tier_3
+}
+
+enum SeoDigestStatus {
+  pending
+  fetching
+  analyzing
+  generating
+  delivering
+  completed
+  failed
+}
+
+enum SeoRecommendationStatus {
+  draft
+  approved
+  rejected
+  actioned
+}
+
+enum SeoTaskDraftStatus {
+  pending
+  approved
+  rejected
+}
+
 model TemplateSet {
   id           String      @id @default(uuid())
   name         String
@@ -158,6 +187,10 @@ model Client {
   accessTokens    ClientAccessToken[]
   viewers         ClientViewer[]
   taskSubmissions TaskSubmission[]
+  seoInsights     SeoClientInsight[]
+
+  gbpLocationId      String? @map("gbp_location_id")
+  googleAdsCustomerId String? @map("google_ads_customer_id")
 
   @@map("clients")
 }
@@ -213,6 +246,7 @@ model Task {
   watchers     TaskWatcher[]
   submission       TaskSubmission?
   telegramMessages TelegramMessageMap[]
+  seoTaskDraft     SeoTaskDraft?
 
   @@index([projectId])
   @@index([status])
@@ -701,4 +735,187 @@ model TaskWatcher {
   @@index([taskId])
   @@index([userId])
   @@map("task_watchers")
+}
+
+// ==========================================
+// SEO Intelligence Module
+// ==========================================
+
+model SeoSettings {
+  id              String   @id @default(uuid())
+  enabled         Boolean  @default(false)
+  runDayOfMonth   Int      @default(1) @map("run_day_of_month")
+  telegramChatId  String?  @map("telegram_chat_id")
+  driveFolderId   String?  @map("drive_folder_id")
+  sopFolderId     String?  @map("sop_folder_id")
+  tokenBudget     Int      @default(100000) @map("token_budget")
+  retentionMonths Int      @default(6) @map("retention_months")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("seo_settings")
+}
+
+model SeoSource {
+  id            String     @id @default(uuid())
+  name          String
+  url           String
+  tier          SourceTier @default(tier_3)
+  category      String     @default("general")
+  fetchMethod   String     @default("rss") @map("fetch_method")
+  fetchConfig   Json       @default("{}") @map("fetch_config")
+  active        Boolean    @default(true)
+  lastFetchedAt DateTime?  @map("last_fetched_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  fetchResults SeoFetchResult[]
+
+  @@map("seo_sources")
+}
+
+model SeoDigest {
+  id                       String          @id @default(uuid())
+  period                   String
+  status                   SeoDigestStatus @default(pending)
+  sourcesFetched           Int             @default(0) @map("sources_fetched")
+  recommendationsGenerated Int             @default(0) @map("recommendations_generated")
+  taskDraftsCreated        Int             @default(0) @map("task_drafts_created")
+  sopDraftsCreated         Int             @default(0) @map("sop_drafts_created")
+  googleDocUrl             String?         @map("google_doc_url")
+  errorMessage             String?         @map("error_message")
+  startedAt                DateTime        @default(now()) @map("started_at")
+  completedAt              DateTime?       @map("completed_at")
+  createdAt                DateTime        @default(now()) @map("created_at")
+  updatedAt                DateTime        @updatedAt @map("updated_at")
+
+  fetchResults    SeoFetchResult[]
+  recommendations SeoRecommendation[]
+  taskDrafts      SeoTaskDraft[]
+  sopDrafts       SeoSopDraft[]
+  clientInsights  SeoClientInsight[]
+
+  @@map("seo_digests")
+}
+
+model SeoFetchResult {
+  id          String   @id @default(uuid())
+  digestId    String   @map("digest_id")
+  sourceId    String   @map("source_id")
+  url         String
+  title       String
+  content     String
+  contentHash String   @map("content_hash")
+  publishedAt DateTime? @map("published_at")
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  digest   SeoDigest  @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  source   SeoSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  citations SeoRecommendationCitation[]
+
+  @@index([digestId])
+  @@index([sourceId])
+  @@index([contentHash])
+  @@map("seo_fetch_results")
+}
+
+model SeoRecommendation {
+  id          String                   @id @default(uuid())
+  digestId    String                   @map("digest_id")
+  category    String
+  title       String
+  summary     String
+  details     String
+  impact      String                   @default("medium")
+  confidence  String                   @default("medium")
+  status      SeoRecommendationStatus  @default(draft)
+  sourceCount Int                      @default(1) @map("source_count")
+  createdAt   DateTime                 @default(now()) @map("created_at")
+
+  digest     SeoDigest                  @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  citations  SeoRecommendationCitation[]
+  taskDrafts SeoTaskDraft[]
+  sopDrafts  SeoSopDraft[]
+
+  @@index([digestId])
+  @@index([category])
+  @@map("seo_recommendations")
+}
+
+model SeoRecommendationCitation {
+  id               String   @id @default(uuid())
+  recommendationId String   @map("recommendation_id")
+  fetchResultId    String   @map("fetch_result_id")
+  sourceUrl        String   @map("source_url")
+  sourceName       String   @map("source_name")
+  excerpt          String
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  recommendation SeoRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  fetchResult    SeoFetchResult    @relation(fields: [fetchResultId], references: [id], onDelete: Cascade)
+
+  @@index([recommendationId])
+  @@index([fetchResultId])
+  @@map("seo_recommendation_citations")
+}
+
+model SeoTaskDraft {
+  id                 String             @id @default(uuid())
+  digestId           String             @map("digest_id")
+  recommendationId   String?            @map("recommendation_id")
+  title              String
+  description        String
+  suggestedProjectId String?            @map("suggested_project_id")
+  suggestedPriority  String             @default("medium") @map("suggested_priority")
+  suggestedDueInDays Int                @default(7) @map("suggested_due_in_days")
+  status             SeoTaskDraftStatus @default(pending)
+  taskId             String?            @unique @map("task_id")
+  reviewedAt         DateTime?          @map("reviewed_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  digest         SeoDigest          @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  recommendation SeoRecommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
+  task           Task?              @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([digestId])
+  @@index([status])
+  @@map("seo_task_drafts")
+}
+
+model SeoSopDraft {
+  id               String   @id @default(uuid())
+  digestId         String   @map("digest_id")
+  recommendationId String?  @map("recommendation_id")
+  sopDocId         String   @map("sop_doc_id")
+  sopTitle         String   @map("sop_title")
+  description      String
+  beforeContent    String   @map("before_content")
+  afterContent     String   @map("after_content")
+  status           String   @default("pending")
+  appliedAt        DateTime? @map("applied_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  digest         SeoDigest          @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  recommendation SeoRecommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
+
+  @@index([digestId])
+  @@map("seo_sop_drafts")
+}
+
+model SeoClientInsight {
+  id         String   @id @default(uuid())
+  digestId   String   @map("digest_id")
+  clientId   String   @map("client_id")
+  dataSource String   @map("data_source")
+  metrics    Json     @default("{}")
+  period     String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  digest SeoDigest @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  client Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([digestId])
+  @@index([clientId])
+  @@map("seo_client_insights")
 }

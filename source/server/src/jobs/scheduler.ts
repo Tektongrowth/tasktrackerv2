@@ -2,6 +2,8 @@ import cron from 'node-cron';
 import { runDueDateReminders } from './dueDateReminder.js';
 import { runMonthlyReport } from './monthlyTimeReport.js';
 import { runDatabaseBackup } from './databaseBackup.js';
+import { runSeoIntelligencePipeline } from './seoIntelligence.js';
+import { runSeoContentCleanup } from './seoCleanup.js';
 
 /**
  * Initialize all scheduled jobs
@@ -58,8 +60,34 @@ export function initializeScheduler() {
   });
   console.log('[Scheduler] Database backup scheduled for 2:00 AM daily');
 
+  // SEO Intelligence Pipeline - daily check at 6:00 AM
+  cron.schedule('0 6 * * *', async () => {
+    console.log('[Scheduler] Checking SEO intelligence pipeline trigger...');
+    try {
+      await runSeoIntelligencePipeline();
+    } catch (error) {
+      console.error('[Scheduler] SEO intelligence pipeline failed:', error);
+    }
+  }, {
+    timezone: 'America/Los_Angeles'
+  });
+  console.log('[Scheduler] SEO intelligence pipeline check scheduled for 6:00 AM daily');
+
+  // SEO Content Cleanup - daily at 3:00 AM
+  cron.schedule('0 3 * * *', async () => {
+    console.log('[Scheduler] Triggering SEO content cleanup...');
+    try {
+      await runSeoContentCleanup();
+    } catch (error) {
+      console.error('[Scheduler] SEO content cleanup job failed:', error);
+    }
+  }, {
+    timezone: 'America/Los_Angeles'
+  });
+  console.log('[Scheduler] SEO content cleanup scheduled for 3:00 AM daily');
+
   console.log('[Scheduler] All scheduled jobs initialized');
 }
 
 // Export individual job runners for manual triggering
-export { runDueDateReminders, runMonthlyReport, runDatabaseBackup };
+export { runDueDateReminders, runMonthlyReport, runDatabaseBackup, runSeoIntelligencePipeline, runSeoContentCleanup };

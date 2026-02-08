@@ -93,7 +93,7 @@ router.get('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response,
 // Create client (admin only, for manual creation)
 router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, phone, ghlLocationId } = req.body;
+    const { name, email, phone, ghlLocationId, gbpLocationId, googleAdsCustomerId } = req.body;
 
     // Validate inputs
     const validName = validateName(name, true);
@@ -109,7 +109,9 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
         email: validEmail,
         phone: validPhone,
         embedToken,
-        ghlLocationId: ghlLocationId || null
+        ghlLocationId: ghlLocationId || null,
+        gbpLocationId: gbpLocationId || null,
+        googleAdsCustomerId: googleAdsCustomerId || null
       }
     });
 
@@ -123,7 +125,7 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
 router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { name, email, phone, ghlLocationId } = req.body;
+    const { name, email, phone, ghlLocationId, gbpLocationId, googleAdsCustomerId } = req.body;
 
     // Validate inputs if provided
     const validName = name !== undefined ? validateName(name, true) : undefined;
@@ -136,7 +138,9 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
         ...(validName && { name: validName }),
         ...(validEmail !== undefined && { email: validEmail }),
         ...(validPhone !== undefined && { phone: validPhone }),
-        ...(ghlLocationId !== undefined && { ghlLocationId: ghlLocationId || null })
+        ...(ghlLocationId !== undefined && { ghlLocationId: ghlLocationId || null }),
+        ...(gbpLocationId !== undefined && { gbpLocationId: gbpLocationId || null }),
+        ...(googleAdsCustomerId !== undefined && { googleAdsCustomerId: googleAdsCustomerId || null })
       }
     });
 

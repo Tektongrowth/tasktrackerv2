@@ -35,6 +35,8 @@ export interface Client {
   email?: string;
   phone?: string;
   stripeCustomerId?: string;
+  gbpLocationId?: string;
+  googleAdsCustomerId?: string;
   projects?: Project[];
   createdAt: string;
   updatedAt: string;
@@ -587,4 +589,120 @@ export interface FeatureRequestData {
   description: string;
   useCase: string;
   priority: 'nice_to_have' | 'would_help' | 'important';
+}
+
+// SEO Intelligence Types
+export type SourceTier = 'tier_1' | 'tier_2' | 'tier_3';
+export type SeoDigestStatus = 'pending' | 'fetching' | 'analyzing' | 'generating' | 'delivering' | 'completed' | 'failed';
+export type SeoRecommendationStatus = 'draft' | 'approved' | 'rejected' | 'actioned';
+export type SeoTaskDraftStatus = 'pending' | 'approved' | 'rejected';
+
+export interface SeoSettings {
+  id: string;
+  enabled: boolean;
+  runDayOfMonth: number;
+  telegramChatId?: string;
+  driveFolderId?: string;
+  sopFolderId?: string;
+  tokenBudget: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeoSource {
+  id: string;
+  name: string;
+  url: string;
+  tier: SourceTier;
+  category: string;
+  fetchMethod: string;
+  fetchConfig: Record<string, unknown>;
+  active: boolean;
+  lastFetchedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeoDigest {
+  id: string;
+  period: string;
+  status: SeoDigestStatus;
+  sourcesFetched: number;
+  recommendationsGenerated: number;
+  taskDraftsCreated: number;
+  sopDraftsCreated: number;
+  googleDocUrl?: string;
+  errorMessage?: string;
+  startedAt: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  recommendations?: SeoRecommendation[];
+}
+
+export interface SeoRecommendation {
+  id: string;
+  digestId: string;
+  category: string;
+  title: string;
+  summary: string;
+  details: string;
+  impact: string;
+  confidence: string;
+  status: SeoRecommendationStatus;
+  sourceCount: number;
+  createdAt: string;
+  citations?: SeoRecommendationCitation[];
+  taskDrafts?: SeoTaskDraft[];
+}
+
+export interface SeoRecommendationCitation {
+  id: string;
+  recommendationId: string;
+  fetchResultId: string;
+  sourceUrl: string;
+  sourceName: string;
+  excerpt: string;
+  createdAt: string;
+}
+
+export interface SeoTaskDraft {
+  id: string;
+  digestId: string;
+  recommendationId?: string;
+  title: string;
+  description: string;
+  suggestedProjectId?: string;
+  suggestedPriority: string;
+  suggestedDueInDays: number;
+  status: SeoTaskDraftStatus;
+  taskId?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  recommendation?: SeoRecommendation;
+}
+
+export interface SeoSopDraft {
+  id: string;
+  digestId: string;
+  recommendationId?: string;
+  sopDocId: string;
+  sopTitle: string;
+  description: string;
+  beforeContent: string;
+  afterContent: string;
+  status: string;
+  appliedAt?: string;
+  createdAt: string;
+  recommendation?: SeoRecommendation;
+}
+
+export interface SeoClientInsight {
+  id: string;
+  digestId: string;
+  clientId: string;
+  dataSource: string;
+  metrics: Record<string, unknown>;
+  period: string;
+  createdAt: string;
 }

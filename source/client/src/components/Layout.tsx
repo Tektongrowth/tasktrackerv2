@@ -30,6 +30,7 @@ import {
   X,
   Inbox,
   MessageCircle,
+  Brain,
 } from 'lucide-react';
 import { chats as chatsApi, notifications as notificationsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,7 @@ const navItems: NavItem[] = [
   { to: '/submissions', icon: Inbox, label: 'Task Requests', requiresProjectManager: true },
   { to: '/time', icon: Clock, label: 'Time Analytics', requiresProjectManager: true },
   { to: '/templates', icon: FileText, label: 'Templates', requiresProjectManager: true },
+  { to: '/seo-intelligence', icon: Brain, label: 'SEO Intel', adminOnly: true },
   { to: '/settings', icon: Settings, label: 'Settings', adminOnly: true },
   { to: '/my-settings', icon: Settings, label: 'My Settings', contractorOnly: true },
 ];
@@ -97,7 +99,7 @@ function ProjectSidebar() {
     <div className="flex flex-col h-full">
       <div className="p-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/60" />
           <Input
             placeholder="Search projects..."
             value={searchQuery}
@@ -108,13 +110,13 @@ function ProjectSidebar() {
       </div>
 
       {hasActiveFilter && (
-        <div className="px-3 py-2 border-b bg-red-50">
+        <div className="px-3 py-2 border-b border-white/5 bg-white/[0.02]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--theme-accent)]">Active Filter</span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs text-[var(--theme-accent)] hover:bg-red-100"
+              className="h-6 px-2 text-xs text-[var(--theme-accent)] hover:bg-white/5"
               onClick={clearFilters}
             >
               <X className="h-3 w-3 mr-1" />
@@ -130,7 +132,7 @@ function ProjectSidebar() {
             'flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm font-medium mb-1',
             !selectedProjectId && !selectedClientId
               ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted'
+              : 'text-white/60 hover:bg-white/[0.06]'
           )}
           onClick={clearFilters}
         >
@@ -139,7 +141,7 @@ function ProjectSidebar() {
         </div>
 
         <div className="mt-3">
-          <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="px-3 py-1.5 text-xs font-semibold text-white/60 uppercase tracking-wider">
             Clients
           </div>
           {filteredClients.map((client) => (
@@ -149,7 +151,7 @@ function ProjectSidebar() {
                   'flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm',
                   selectedClientId === client.id
                     ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-muted'
+                    : 'hover:bg-white/[0.06]'
                 )}
                 onClick={() => {
                   if (client.projects && client.projects.length > 0) {
@@ -184,7 +186,7 @@ function ProjectSidebar() {
                         'flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer text-sm',
                         selectedProjectId === project.id
                           ? 'bg-primary/10 text-primary font-medium'
-                          : 'text-muted-foreground hover:bg-muted'
+                          : 'text-white/60 hover:bg-white/[0.06]'
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -242,8 +244,6 @@ export function Layout() {
 
   // Get branding from theme
   const logoUrl = theme?.branding?.logoUrl || '/logo.png';
-  const backgroundImage = theme?.branding?.backgroundImage || '/background.jpg';
-  const backgroundColor = theme?.branding?.backgroundColor;
 
   // Global keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -279,38 +279,29 @@ export function Layout() {
     return true;
   };
 
-  // Build background style
-  const backgroundStyle: React.CSSProperties = {};
-  if (backgroundImage) {
-    backgroundStyle.backgroundImage = `url('${backgroundImage}')`;
-    backgroundStyle.backgroundSize = 'cover';
-    backgroundStyle.backgroundPosition = 'center';
-  } else if (backgroundColor) {
-    backgroundStyle.backgroundColor = backgroundColor;
-  }
-
   return (
-    <div className={cn("h-screen bg-background flex relative overflow-hidden", demoMode && "demo-mode")}>
+    <div className={cn("h-screen flex relative overflow-hidden bg-honeycomb", demoMode && "demo-mode")}>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:p-4 focus:bg-white focus:text-primary focus:underline"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:p-4 focus:text-primary focus:underline"
       >
         Skip to content
       </a>
-      {/* Custom background from theme */}
-      {(backgroundImage || backgroundColor) && (
-        <div
-          className="fixed inset-0 pointer-events-none z-0"
-          style={{
-            ...backgroundStyle,
-            opacity: 1,
-          }}
-        />
-      )}
-      {/* Subtle background pattern (only if no custom background) */}
-      {!backgroundImage && !backgroundColor && (
-        <div className="fixed inset-0 bg-pattern pointer-events-none" />
-      )}
+
+      {/* Floating hexagons — parallax depth */}
+      <div className="hex-float hex-float-1" />
+      <div className="hex-float hex-float-2" />
+      <div className="hex-float hex-float-3" />
+      <div className="hex-float hex-float-4" />
+      <div className="hex-float hex-float-5" />
+      <div className="hex-float hex-float-6" />
+      <div className="hex-float hex-float-7" />
+      <div className="hex-float hex-float-8" />
+      <div className="hex-float hex-float-9" />
+      <div className="hex-float hex-float-10" />
+      <div className="hex-float hex-float-11" />
+      <div className="hex-float hex-float-12" />
+      <div className="hex-float hex-float-13" />
 
       {/* Demo mode indicator - centered on header edge */}
       {demoMode && (
@@ -340,7 +331,7 @@ export function Layout() {
                     'w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group relative',
                     isActive
                       ? 'bg-brand-gradient text-white shadow-lg'
-                      : 'text-gray-500 hover:bg-white/10 hover:text-white'
+                      : 'text-white/50 hover:bg-white/10 hover:text-white'
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -349,7 +340,7 @@ export function Layout() {
                       {totalUnreadMessages > 99 ? '99+' : totalUnreadMessages}
                     </span>
                   )}
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--theme-sidebar)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
                     {item.label}
                   </div>
                 </NavLink>
@@ -363,7 +354,7 @@ export function Layout() {
             onClick={() => navigate(isAdmin ? '/settings' : '/my-settings')}
           >
             <UserAvatar name={user?.name || '?'} avatarUrl={user?.avatarUrl} size="md" />
-            <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--theme-sidebar)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
+            <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
               {isAdmin ? 'Settings' : 'My Settings'}
             </div>
           </div>
@@ -371,13 +362,13 @@ export function Layout() {
             <Button
               variant="ghost"
               size="icon"
-              className="w-10 h-10 text-gray-500 hover:text-white hover:bg-white/10"
+              className="w-10 h-10 text-white/50 hover:text-white hover:bg-white/10"
               onClick={handleLogout}
               aria-label="Logout"
             >
               <LogOut className="h-5 w-5" />
             </Button>
-            <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--theme-sidebar)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
+            <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
               Logout
             </div>
           </div>
@@ -386,23 +377,23 @@ export function Layout() {
 
       {/* Project Sidebar - Hidden on mobile */}
       {showProjectSidebar && (
-        <aside className="w-64 bg-white border-r hidden md:flex flex-col relative z-10">
+        <aside className="w-64 liquid-panel hidden md:flex flex-col relative z-10">
           <ProjectSidebar />
         </aside>
       )}
 
       {/* Main content - always show scrollbar to prevent layout shift */}
-      <main id="main-content" className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-20 md:pb-0">
+      <main id="main-content" className="flex-1 min-w-0 relative z-10 overflow-y-scroll flex flex-col pb-20 md:pb-0 bg-orbs">
         {/* Mobile Project Selector */}
         {showProjectSidebar && isMobile && <MobileProjectSelector />}
-        <div className="flex-1">
+        <div className="flex-1 relative z-10">
           <Outlet />
         </div>
         {/* Footer Branding */}
-        <div className="flex items-end justify-end gap-3 text-right px-6 py-4 mt-auto">
+        <div className="flex items-end justify-end gap-3 text-right px-6 py-4 mt-auto relative z-10">
           <div className="flex flex-col items-end gap-0.5">
-            <span className="text-xs text-slate-300 italic tracking-wide">Task Tracker Pro</span>
-            <span className="text-[10px] text-slate-300">&copy; {new Date().getFullYear()} Tekton Growth</span>
+            <span className="text-xs text-gradient italic tracking-wide">Task Tracker Pro</span>
+            <span className="text-[10px] text-white/30">&copy; {new Date().getFullYear()} Tekton Growth</span>
           </div>
           <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain opacity-30" />
         </div>
@@ -420,7 +411,7 @@ export function Layout() {
         >
           <Search className="h-6 w-6 text-white" />
         </button>
-        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-[var(--theme-sidebar)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
+        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] font-medium shadow-lg">
           Search (Option+Space)
         </div>
       </div>

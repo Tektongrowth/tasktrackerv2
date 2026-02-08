@@ -76,12 +76,12 @@ export const users = {
 export const clients = {
   list: () => fetchApi<import('./types').Client[]>('/api/clients'),
   get: (id: string) => fetchApi<import('./types').Client>(`/api/clients/${id}`),
-  create: (data: { name: string; email?: string; phone?: string; ghlLocationId?: string }) =>
+  create: (data: { name: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string }) =>
     fetchApi<import('./types').Client>('/api/clients', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: { name?: string; email?: string; phone?: string; ghlLocationId?: string }) =>
+  update: (id: string, data: { name?: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string }) =>
     fetchApi<import('./types').Client>(`/api/clients/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -691,6 +691,63 @@ export const gifs = {
     fetchApi<GifResponse>(`/api/gifs/trending?limit=${limit}`),
   search: (query: string, limit = 20) =>
     fetchApi<GifResponse>(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+};
+
+// SEO Intelligence
+export const seo = {
+  listDigests: (page = 1, limit = 10) =>
+    fetchApi<{ digests: import('./types').SeoDigest[]; total: number }>(`/api/seo/digests?page=${page}&limit=${limit}`),
+  getDigest: (id: string) =>
+    fetchApi<import('./types').SeoDigest>(`/api/seo/digests/${id}`),
+  runPipeline: () =>
+    fetchApi<{ message: string; status: string }>('/api/seo/digests/run', { method: 'POST' }),
+  retryDigest: (id: string) =>
+    fetchApi<import('./types').SeoDigest>(`/api/seo/digests/${id}/retry`, { method: 'POST' }),
+  getTaskDrafts: (digestId: string) =>
+    fetchApi<import('./types').SeoTaskDraft[]>(`/api/seo/digests/${digestId}/task-drafts`),
+  approveTaskDraft: (id: string, data: { projectId: string; assigneeIds?: string[]; dueDate?: string }) =>
+    fetchApi<{ task: import('./types').Task; draft: import('./types').SeoTaskDraft }>(`/api/seo/task-drafts/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  rejectTaskDraft: (id: string) =>
+    fetchApi<import('./types').SeoTaskDraft>(`/api/seo/task-drafts/${id}/reject`, { method: 'POST' }),
+  bulkApproveTaskDrafts: (ids: string[], data: { projectId: string }) =>
+    fetchApi<{ approved: import('./types').Task[] }>('/api/seo/task-drafts/bulk-approve', {
+      method: 'POST',
+      body: JSON.stringify({ ids, ...data }),
+    }),
+  getSopDrafts: (digestId: string) =>
+    fetchApi<import('./types').SeoSopDraft[]>(`/api/seo/digests/${digestId}/sop-drafts`),
+  applySopDraft: (id: string) =>
+    fetchApi<import('./types').SeoSopDraft>(`/api/seo/sop-drafts/${id}/apply`, { method: 'POST' }),
+  dismissSopDraft: (id: string) =>
+    fetchApi<import('./types').SeoSopDraft>(`/api/seo/sop-drafts/${id}/dismiss`, { method: 'POST' }),
+  getSettings: () =>
+    fetchApi<import('./types').SeoSettings>('/api/seo/settings'),
+  updateSettings: (data: Partial<import('./types').SeoSettings>) =>
+    fetchApi<import('./types').SeoSettings>('/api/seo/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  listSources: () =>
+    fetchApi<import('./types').SeoSource[]>('/api/seo/sources'),
+  createSource: (data: Partial<import('./types').SeoSource>) =>
+    fetchApi<import('./types').SeoSource>('/api/seo/sources', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateSource: (id: string, data: Partial<import('./types').SeoSource>) =>
+    fetchApi<import('./types').SeoSource>(`/api/seo/sources/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteSource: (id: string) =>
+    fetchApi<void>(`/api/seo/sources/${id}`, { method: 'DELETE' }),
+  getJobHistory: (limit = 20) =>
+    fetchApi<import('./types').ScheduledJobRun[]>(`/api/seo/job-history?limit=${limit}`),
+  testSource: (id: string) =>
+    fetchApi<{ source: string; method: string; articlesFound: number; articles: { title: string; url: string; contentPreview: string; publishedAt?: string }[] }>(`/api/seo/sources/${id}/test`, { method: 'POST' }),
 };
 
 export { API_BASE, fetchApi };

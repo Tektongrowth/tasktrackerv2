@@ -22,6 +22,7 @@ import { ClientPortalVerify } from './pages/ClientPortalVerify';
 import { ClientPortalDashboard } from './pages/ClientPortalDashboard';
 import { EmbedSubmitPage } from './pages/EmbedSubmitPage';
 import { EmbedLocationPage } from './pages/EmbedLocationPage';
+import { SeoIntelligencePage } from './pages/SeoIntelligencePage';
 import { Toaster } from './components/ui/toaster';
 import { ConfirmDialogProvider } from './components/ConfirmDialog';
 import { GuideProvider, WelcomeWizard, SpotlightTour, HelpButton } from './components/guide';
@@ -93,6 +94,7 @@ function App() {
           <Route path="chat" element={<ChatPage />} />
           <Route path="help" element={<HelpPage />} />
           <Route path="client-portal-preview" element={<ClientPortalPreview />} />
+          <Route path="seo-intelligence" element={<SeoIntelligencePage />} />
         </Route>
       </Routes>
       <Toaster />

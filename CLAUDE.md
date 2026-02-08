@@ -33,7 +33,7 @@ Planning to evolve into a modular monolith with background job processing.
 |--------|---------|--------|
 | core | Current task tracker (tasks, projects, clients, chat) | Active |
 | analytics | Reporting & metrics (leads, ad performance, GBP calls) | Planned |
-| seo | SEO tool ecosystem with automated workflows | Planned |
+| seo | SEO Intelligence module - monthly automated pipeline | Active |
 | website-builder | Website design automation triggered by projects | Planned |
 
 ### Infrastructure Additions (When Ready)
@@ -77,6 +77,26 @@ source/
 │       └── middleware/   # Auth, error handling
 └── prisma/           # Database schema
 ```
+
+## SEO Intelligence Module
+
+Monthly automated pipeline that monitors 30+ SEO/marketing industry sources, analyzes via Claude API, and generates actionable recommendations.
+
+### Architecture
+- **Backend**: `server/src/services/seo/` (6 services), `server/src/jobs/seoIntelligence.ts`, `server/src/routes/seo.ts`
+- **Frontend**: `client/src/pages/SeoIntelligencePage.tsx`, `client/src/components/seo/` (6 components), `client/src/hooks/useSeo.ts`
+- **Database**: 9 Prisma models (SeoSettings, SeoSource, SeoDigest, SeoFetchResult, SeoRecommendation, SeoRecommendationCitation, SeoTaskDraft, SeoSopDraft, SeoClientInsight)
+- **Route**: `/seo-intelligence` (admin only), API at `/api/seo/*`
+- **Cron**: Daily 6 AM check, runs on configured day of month
+
+### Pipeline Flow
+Cron trigger → Fetch 30+ sources (RSS, YouTube, Reddit, HTML) → Pull client data (GBP, Ads) → AI analysis (Claude Sonnet) → Generate recommendations, task drafts, SOP drafts → Deliver via Google Doc + Telegram → Queue draft tasks for approval
+
+### Key Deps
+`@anthropic-ai/sdk`, `rss-parser`, `jsdom`, `@mozilla/readability`, `googleapis`
+
+### Env Vars
+`ANTHROPIC_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_KEY` (base64), `YOUTUBE_API_KEY`, `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_MANAGER_CUSTOMER_ID`
 
 ## Key Commands
 
@@ -169,7 +189,7 @@ Key env vars (set in Railway):
 
 ## Maintenance
 
-**Last reviewed**: 2026-02-03
+**Last reviewed**: 2026-02-07
 
 This file contains foundational project information. Update it when:
 - New services or integrations are added

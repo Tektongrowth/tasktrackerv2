@@ -49,8 +49,8 @@ function AuditLogTab() {
     <TabsContent value="audit" className="space-y-4 mt-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold">Audit Log</h2>
-          <p className="text-sm text-muted-foreground">Track all system actions and changes</p>
+          <h2 className="text-lg font-semibold text-white">Audit Log</h2>
+          <p className="text-sm text-white/60">Track all system actions and changes</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -85,27 +85,27 @@ function AuditLogTab() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-white/60">Loading...</div>
           ) : !data?.logs?.length ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-white/60">
               <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No audit logs found</p>
             </div>
           ) : (
             <div className="divide-y">
               {data.logs.map((log: any) => (
-                <div key={log.id} className="p-4 hover:bg-slate-50">
+                <div key={log.id} className="p-4 hover:bg-white/[0.04]">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{log.entityType}</Badge>
                         <span className="font-medium capitalize">{formatAction(log.action)}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-white/60">
                         {log.user?.name || 'System'} • {formatDate(log.createdAt)}
                       </p>
                       {log.details && (
-                        <p className="text-xs text-muted-foreground font-mono bg-slate-100 p-2 rounded mt-2">
+                        <p className="text-xs text-white/60 font-mono bg-white/[0.06] p-2 rounded mt-2">
                           {JSON.stringify(log.details, null, 2).slice(0, 200)}
                           {JSON.stringify(log.details).length > 200 && '...'}
                         </p>
@@ -134,7 +134,7 @@ function AuditLogTab() {
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-white/60">
             Page {page} of {data.pagination.totalPages}
           </span>
           <Button
@@ -200,8 +200,8 @@ function BackupsTab() {
     <TabsContent value="backups" className="space-y-4 mt-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold">Database Backups</h2>
-          <p className="text-sm text-muted-foreground">Automatic daily backups at 2 AM UTC</p>
+          <h2 className="text-lg font-semibold text-white">Database Backups</h2>
+          <p className="text-sm text-white/60">Automatic daily backups at 2 AM UTC</p>
         </div>
         <Button onClick={() => triggerBackup.mutate()} disabled={triggerBackup.isPending}>
           {triggerBackup.isPending ? (
@@ -223,13 +223,13 @@ function BackupsTab() {
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold">{stats.totalBackups}</div>
-              <p className="text-sm text-muted-foreground">Total Backups</p>
+              <p className="text-sm text-white/60">Total Backups</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold">{formatBytes(stats.totalSizeBytes || 0)}</div>
-              <p className="text-sm text-muted-foreground">Total Size</p>
+              <p className="text-sm text-white/60">Total Size</p>
             </CardContent>
           </Card>
           <Card>
@@ -237,7 +237,7 @@ function BackupsTab() {
               <div className="text-2xl font-bold">
                 {stats.lastBackupAt ? formatDate(stats.lastBackupAt) : 'Never'}
               </div>
-              <p className="text-sm text-muted-foreground">Last Backup</p>
+              <p className="text-sm text-white/60">Last Backup</p>
             </CardContent>
           </Card>
         </div>
@@ -250,9 +250,9 @@ function BackupsTab() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-white/60">Loading...</div>
           ) : backupList.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-white/60">
               <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No backups yet</p>
               <p className="text-sm">Create a manual backup or wait for the daily scheduled backup.</p>
@@ -262,20 +262,20 @@ function BackupsTab() {
               {backupList.map((backup: any) => (
                 <div
                   key={backup.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <Database className="h-5 w-5 text-muted-foreground" />
+                    <Database className="h-5 w-5 text-white/60" />
                     <div>
                       <p className="font-medium text-sm">{backup.filename}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-white/60">
                         {formatDate(backup.createdAt)} • {formatBytes(backup.sizeBytes)}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {backup.expiresAt && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-white/60">
                         Expires: {formatDate(backup.expiresAt)}
                       </span>
                     )}
@@ -286,7 +286,7 @@ function BackupsTab() {
                       onClick={() => deleteBackup.mutate(backup.id)}
                       disabled={deleteBackup.isPending}
                     >
-                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                      <Trash2 className="h-4 w-4 text-white/60 hover:text-red-500" />
                     </Button>
                   </div>
                 </div>
@@ -354,7 +354,7 @@ function StripeConfigTab() {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/60">
               Add this URL to your Stripe webhook settings.
             </p>
           </div>
@@ -362,7 +362,7 @@ function StripeConfigTab() {
           {/* Required Events */}
           <div className="space-y-2">
             <Label>Required Webhook Events</Label>
-            <div className="text-sm text-muted-foreground space-y-1 bg-muted p-3 rounded-md font-mono">
+            <div className="text-sm text-white/60 space-y-1 bg-white/[0.04] p-3 rounded-md font-mono">
               <p>customer.subscription.created</p>
               <p>customer.subscription.updated</p>
               <p>customer.subscription.deleted</p>
@@ -405,7 +405,7 @@ function StripeConfigTab() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-4 text-muted-foreground">Loading...</div>
+            <div className="text-center py-4 text-white/60">Loading...</div>
           ) : (
             <div className="space-y-3">
               {stripePrices?.prices.map((price) => (
@@ -413,24 +413,24 @@ function StripeConfigTab() {
                   key={price.envVar}
                   className={cn(
                     'flex items-center justify-between p-3 rounded-md border',
-                    price.isConfigured ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
+                    price.isConfigured ? 'border-green-500/20 bg-green-500/10' : 'border-amber-500/20 bg-amber-500/10'
                   )}
                 >
                   <div className="space-y-1">
                     <div className="font-medium">{price.label}</div>
-                    <div className="text-sm text-muted-foreground font-mono">{price.envVar}</div>
+                    <div className="text-sm text-white/60 font-mono">{price.envVar}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {price.isConfigured ? (
                       <>
-                        <code className="text-xs bg-white px-2 py-1 rounded border">
+                        <code className="text-xs bg-white/[0.06] px-2 py-1 rounded border">
                           {price.priceId?.slice(0, 20)}...
                         </code>
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <CheckCircle className="h-5 w-5 text-green-400" />
                       </>
                     ) : (
                       <>
-                        <span className="text-sm text-amber-600">Not configured</span>
+                        <span className="text-sm text-amber-400">Not configured</span>
                         <AlertCircle className="h-5 w-5 text-amber-500" />
                       </>
                     )}
@@ -440,11 +440,11 @@ function StripeConfigTab() {
             </div>
           )}
 
-          <div className="mt-4 p-3 bg-muted rounded-md">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-4 p-3 bg-white/[0.04] rounded-md">
+            <p className="text-sm text-white/60">
               <strong>How to configure:</strong> Add these environment variables to your deployment:
             </p>
-            <pre className="mt-2 text-xs bg-background p-2 rounded border overflow-x-auto">
+            <pre className="mt-2 text-xs bg-white/[0.06] p-2 rounded border border-white/[0.08] overflow-x-auto text-white/70">
 {`STRIPE_PRICE_PACKAGE_ONE=price_xxx      # Package 1
 STRIPE_PRICE_PACKAGE_TWO=price_xxx      # Package 2
 STRIPE_PRICE_PACKAGE_THREE=price_xxx    # Package 3
@@ -545,8 +545,8 @@ function EmailTemplatesTab() {
     <TabsContent value="emails" className="space-y-4 mt-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold">Email Templates</h2>
-          <p className="text-sm text-muted-foreground">Customize the emails sent by the system</p>
+          <h2 className="text-lg font-semibold text-white">Email Templates</h2>
+          <p className="text-sm text-white/60">Customize the emails sent by the system</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -578,7 +578,7 @@ function EmailTemplatesTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-white/60">Loading...</div>
           ) : (
             <>
               <div className="space-y-2">
@@ -597,7 +597,7 @@ function EmailTemplatesTab() {
                   onChange={handleFieldChange(setWelcomeHeading)}
                   placeholder="Welcome to the team!"
                 />
-                <p className="text-xs text-muted-foreground">The main heading shown in the email</p>
+                <p className="text-xs text-white/60">The main heading shown in the email</p>
               </div>
 
               <div className="space-y-2">
@@ -608,7 +608,7 @@ function EmailTemplatesTab() {
                   placeholder="You have been invited to join..."
                   rows={4}
                 />
-                <p className="text-xs text-muted-foreground">The main message explaining the invitation</p>
+                <p className="text-xs text-white/60">The main message explaining the invitation</p>
               </div>
 
               <div className="space-y-2">
@@ -618,7 +618,7 @@ function EmailTemplatesTab() {
                   onChange={handleFieldChange(setWelcomeButtonText)}
                   placeholder="Complete Setup"
                 />
-                <p className="text-xs text-muted-foreground">Text shown on the call-to-action button</p>
+                <p className="text-xs text-white/60">Text shown on the call-to-action button</p>
               </div>
 
               <div className="space-y-2">
@@ -629,7 +629,7 @@ function EmailTemplatesTab() {
                   placeholder="If you have any questions..."
                   rows={2}
                 />
-                <p className="text-xs text-muted-foreground">Additional text shown at the bottom of the email</p>
+                <p className="text-xs text-white/60">Additional text shown at the bottom of the email</p>
               </div>
 
               {/* Email Preview */}
@@ -638,15 +638,15 @@ function EmailTemplatesTab() {
                   <Eye className="h-4 w-4" />
                   Preview
                 </h4>
-                <div className="bg-slate-50 rounded-lg p-6 border">
-                  <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
+                <div className="bg-white/[0.03] rounded-lg p-6 border">
+                  <div className="bg-white/[0.06] rounded-lg shadow-sm p-6 max-w-md mx-auto">
                     <div className="text-center">
-                      <h2 className="text-xl font-bold text-slate-900 mb-3">{welcomeHeading || 'Welcome!'}</h2>
-                      <p className="text-slate-600 text-sm mb-4 whitespace-pre-wrap">{welcomeBody || 'You have been invited...'}</p>
+                      <h2 className="text-xl font-bold text-white mb-3">{welcomeHeading || 'Welcome!'}</h2>
+                      <p className="text-white/70 text-sm mb-4 whitespace-pre-wrap">{welcomeBody || 'You have been invited...'}</p>
                       <button className="bg-[var(--theme-primary)] text-white px-6 py-2 rounded-md text-sm font-medium mb-4">
                         {welcomeButtonText || 'Complete Setup'}
                       </button>
-                      <p className="text-xs text-slate-400 whitespace-pre-wrap">{welcomeFooter || 'Contact us if you need help.'}</p>
+                      <p className="text-xs text-white/40 whitespace-pre-wrap">{welcomeFooter || 'Contact us if you need help.'}</p>
                     </div>
                   </div>
                 </div>
@@ -733,11 +733,13 @@ export function SettingsPage() {
 
   // Client state
   const [showClientDialog, setShowClientDialog] = useState(false);
-  const [editingClient, setEditingClient] = useState<{ id: string; name: string; email?: string; phone?: string; ghlLocationId?: string } | null>(null);
+  const [editingClient, setEditingClient] = useState<{ id: string; name: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string } | null>(null);
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientGhlLocationId, setClientGhlLocationId] = useState('');
+  const [clientGbpLocationId, setClientGbpLocationId] = useState('');
+  const [clientGoogleAdsCustomerId, setClientGoogleAdsCustomerId] = useState('');
 
   // Viewer state
   const [showViewersDialog, setShowViewersDialog] = useState(false);
@@ -942,7 +944,7 @@ export function SettingsPage() {
   });
 
   const updateClient = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string; email?: string; phone?: string; ghlLocationId?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string } }) =>
       clientsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -1179,25 +1181,29 @@ export function SettingsPage() {
     setClientEmail('');
     setClientPhone('');
     setClientGhlLocationId('');
+    setClientGbpLocationId('');
+    setClientGoogleAdsCustomerId('');
   };
 
-  const openClientEditDialog = (client: { id: string; name: string; email?: string; phone?: string; ghlLocationId?: string }) => {
+  const openClientEditDialog = (client: { id: string; name: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string }) => {
     setEditingClient(client);
     setClientName(client.name);
     setClientEmail(client.email || '');
     setClientPhone(client.phone || '');
     setClientGhlLocationId(client.ghlLocationId || '');
+    setClientGbpLocationId(client.gbpLocationId || '');
+    setClientGoogleAdsCustomerId(client.googleAdsCustomerId || '');
   };
 
   const handleClientSave = () => {
     if (editingClient) {
-      updateClient.mutate({ id: editingClient.id, data: { name: clientName, email: clientEmail || undefined, phone: clientPhone || undefined, ghlLocationId: clientGhlLocationId || undefined } });
+      updateClient.mutate({ id: editingClient.id, data: { name: clientName, email: clientEmail || undefined, phone: clientPhone || undefined, ghlLocationId: clientGhlLocationId || undefined, gbpLocationId: clientGbpLocationId || undefined, googleAdsCustomerId: clientGoogleAdsCustomerId || undefined } });
     } else {
       if (!clientName) {
         toast({ title: 'Please enter a client name', variant: 'destructive' });
         return;
       }
-      createClient.mutate({ name: clientName, email: clientEmail || undefined, phone: clientPhone || undefined, ghlLocationId: clientGhlLocationId || undefined });
+      createClient.mutate({ name: clientName, email: clientEmail || undefined, phone: clientPhone || undefined, ghlLocationId: clientGhlLocationId || undefined, gbpLocationId: clientGbpLocationId || undefined, googleAdsCustomerId: clientGoogleAdsCustomerId || undefined });
     }
   };
 
@@ -1269,8 +1275,8 @@ export function SettingsPage() {
         <TabsContent value="contractors" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Contractor Management</h2>
-              <p className="text-sm text-muted-foreground">Invite and manage team members</p>
+              <h2 className="text-lg font-semibold text-white">Contractor Management</h2>
+              <p className="text-sm text-white/60">Invite and manage team members</p>
             </div>
             <Dialog open={showInviteDialog} onOpenChange={(open) => {
               setShowInviteDialog(open);
@@ -1320,7 +1326,7 @@ export function SettingsPage() {
                       <SelectContent>
                         <SelectItem value="viewer">
                           <div className="flex items-center gap-2">
-                            <Eye className="h-4 w-4 text-gray-500" />
+                            <Eye className="h-4 w-4 text-white/50" />
                             <span>Viewer</span>
                           </div>
                         </SelectItem>
@@ -1347,7 +1353,7 @@ export function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Job Role (optional)</Label>
-                    <p className="text-xs text-muted-foreground">Assign a job role to automatically add this contractor to related tasks</p>
+                    <p className="text-xs text-white/60">Assign a job role to automatically add this contractor to related tasks</p>
                     <Select value={inviteJobRoleId || 'none'} onValueChange={(v) => setInviteJobRoleId(v === 'none' ? undefined : v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a job role..." />
@@ -1379,7 +1385,7 @@ export function SettingsPage() {
                         >
                           Select All
                         </button>
-                        <span className="text-xs text-muted-foreground">|</span>
+                        <span className="text-xs text-white/60">|</span>
                         <button
                           type="button"
                           className="text-xs text-primary hover:underline"
@@ -1389,14 +1395,14 @@ export function SettingsPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="border rounded-lg p-3 space-y-3 max-h-[200px] overflow-y-auto bg-slate-50">
+                    <div className="border rounded-lg p-3 space-y-3 max-h-[200px] overflow-y-auto bg-white/[0.03]">
                       {allClients.map((client) => {
                         const clientProjects = allProjects.filter((p) => p.client?.id === client.id);
                         if (clientProjects.length === 0) return null;
 
                         return (
                           <div key={client.id} className="space-y-1.5">
-                            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            <div className="text-xs font-medium text-white/60 uppercase tracking-wide">
                               {client.name}
                             </div>
                             <div className="space-y-1 ml-2">
@@ -1429,12 +1435,12 @@ export function SettingsPage() {
                         );
                       })}
                       {allProjects.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-2">
+                        <p className="text-sm text-white/60 text-center py-2">
                           No projects available
                         </p>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-white/60">
                       {inviteProjectIds.length} of {allProjects.length} projects selected
                     </p>
                   </div>
@@ -1464,10 +1470,10 @@ export function SettingsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       {!user.googleId && (
-                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">Pending Invite</Badge>
+                        <Badge variant="outline" className="text-amber-400 border-amber-500/20 bg-amber-500/10">Pending Invite</Badge>
                       )}
                       {user.role === 'admin' ? (
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">Admin</Badge>
+                        <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20">Admin</Badge>
                       ) : (
                         <Select
                           value={user.accessLevel || 'viewer'}
@@ -1484,7 +1490,7 @@ export function SettingsPage() {
                           <SelectContent>
                             <SelectItem value="viewer">
                               <div className="flex items-center gap-2">
-                                <Eye className="h-4 w-4 text-gray-500" />
+                                <Eye className="h-4 w-4 text-white/50" />
                                 <span>Viewer</span>
                               </div>
                             </SelectItem>
@@ -1516,7 +1522,7 @@ export function SettingsPage() {
                         onClick={() => openEditDialog(user)}
                         title="Edit"
                       >
-                        <Pencil className="h-4 w-4 text-muted-foreground hover:text-[var(--theme-primary)]" />
+                        <Pencil className="h-4 w-4 text-white/60 hover:text-[var(--theme-primary)]" />
                       </Button>
                       {user.role !== 'admin' && (
                         <>
@@ -1527,7 +1533,7 @@ export function SettingsPage() {
                             onClick={() => archiveUser.mutate(user.id)}
                             title="Archive"
                           >
-                            <Archive className="h-4 w-4 text-muted-foreground hover:text-[var(--theme-primary)]" />
+                            <Archive className="h-4 w-4 text-white/60 hover:text-[var(--theme-primary)]" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1547,7 +1553,7 @@ export function SettingsPage() {
                             }}
                             title="Delete"
                           >
-                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                            <Trash2 className="h-4 w-4 text-white/60 hover:text-red-500" />
                           </Button>
                         </>
                       )}
@@ -1563,7 +1569,7 @@ export function SettingsPage() {
             <div className="mt-6">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-3"
+                className="flex items-center gap-2 text-sm font-medium text-white/60 hover:text-foreground transition-colors mb-3"
               >
                 {showArchived ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 <Archive className="h-4 w-4" />
@@ -1571,21 +1577,21 @@ export function SettingsPage() {
               </button>
 
               {showArchived && (
-                <div className="space-y-3 pl-6 border-l-2 border-slate-200">
+                <div className="space-y-3 pl-6 border-l-2 border-white/[0.08]">
                   {allUsers.filter(u => u.archived).map((user) => (
-                    <Card key={user.id} className="bg-slate-50 border-slate-200">
+                    <Card key={user.id} className="bg-white/[0.03] border-white/[0.08]">
                       <CardHeader className="py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="md" />
                             <div>
-                              <CardTitle className="text-base text-slate-600">{user.name}</CardTitle>
+                              <CardTitle className="text-base text-white/70">{user.name}</CardTitle>
                               <CardDescription className="flex items-center gap-2">
                                 <Mail className="h-3 w-3" />
                                 <span data-sensitive>{user.email}</span>
                               </CardDescription>
                               {user.archivedAt && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-xs text-white/60 mt-1">
                                   Archived {formatDate(user.archivedAt)}
                                 </p>
                               )}
@@ -1619,7 +1625,7 @@ export function SettingsPage() {
                               }}
                               title="Delete permanently"
                             >
-                              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                              <Trash2 className="h-4 w-4 text-white/60 hover:text-red-500" />
                             </Button>
                           </div>
                         </div>
@@ -1657,7 +1663,7 @@ export function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Job Role</Label>
-                  <p className="text-xs text-muted-foreground">Assign a job role to automatically add this contractor to related tasks</p>
+                  <p className="text-xs text-white/60">Assign a job role to automatically add this contractor to related tasks</p>
                   <Select value={editJobRoleId || 'none'} onValueChange={(v) => setEditJobRoleId(v === 'none' ? undefined : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a job role..." />
@@ -1696,7 +1702,7 @@ export function SettingsPage() {
                       <Send className="h-4 w-4 mr-2" />
                       {resendInvite.isPending ? 'Sending...' : 'Resend Invitation Email'}
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                    <p className="text-xs text-white/60 mt-2 text-center">
                       Use this if you made a typo in the email or the user didn't receive it
                     </p>
                   </div>
@@ -1709,8 +1715,8 @@ export function SettingsPage() {
         <TabsContent value="permissions" className="space-y-6 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Role Permissions</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg font-semibold text-white">Role Permissions</h2>
+              <p className="text-sm text-white/60">
                 Define what each role can access in the system
               </p>
             </div>
@@ -1729,13 +1735,13 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full text-white">
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 font-medium text-sm">Permission</th>
                       <th className="text-center py-3 px-4 font-medium text-sm">
                         <div className="flex flex-col items-center gap-1">
-                          <Eye className="h-4 w-4 text-gray-500" />
+                          <Eye className="h-4 w-4 text-white/50" />
                           <span>Viewer</span>
                         </div>
                       </th>
@@ -1760,70 +1766,70 @@ export function SettingsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">View assigned tasks</td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">View all tasks</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">Edit own tasks</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">Edit all tasks</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">Create new tasks</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">View own time entries</td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">View all time entries</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">Manage templates</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">Access Time Analytics</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox defaultChecked /></td>
                       <td className="py-3 px-4 text-center"><Checkbox checked disabled className="opacity-50" /></td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="hover:bg-white/[0.04]">
                       <td className="py-3 px-4 text-sm">Access Settings page</td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
                       <td className="py-3 px-4 text-center"><Checkbox /></td>
@@ -1848,7 +1854,7 @@ export function SettingsPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Contractors List */}
                 <div className="space-y-2">
-                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-3">Select Contractor</h3>
+                  <h3 className="font-medium text-sm text-white/60 uppercase tracking-wide mb-3">Select Contractor</h3>
                   <div className="space-y-2 p-1">
                     {allUsers
                       .filter((u) => u.role === 'contractor' && u.active)
@@ -1861,7 +1867,7 @@ export function SettingsPage() {
                             key={contractor.id}
                             className={cn(
                               'flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all',
-                              isSelected ? 'ring-2 ring-[var(--theme-primary)] bg-[var(--theme-primary)]/5 border-[var(--theme-primary)]/30' : 'hover:bg-slate-50'
+                              isSelected ? 'ring-2 ring-[var(--theme-primary)] bg-[var(--theme-primary)]/5 border-[var(--theme-primary)]/30' : 'hover:bg-white/[0.04]'
                             )}
                             onClick={() => setSelectedUserId(contractor.id)}
                           >
@@ -1869,7 +1875,7 @@ export function SettingsPage() {
                               <UserAvatar name={contractor.name} avatarUrl={contractor.avatarUrl} size="sm" />
                               <div>
                                 <p className="font-medium text-sm">{contractor.name}</p>
-                                <p className="text-xs text-muted-foreground">{contractor.accessLevel === 'project_manager' ? 'Project Manager' : contractor.accessLevel}</p>
+                                <p className="text-xs text-white/60">{contractor.accessLevel === 'project_manager' ? 'Project Manager' : contractor.accessLevel}</p>
                               </div>
                             </div>
                             <Badge variant="secondary" className="text-xs">
@@ -1879,7 +1885,7 @@ export function SettingsPage() {
                         );
                       })}
                     {allUsers.filter((u) => u.role === 'contractor' && u.active).length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">
+                      <p className="text-sm text-white/60 text-center py-4">
                         No active contractors
                       </p>
                     )}
@@ -1888,7 +1894,7 @@ export function SettingsPage() {
 
                 {/* Project Access Panel */}
                 <div className="space-y-2">
-                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-3">
+                  <h3 className="font-medium text-sm text-white/60 uppercase tracking-wide mb-3">
                     {selectedUserId
                       ? `Projects for ${allUsers.find((u) => u.id === selectedUserId)?.name}`
                       : 'Select a Contractor'}
@@ -1902,7 +1908,7 @@ export function SettingsPage() {
 
                         return (
                           <div key={client.id} className="space-y-2">
-                            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                            <div className="text-sm font-medium text-white/60 flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-[var(--theme-primary)]" />
                               {client.name}
                             </div>
@@ -1918,7 +1924,7 @@ export function SettingsPage() {
                                     key={project.id}
                                     className={cn(
                                       'flex items-center justify-between p-2 rounded-lg border transition-colors',
-                                      hasAccess ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                      hasAccess ? 'bg-green-500/10 border-green-500/20' : 'bg-white/[0.03] border-white/[0.08]'
                                     )}
                                   >
                                     <div className="flex items-center gap-3">
@@ -1947,7 +1953,7 @@ export function SettingsPage() {
                                         htmlFor={`access-${project.id}`}
                                         className={cn(
                                           'text-sm font-medium cursor-pointer',
-                                          hasAccess ? 'text-green-800' : 'text-gray-600'
+                                          hasAccess ? 'text-green-400' : 'text-white/60'
                                         )}
                                       >
                                         {project.name}
@@ -1962,13 +1968,13 @@ export function SettingsPage() {
                       })}
 
                       {allProjects.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-4">
+                        <p className="text-sm text-white/60 text-center py-4">
                           No projects available
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground py-8 bg-slate-50 rounded-lg">
+                    <div className="text-center text-white/60 py-8 bg-white/[0.03] rounded-lg">
                       <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Select a contractor to assign projects</p>
                     </div>
@@ -1982,8 +1988,8 @@ export function SettingsPage() {
         <TabsContent value="clients" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Client Management</h2>
-              <p className="text-sm text-muted-foreground">Manage client accounts and contacts</p>
+              <h2 className="text-lg font-semibold text-white">Client Management</h2>
+              <p className="text-sm text-white/60">Manage client accounts and contacts</p>
             </div>
             <Dialog open={showClientDialog} onOpenChange={(open) => { setShowClientDialog(open); if (!open) { resetClientForm(); setEditingClient(null); } }}>
               <DialogTrigger asChild>
@@ -2029,8 +2035,30 @@ export function SettingsPage() {
                       onChange={(e) => setClientGhlLocationId(e.target.value)}
                       placeholder="vI2auSPhucdsnmIBeVDK"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-white/60">
                       Find this in your GHL subaccount URL or settings
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>GBP Location ID</Label>
+                    <Input
+                      value={clientGbpLocationId}
+                      onChange={(e) => setClientGbpLocationId(e.target.value)}
+                      placeholder="accounts/123/locations/456"
+                    />
+                    <p className="text-xs text-white/60">
+                      Google Business Profile location ID for SEO intelligence
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Google Ads Customer ID</Label>
+                    <Input
+                      value={clientGoogleAdsCustomerId}
+                      onChange={(e) => setClientGoogleAdsCustomerId(e.target.value)}
+                      placeholder="123-456-7890"
+                    />
+                    <p className="text-xs text-white/60">
+                      Google Ads customer ID for SEO intelligence metrics
                     </p>
                   </div>
                   <Button
@@ -2090,7 +2118,7 @@ export function SettingsPage() {
                         className="hover:bg-transparent"
                         onClick={() => { openClientEditDialog(client); setShowClientDialog(true); }}
                       >
-                        <Pencil className="h-4 w-4 text-muted-foreground hover:text-[var(--theme-primary)]" />
+                        <Pencil className="h-4 w-4 text-white/60 hover:text-[var(--theme-primary)]" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -2099,7 +2127,7 @@ export function SettingsPage() {
                         onClick={() => deleteClient.mutate(client.id)}
                         disabled={client.projects && client.projects.length > 0}
                       >
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                        <Trash2 className="h-4 w-4 text-white/60 hover:text-red-500" />
                       </Button>
                     </div>
                   </div>
@@ -2107,12 +2135,12 @@ export function SettingsPage() {
                     <div className="mt-3 pt-3 border-t space-y-3">
                       {client.ghlLocationId && (
                         <div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
+                          <div className="flex items-center gap-2 text-xs text-white/60 mb-1.5">
                             <Code className="h-3 w-3" />
                             <span className="font-medium">GHL Location ID</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <code className="flex-1 text-xs bg-slate-100 px-2 py-1.5 rounded font-mono truncate">
+                            <code className="flex-1 text-xs bg-white/[0.06] px-2 py-1.5 rounded font-mono truncate">
                               {client.ghlLocationId}
                             </code>
                             <Button
@@ -2133,12 +2161,12 @@ export function SettingsPage() {
                       )}
                       {client.embedToken && (
                         <div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
+                          <div className="flex items-center gap-2 text-xs text-white/60 mb-1.5">
                             <Code className="h-3 w-3" />
                             <span className="font-medium">Embed Token</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <code className="flex-1 text-xs bg-slate-100 px-2 py-1.5 rounded font-mono truncate">
+                            <code className="flex-1 text-xs bg-white/[0.06] px-2 py-1.5 rounded font-mono truncate">
                               {client.embedToken}
                             </code>
                             <Button
@@ -2175,7 +2203,7 @@ export function SettingsPage() {
               </Card>
             ))}
             {allClients.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-sm text-white/60 text-center py-8">
                 No clients yet. Add one manually or they will be created automatically from Stripe subscriptions.
               </p>
             )}
@@ -2199,7 +2227,7 @@ export function SettingsPage() {
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 {/* Add new viewer */}
-                <div className="space-y-2 p-3 bg-slate-50 rounded-lg">
+                <div className="space-y-2 p-3 bg-white/[0.03] rounded-lg">
                   <Label className="text-sm font-medium">Add New Viewer</Label>
                   <div className="flex gap-2">
                     <Input
@@ -2230,16 +2258,16 @@ export function SettingsPage() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Current Viewers</Label>
                   {viewersLoading ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
+                    <p className="text-sm text-white/60 text-center py-4">Loading...</p>
                   ) : clientViewers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">No viewers yet</p>
+                    <p className="text-sm text-white/60 text-center py-4">No viewers yet</p>
                   ) : (
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {clientViewers.map((viewer) => (
-                        <div key={viewer.id} className="flex items-center justify-between p-2 bg-white border rounded-lg">
+                        <div key={viewer.id} className="flex items-center justify-between p-2 bg-white/[0.06] border rounded-lg">
                           <div>
                             <p className="text-sm font-medium">{viewer.name || <span data-sensitive>{viewer.email}</span>}</p>
-                            {viewer.name && <p className="text-xs text-muted-foreground" data-sensitive>{viewer.email}</p>}
+                            {viewer.name && <p className="text-xs text-white/60" data-sensitive>{viewer.email}</p>}
                           </div>
                           <Button
                             variant="ghost"
@@ -2248,7 +2276,7 @@ export function SettingsPage() {
                             onClick={() => viewersClientId && removeViewer.mutate({ clientId: viewersClientId, viewerId: viewer.id })}
                             disabled={removeViewer.isPending}
                           >
-                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                            <Trash2 className="h-4 w-4 text-white/60 hover:text-red-500" />
                           </Button>
                         </div>
                       ))}
@@ -2263,8 +2291,8 @@ export function SettingsPage() {
         <TabsContent value="projects" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Project Management</h2>
-              <p className="text-sm text-muted-foreground">Create and configure client projects</p>
+              <h2 className="text-lg font-semibold text-white">Project Management</h2>
+              <p className="text-sm text-white/60">Create and configure client projects</p>
             </div>
             <Dialog open={showProjectDialog} onOpenChange={(open) => { setShowProjectDialog(open); if (!open) { resetProjectForm(); setEditingProject(null); } }}>
               <DialogTrigger asChild>
@@ -2373,7 +2401,7 @@ export function SettingsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 text-xs text-orange-600 border-orange-300 hover:bg-orange-50"
+                          className="h-8 text-xs text-orange-400 border-orange-500/20 hover:bg-orange-500/10"
                           onClick={() => {
                             setOffboardingProject({ id: project.id, name: project.name, clientName: project.client?.name });
                             setShowOffboardDialog(true);
@@ -2388,7 +2416,7 @@ export function SettingsPage() {
                         className="hover:bg-transparent"
                         onClick={() => { openProjectEditDialog({ ...project, clientId: project.client?.id || '' }); setShowProjectDialog(true); }}
                       >
-                        <Pencil className="h-4 w-4 text-muted-foreground hover:text-[var(--theme-primary)]" />
+                        <Pencil className="h-4 w-4 text-white/60 hover:text-[var(--theme-primary)]" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -2396,7 +2424,7 @@ export function SettingsPage() {
                         className="hover:bg-transparent"
                         onClick={() => deleteProject.mutate(project.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                        <Trash2 className="h-4 w-4 text-white/60 hover:text-red-500" />
                       </Button>
                     </div>
                   </div>
@@ -2404,7 +2432,7 @@ export function SettingsPage() {
               </Card>
             ))}
             {allProjects.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-sm text-white/60 text-center py-8">
                 No projects yet. Add one manually or they will be created automatically from Stripe subscriptions.
               </p>
             )}
@@ -2420,8 +2448,8 @@ export function SettingsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Current package:</p>
+                <div className="p-3 bg-white/[0.03] rounded-lg">
+                  <p className="text-sm text-white/60">Current package:</p>
                   <p className="font-medium">{upgradingProject?.planType?.replace(/_/g, ' ') || 'None'}</p>
                 </div>
                 <div className="space-y-2">
@@ -2439,8 +2467,8 @@ export function SettingsPage() {
                     <option value="custom_website_addon">Custom Website Add-on</option>
                   </select>
                 </div>
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-sm text-blue-400">
                     Tasks from templates already applied to this project will be skipped to prevent duplicates.
                   </p>
                 </div>
@@ -2465,15 +2493,15 @@ export function SettingsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Client:</p>
+                <div className="p-3 bg-white/[0.03] rounded-lg">
+                  <p className="text-sm text-white/60">Client:</p>
                   <p className="font-medium">{offboardingProject?.clientName || 'Unknown'}</p>
                 </div>
-                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-sm text-orange-800">
+                <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                  <p className="text-sm text-orange-400">
                     This will:
                   </p>
-                  <ul className="text-sm text-orange-800 list-disc list-inside mt-1 space-y-1">
+                  <ul className="text-sm text-orange-400 list-disc list-inside mt-1 space-y-1">
                     <li>Create offboarding tasks from your offboarding templates</li>
                     <li>Change the project status to "canceled"</li>
                   </ul>
@@ -2502,8 +2530,8 @@ export function SettingsPage() {
         <TabsContent value="tags" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Tag Management</h2>
-              <p className="text-sm text-muted-foreground">Organize tasks with color-coded tags</p>
+              <h2 className="text-lg font-semibold text-white">Tag Management</h2>
+              <p className="text-sm text-white/60">Organize tasks with color-coded tags</p>
             </div>
             <Dialog open={showTagDialog} onOpenChange={setShowTagDialog}>
               <DialogTrigger asChild>
@@ -2551,7 +2579,7 @@ export function SettingsPage() {
                   {allTags.map((tag) => (
                     <div
                       key={tag.id}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg hover:bg-white/[0.06] transition-colors"
                     >
                       <div
                         className="w-4 h-4 rounded-full ring-1 ring-black/10"
@@ -2564,18 +2592,18 @@ export function SettingsPage() {
                         className="h-6 w-6 ml-1 hover:bg-transparent"
                         onClick={() => deleteTag.mutate(tag.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+                        <Trash2 className="h-3.5 w-3.5 text-white/60 hover:text-red-500" />
                       </Button>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Plus className="h-6 w-6 text-slate-400" />
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/[0.06] flex items-center justify-center">
+                    <Plus className="h-6 w-6 text-white/40" />
                   </div>
-                  <p className="text-muted-foreground font-medium">No tags yet</p>
-                  <p className="text-sm text-slate-400 mt-1">Create your first tag to organize tasks</p>
+                  <p className="text-white/60 font-medium">No tags yet</p>
+                  <p className="text-sm text-white/40 mt-1">Create your first tag to organize tasks</p>
                 </div>
               )}
             </CardContent>
@@ -2586,8 +2614,8 @@ export function SettingsPage() {
         <TabsContent value="roles" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Role Management</h2>
-              <p className="text-sm text-muted-foreground">Create job roles to assign contractors and tasks</p>
+              <h2 className="text-lg font-semibold text-white">Role Management</h2>
+              <p className="text-sm text-white/60">Create job roles to assign contractors and tasks</p>
             </div>
             <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
               <DialogTrigger asChild>
@@ -2644,7 +2672,7 @@ export function SettingsPage() {
                   {allRoles.map((role) => (
                     <div
                       key={role.id}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg hover:bg-white/[0.06] transition-colors"
                     >
                       <div
                         className="w-4 h-4 rounded-full ring-1 ring-black/10"
@@ -2653,7 +2681,7 @@ export function SettingsPage() {
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">{role.name}</span>
                         {role.description && (
-                          <span className="text-xs text-muted-foreground">{role.description}</span>
+                          <span className="text-xs text-white/60">{role.description}</span>
                         )}
                       </div>
                       <Button
@@ -2662,18 +2690,18 @@ export function SettingsPage() {
                         className="h-6 w-6 ml-1 hover:bg-transparent"
                         onClick={() => deleteRole.mutate(role.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+                        <Trash2 className="h-3.5 w-3.5 text-white/60 hover:text-red-500" />
                       </Button>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-slate-400" />
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/[0.06] flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white/40" />
                   </div>
-                  <p className="text-muted-foreground font-medium">No roles yet</p>
-                  <p className="text-sm text-slate-400 mt-1">Create roles to assign contractors to task types</p>
+                  <p className="text-white/60 font-medium">No roles yet</p>
+                  <p className="text-sm text-white/40 mt-1">Create roles to assign contractors to task types</p>
                 </div>
               )}
             </CardContent>
@@ -2684,8 +2712,8 @@ export function SettingsPage() {
         <TabsContent value="appearance" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold">Appearance Settings</h2>
-              <p className="text-sm text-muted-foreground">Customize the look and feel of the application</p>
+              <h2 className="text-lg font-semibold text-white">Appearance Settings</h2>
+              <p className="text-sm text-white/60">Customize the look and feel of the application</p>
             </div>
             <Button
               variant="outline"
@@ -2735,7 +2763,7 @@ export function SettingsPage() {
                         className="flex-1 font-mono text-sm"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">Main brand color for navigation, headers</p>
+                    <p className="text-xs text-white/60">Main brand color for navigation, headers</p>
                   </div>
 
                   <div className="space-y-2">
@@ -2753,7 +2781,7 @@ export function SettingsPage() {
                         className="flex-1 font-mono text-sm"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">Highlights, CTAs, and active states</p>
+                    <p className="text-xs text-white/60">Highlights, CTAs, and active states</p>
                   </div>
 
                   <div className="space-y-2">
@@ -2846,7 +2874,7 @@ export function SettingsPage() {
                   <Label className="text-sm font-medium mb-3 block">Status Colors</Label>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Success</Label>
+                      <Label className="text-xs text-white/60">Success</Label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -2863,7 +2891,7 @@ export function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Warning</Label>
+                      <Label className="text-xs text-white/60">Warning</Label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -2880,7 +2908,7 @@ export function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Error</Label>
+                      <Label className="text-xs text-white/60">Error</Label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -2918,7 +2946,7 @@ export function SettingsPage() {
                         'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                         effectiveTheme.borderRadius === radius
                           ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/5'
-                          : 'border-slate-200 hover:border-slate-300'
+                          : 'border-white/[0.08] hover:border-white/[0.12]'
                       )}
                       onClick={() => handleThemeChange(['borderRadius'], radius)}
                     >
@@ -3011,26 +3039,26 @@ export function SettingsPage() {
                 {/* Logo Upload */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Logo</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/60">
                     Square logo (512x512px)
                   </p>
                   {/* Logo Dropzone */}
                   <div
                     className={cn(
                       "border-2 border-dashed rounded-[var(--radius)] p-4 text-center cursor-pointer transition-colors h-32 flex items-center justify-center",
-                      "hover:border-[var(--theme-primary)] hover:bg-slate-50",
-                      effectiveTheme.branding?.logoUrl ? "border-green-300 bg-green-50" : "border-slate-300"
+                      "hover:border-[var(--theme-primary)] hover:bg-white/[0.04]",
+                      effectiveTheme.branding?.logoUrl ? "border-green-500/20 bg-green-500/10" : "border-white/[0.12]"
                     )}
                     onDragOver={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.add('border-[var(--theme-primary)]', 'bg-slate-50');
+                      e.currentTarget.classList.add('border-[var(--theme-primary)]', 'bg-white/[0.03]');
                     }}
                     onDragLeave={(e) => {
-                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-slate-50');
+                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-white/[0.03]');
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-slate-50');
+                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-white/[0.03]');
                       const file = e.dataTransfer.files[0];
                       if (file && file.type.startsWith('image/')) {
                         const reader = new FileReader();
@@ -3062,16 +3090,16 @@ export function SettingsPage() {
                         <img
                           src={effectiveTheme.branding.logoUrl}
                           alt="Logo preview"
-                          className="w-16 h-16 object-contain rounded-[var(--radius)] border bg-white"
+                          className="w-16 h-16 object-contain rounded-[var(--radius)] border bg-white/[0.06]"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = '/logo.png';
                           }}
                         />
-                        <p className="text-xs text-muted-foreground">Click to replace</p>
+                        <p className="text-xs text-white/60">Click to replace</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1">
-                        <Upload className="h-6 w-6 text-muted-foreground" />
+                        <Upload className="h-6 w-6 text-white/60" />
                         <p className="text-xs font-medium">Drop logo here</p>
                       </div>
                     )}
@@ -3100,26 +3128,26 @@ export function SettingsPage() {
                 {/* Background Image */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Background Image</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/60">
                     Optional background
                   </p>
                   {/* Background Image Dropzone */}
                   <div
                     className={cn(
                       "border-2 border-dashed rounded-[var(--radius)] p-4 text-center cursor-pointer transition-colors h-32 flex items-center justify-center",
-                      "hover:border-[var(--theme-primary)] hover:bg-slate-50",
-                      effectiveTheme.branding?.backgroundImage ? "border-green-300 bg-green-50" : "border-slate-300"
+                      "hover:border-[var(--theme-primary)] hover:bg-white/[0.04]",
+                      effectiveTheme.branding?.backgroundImage ? "border-green-500/20 bg-green-500/10" : "border-white/[0.12]"
                     )}
                     onDragOver={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.add('border-[var(--theme-primary)]', 'bg-slate-50');
+                      e.currentTarget.classList.add('border-[var(--theme-primary)]', 'bg-white/[0.03]');
                     }}
                     onDragLeave={(e) => {
-                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-slate-50');
+                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-white/[0.03]');
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-slate-50');
+                      e.currentTarget.classList.remove('border-[var(--theme-primary)]', 'bg-white/[0.03]');
                       const file = e.dataTransfer.files[0];
                       if (file && file.type.startsWith('image/')) {
                         const reader = new FileReader();
@@ -3152,11 +3180,11 @@ export function SettingsPage() {
                           className="w-20 h-14 rounded-[var(--radius)] border bg-cover bg-center"
                           style={{ backgroundImage: `url('${effectiveTheme.branding.backgroundImage}')` }}
                         />
-                        <p className="text-xs text-muted-foreground">Click to replace</p>
+                        <p className="text-xs text-white/60">Click to replace</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1">
-                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                        <ImagePlus className="h-6 w-6 text-white/60" />
                         <p className="text-xs font-medium">Drop image here</p>
                       </div>
                     )}
@@ -3185,7 +3213,7 @@ export function SettingsPage() {
                 {/* Background Color */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Background Color</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/60">
                     App background color
                   </p>
                   {/* Color Preview Box */}
@@ -3247,7 +3275,7 @@ export function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-4 p-4 bg-white/[0.03] rounded-lg">
                 <Button className="bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-dark)]">
                   Primary Button
                 </Button>
@@ -3291,7 +3319,7 @@ export function SettingsPage() {
           </Card>
 
           {isUpdating && (
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm text-white/60">
               <RotateCw className="h-4 w-4 animate-spin inline mr-2" />
               Saving changes...
             </div>
