@@ -14,23 +14,14 @@ router.get('/google/callback', (req: Request, res: Response, next: NextFunction)
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
   passport.authenticate('google', (err: Error | null, user: Express.User | false) => {
-    if (err) {
-      console.error('[Auth] OAuth error:', err.message);
+    if (err || !user) {
       return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
-    if (!user) {
-      console.error('[Auth] OAuth returned no user');
-      return res.redirect(`${clientUrl}/login?error=auth_failed`);
-    }
-    console.log('[Auth] OAuth success for:', user.email);
     req.logIn(user, (loginErr) => {
       if (loginErr) {
-        console.error('[Auth] Login error:', loginErr.message);
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
       }
-      console.log('[Auth] Session created:', req.sessionID, 'for user:', user.email);
-      // Debug: include session info in redirect to diagnose login loop
-      return res.redirect(`${clientUrl}/dashboard?_dbg=ok&_sid=${req.sessionID.substring(0, 8)}`);
+      return res.redirect(`${clientUrl}/dashboard`);
     });
   })(req, res, next);
 });
@@ -58,11 +49,7 @@ router.post('/logout', (req: Request, res: Response) => {
 });
 
 // Get current user
-router.get('/me', (req: Request, res: Response) => {
-  console.log('[Auth] /me called - sessionID:', req.sessionID, 'hasUser:', !!req.user, 'isAuth:', req.isAuthenticated(), 'cookies:', Object.keys(req.cookies || {}), 'hasCookieHeader:', !!req.headers.cookie);
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+router.get('/me', isAuthenticated, (req: Request, res: Response) => {
   res.json({ user: req.user });
 });
 
