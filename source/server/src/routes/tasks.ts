@@ -2326,10 +2326,8 @@ router.post('/:id/watchers', isAuthenticated, async (req: Request, res: Response
     });
 
     res.status(201).json(watcher);
-  } catch (error: any) {
-    console.error('Watcher POST error:', error?.message, error?.code, error?.meta);
-    // Temporary: surface real error for debugging
-    res.status(500).json({ error: error?.message || 'Unknown watcher error', code: error?.code, meta: error?.meta });
+  } catch (error) {
+    next(error);
   }
 });
 
