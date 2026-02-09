@@ -397,15 +397,15 @@ export function HelpPage() {
                       <ul className="space-y-2 ml-2">
                         <li className="flex items-center gap-2 p-2 bg-green-500/10 rounded">
                           <span className="text-green-400">🎉</span>
-                          <span><strong className="text-white">Early completion:</strong> +50% bonus points</span>
+                          <span><strong className="text-white">Early completion:</strong> +50% total task score</span>
                         </li>
                         <li className="flex items-center gap-2 p-2 bg-blue-500/10 rounded">
                           <span className="text-blue-400">✓</span>
-                          <span><strong className="text-white">On-time completion:</strong> +25% bonus points</span>
+                          <span><strong className="text-white">On-time completion:</strong> +25% total task score</span>
                         </li>
                         <li className="flex items-center gap-2 p-2 bg-red-500/10 rounded">
                           <span className="text-red-400">⚠</span>
-                          <span><strong className="text-white">Late completion:</strong> −50% points (still counts!)</span>
+                          <span><strong className="text-white">Late completion:</strong> −50% total task score (still counts!)</span>
                         </li>
                       </ul>
                     </div>
@@ -415,13 +415,34 @@ export function HelpPage() {
                       <ul className="space-y-1 ml-2">
                         <li className="flex items-start gap-2">
                           <span className="text-primary mt-1">•</span>
-                          <span><strong className="text-white">+2 points</strong> per completed subtask</span>
+                          <span><strong className="text-white">+5 points</strong> per completed subtask</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-primary mt-1">•</span>
-                          <span><strong className="text-white">+1 point</strong> per hour of time tracked</span>
+                          <span><strong className="text-white">+3 points</strong> per hour of time tracked</span>
                         </li>
                       </ul>
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-white mb-2">Completion Rate Bonus:</p>
+                      <div className="p-3 bg-white/[0.03] rounded-lg space-y-2">
+                        <p>Your completion rate compares tasks you finished this month vs. tasks that were due (including overdue ones). A higher rate means up to <strong className="text-white">+20% bonus</strong> on your total score!</p>
+                        <ul className="space-y-1 ml-2 text-sm">
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-400 mt-0.5">•</span>
+                            <span><strong className="text-white">100% completion:</strong> Full +20% bonus</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-yellow-400 mt-0.5">•</span>
+                            <span><strong className="text-white">50% completion:</strong> +10% bonus</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-white/40 mt-0.5">•</span>
+                            <span><strong className="text-white">0% completion:</strong> No bonus (but no penalty)</span>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -540,7 +561,7 @@ export function HelpPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span>📝</span>
-                      <span>Break large tasks into subtasks - each completed subtask is worth +2 points</span>
+                      <span>Break large tasks into subtasks - each completed subtask is worth +5 points</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span>🔥</span>
@@ -548,7 +569,11 @@ export function HelpPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span>⏱️</span>
-                      <span>Log your time! Each hour tracked adds +1 point to your score</span>
+                      <span>Log your time! Each hour tracked adds +3 points to your score</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>✅</span>
+                      <span>Finish all your due tasks - 100% completion rate gives you a +20% score bonus</span>
                     </li>
                   </ul>
                 </section>

@@ -396,6 +396,7 @@ export const dashboard = {
       points: number;
       tasksCompleted: number;
       onTimeRate: number;
+      completionRate: number;
       streak: number;
       hoursTracked: number;
       badges: { emoji: string; label: string; description: string }[];

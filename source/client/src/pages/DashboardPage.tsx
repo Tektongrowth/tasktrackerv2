@@ -607,6 +607,8 @@ export function DashboardPage() {
                           <span>{entry.tasksCompleted} tasks</span>
                           <span>·</span>
                           <span>{entry.onTimeRate}% on time</span>
+                          <span>·</span>
+                          <span>{entry.completionRate}% done</span>
                           {entry.streak > 0 && (
                             <>
                               <span>·</span>

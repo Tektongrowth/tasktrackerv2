@@ -435,6 +435,22 @@ router.get('/leaderboard', isAuthenticated, async (req: Request, res: Response, 
       }
     });
 
+    // Get incomplete tasks assigned to users, due this month or overdue (for completion rate)
+    const incompleteDueTasks = await prisma.task.findMany({
+      where: {
+        status: { not: 'completed' },
+        dueDate: { not: null, lte: new Date(now.getFullYear(), now.getMonth() + 1, 0) },
+        assignees: { some: {} }
+      },
+      include: {
+        assignees: {
+          include: {
+            user: { select: { id: true } }
+          }
+        }
+      }
+    });
+
     // Point values by priority
     const priorityPoints: Record<string, number> = {
       low: 5,
@@ -487,14 +503,14 @@ router.get('/leaderboard', isAuthenticated, async (req: Request, res: Response, 
 
       // Calculate subtask bonus
       const completedSubtasks = task.subtasks.filter(s => s.completed).length;
-      const subtaskBonus = completedSubtasks * 2;
+      const subtaskBonus = completedSubtasks * 5;
 
-      // Calculate time bonus (1 point per hour tracked)
+      // Calculate time bonus (3 points per hour tracked)
       const totalMinutes = task.timeEntries.reduce((sum, e) => sum + (e.durationMinutes || 0), 0);
-      const timeBonus = Math.floor(totalMinutes / 60);
+      const timeBonus = Math.floor(totalMinutes / 60) * 3;
 
-      // Total points for this task
-      const taskPoints = Math.round(basePoints * timingMultiplier) + subtaskBonus + timeBonus;
+      // Total points for this task (timing multiplier applies to everything)
+      const taskPoints = Math.round((basePoints + subtaskBonus + timeBonus) * timingMultiplier);
 
       // Distribute points to all assignees
       for (const assignee of task.assignees) {
@@ -592,14 +608,25 @@ router.get('/leaderboard', isAuthenticated, async (req: Request, res: Response, 
         badges.push({ emoji: '🔍', label: 'Detail Master', description: '15+ subtasks completed' });
       }
 
+      // Calculate completion rate multiplier
+      const incompleteCount = incompleteDueTasks.filter(t =>
+        t.assignees.some(a => a.user.id === user.id)
+      ).length;
+      const completedCount = user.tasksCompleted;
+      const completionRate = completedCount + incompleteCount > 0
+        ? completedCount / (completedCount + incompleteCount)
+        : 1.0;
+      const completionMultiplier = 1 + (0.2 * completionRate);
+
       return {
         id: user.id,
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl,
-        points: user.points,
+        points: Math.round(user.points * completionMultiplier),
         tasksCompleted: user.tasksCompleted,
         onTimeRate: Math.round(onTimeRate * 100),
+        completionRate: Math.round(completionRate * 100),
         streak,
         hoursTracked: Math.round(user.hoursTracked * 10) / 10,
         badges
