@@ -65,12 +65,30 @@ export async function analyzeContent(digestId: string): Promise<{
   }));
 
   const settings = await prisma.seoSettings.findFirst();
-  const prompt = buildAnalysisPrompt(articles, settings);
 
-  console.log(`[AIAnalyzer] Analyzing ${articles.length} articles for digest ${digestId}`);
-  const response = await callClaudeApi(prompt.userPrompt, prompt.systemPrompt);
-  const recommendations = parseRecommendations(response, articles);
-  console.log(`[AIAnalyzer] Parsed ${recommendations.length} recommendations`);
+  // Chunk articles into batches of 20 to avoid truncated responses
+  const BATCH_SIZE = 20;
+  const allRecommendations: ParsedRecommendation[] = [];
+
+  console.log(`[AIAnalyzer] Analyzing ${articles.length} articles in batches of ${BATCH_SIZE} for digest ${digestId}`);
+
+  for (let i = 0; i < articles.length; i += BATCH_SIZE) {
+    const batch = articles.slice(i, i + BATCH_SIZE);
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(articles.length / BATCH_SIZE);
+
+    console.log(`[AIAnalyzer] Processing batch ${batchNum}/${totalBatches} (${batch.length} articles)`);
+
+    const prompt = buildAnalysisPrompt(batch, settings);
+    const response = await callClaudeApi(prompt.userPrompt, prompt.systemPrompt);
+    const batchRecs = parseRecommendations(response, batch);
+
+    console.log(`[AIAnalyzer] Batch ${batchNum}: ${batchRecs.length} recommendations`);
+    allRecommendations.push(...batchRecs);
+  }
+
+  const recommendations = allRecommendations;
+  console.log(`[AIAnalyzer] Total: ${recommendations.length} recommendations from ${articles.length} articles`);
 
   const taskDrafts = await generateTaskDrafts(recommendations);
   console.log(`[AIAnalyzer] Generated ${taskDrafts.length} task drafts`);
