@@ -512,4 +512,54 @@ router.get('/job-history', async (req: Request, res: Response) => {
   }
 });
 
+// Diagnostic endpoint — shows latest digest details for debugging
+router.get('/debug/latest', async (_req: Request, res: Response) => {
+  try {
+    const digests = await prisma.seoDigest.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+      include: {
+        recommendations: { take: 2 },
+        taskDrafts: { take: 2 },
+        sopDrafts: { take: 2 },
+        _count: {
+          select: { recommendations: true, taskDrafts: true, sopDrafts: true },
+        },
+      },
+    });
+
+    const fetchResultCounts = await Promise.all(
+      digests.map(d => prisma.seoFetchResult.count({ where: { digestId: d.id } }))
+    );
+
+    const jobs = await prisma.scheduledJobRun.findMany({
+      where: { jobName: { startsWith: 'seo' } },
+      orderBy: { startedAt: 'desc' },
+      take: 5,
+    });
+
+    res.json({
+      digests: digests.map((d, i) => ({
+        id: d.id,
+        period: d.period,
+        status: d.status,
+        errorMessage: d.errorMessage,
+        sourcesFetched: d.sourcesFetched,
+        fetchResultsInDb: fetchResultCounts[i],
+        recommendationsGenerated: d.recommendationsGenerated,
+        taskDraftsCreated: d.taskDraftsCreated,
+        sopDraftsCreated: d.sopDraftsCreated,
+        actualCounts: d._count,
+        sampleRecommendations: d.recommendations,
+        createdAt: d.createdAt,
+        completedAt: d.completedAt,
+      })),
+      recentJobs: jobs,
+    });
+  } catch (error) {
+    console.error('[SEO Routes] Debug failed:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 export default router;
