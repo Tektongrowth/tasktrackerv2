@@ -534,18 +534,23 @@ router.get('/leaderboard', isAuthenticated, async (req: Request, res: Response, 
 
     // Calculate streaks and determine badges
     const leaderboard = Object.values(userScores).map(user => {
-      // Calculate streak (consecutive days with completions)
+      // Calculate streak (consecutive weekdays with completions, skip weekends)
       const dates = Array.from(user.completionDates).sort().reverse();
       let streak = 0;
       const today = new Date().toISOString().split('T')[0];
       let checkDate = new Date(today);
 
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 60; i++) {
+        const day = checkDate.getDay();
+        if (day === 0 || day === 6) {
+          checkDate.setDate(checkDate.getDate() - 1);
+          continue;
+        }
         const dateStr = checkDate.toISOString().split('T')[0];
         if (dates.includes(dateStr)) {
           streak++;
           checkDate.setDate(checkDate.getDate() - 1);
-        } else if (i > 0) {
+        } else if (streak > 0) {
           break;
         } else {
           checkDate.setDate(checkDate.getDate() - 1);
