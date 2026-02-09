@@ -5,6 +5,7 @@ import { runSeoIntelligencePipeline, retryDigest } from '../jobs/seoIntelligence
 import { applyDraftSopEdit, listSopDocuments } from '../services/seo/googleDocs.js';
 import { fetchRssSource, fetchYouTubeChannel, fetchRedditSubreddit, fetchWebPage } from '../services/seo/sourceFetcher.js';
 import { seedSeoSources } from '../services/seo/seedSeoSources.js';
+import { buildAnalysisPrompt, callClaudeApi, parseRecommendations } from '../services/seo/aiAnalyzer.js';
 
 const router = Router();
 
@@ -559,6 +560,62 @@ router.get('/debug/latest', async (_req: Request, res: Response) => {
   } catch (error) {
     console.error('[SEO Routes] Debug failed:', error);
     res.status(500).json({ error: String(error) });
+  }
+});
+
+// Debug: test AI analysis on a small sample of articles
+router.get('/debug/test-analysis', async (_req: Request, res: Response) => {
+  try {
+    // Grab the latest digest's fetch results (just 5 to keep it cheap)
+    const latestDigest = await prisma.seoDigest.findFirst({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!latestDigest) {
+      return res.json({ error: 'No digests found' });
+    }
+
+    const fetchResults = await prisma.seoFetchResult.findMany({
+      where: { digestId: latestDigest.id },
+      include: { source: true },
+      take: 5,
+    });
+
+    if (fetchResults.length === 0) {
+      return res.json({ error: 'No fetch results found', digestId: latestDigest.id });
+    }
+
+    const articles = fetchResults.map((fr) => ({
+      id: fr.id,
+      url: fr.url,
+      title: fr.title,
+      content: fr.content.substring(0, 2000),
+      sourceName: fr.source.name,
+      sourceTier: fr.source.tier,
+      category: fr.source.category,
+    }));
+
+    const settings = await prisma.seoSettings.findFirst();
+    const prompt = buildAnalysisPrompt(articles, settings);
+
+    const rawResponse = await callClaudeApi(prompt.userPrompt, prompt.systemPrompt);
+    const parsed = parseRecommendations(rawResponse, articles);
+
+    res.json({
+      digestId: latestDigest.id,
+      articlesUsed: articles.length,
+      promptLength: prompt.userPrompt.length,
+      rawResponseLength: rawResponse.length,
+      rawResponsePreview: rawResponse.substring(0, 2000),
+      parsedRecommendations: parsed.length,
+      parsed: parsed.slice(0, 2),
+    });
+  } catch (error) {
+    console.error('[SEO Debug] Test analysis failed:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
   }
 });
 
