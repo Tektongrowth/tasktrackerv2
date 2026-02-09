@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play, Settings, FileText, CheckSquare, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/toaster';
 import { DigestCard } from '@/components/seo/DigestCard';
 import { RecommendationCard } from '@/components/seo/RecommendationCard';
 import { TaskDraftApprovalDialog } from '@/components/seo/TaskDraftApprovalDialog';
@@ -64,7 +65,10 @@ export function SeoIntelligencePage() {
         <h1 className="text-2xl font-bold text-white">SEO Intelligence</h1>
         <Button
           size="sm"
-          onClick={() => runPipeline.mutate()}
+          onClick={() => runPipeline.mutate(undefined, {
+            onSuccess: () => toast({ title: 'Pipeline triggered — running in background' }),
+            onError: (err) => toast({ title: `Pipeline failed: ${err.message}`, variant: 'destructive' }),
+          })}
           disabled={runPipeline.isPending}
         >
           <Play className="h-4 w-4 mr-1" />
