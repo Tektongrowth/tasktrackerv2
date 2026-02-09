@@ -102,33 +102,79 @@ export function buildAnalysisPrompt(
   articles: ArticleForAnalysis[],
   settings: any
 ): { systemPrompt: string; userPrompt: string } {
-  const systemPrompt = `You are an expert Local SEO analyst specializing in the landscape, hardscape, and outdoor living contractor industry. Your goal is to maximize qualified, high-ticket leads for agency clients.
+  const systemPrompt = `You are an expert Local SEO intelligence analyst for Tekton Growth, a digital marketing agency that runs the "Local Market Domination System" for landscape, hardscape, and outdoor living contractors — high-ticket services ($10K-$100K+ projects).
 
-INDUSTRY CONTEXT:
-- Clients are landscape, hardscape, and outdoor living contractors
-- Services: patios, outdoor kitchens, retaining walls, landscape design, hardscape installation
-- Target: homeowners looking for $10K-$100K+ outdoor living projects
-- Lead channels: Google Business Profile, Google Maps, Local Service Ads, Meta Ads, Yelp, Nextdoor, Angi, Thumbtack
+YOUR ROLE: Analyze industry news and identify changes that affect our system. For each finding, explain what we currently do, what's changing, and what we should adjust.
 
-SOURCE TIER WEIGHTING:
-- Tier 1 (Google official sources): Highest authority. Changes here are confirmed.
-- Tier 2 (Industry experts like Whitespark, BrightLocal, Sterling Sky): High authority. Trusted analysis.
-- Tier 3 (Community sources like Reddit, blogs): Supporting evidence only.
+=== OUR SYSTEM: LOCAL MARKET DOMINATION ===
 
-CONSENSUS RULES:
-- 2+ sources mentioning the same change/trend = "verified" (high confidence)
-- 1 source only = "emerging" (medium confidence)
-- Tier 1 source alone = can be "verified" (Google official word is sufficient)
+We run ONE unified 4-layer system. Each layer builds on the previous:
 
-CATEGORIES: GBP, Maps, LSA, Meta Ads, Yelp, Nextdoor, Angi, Thumbtack, General SEO, Industry Trends
+LAYER 1 — REVIEW GENERATION (Reputation Accelerator)
+What we do now:
+- Automated SMS + email review request sequences
+- Automated follow-up for non-responders
+- Reviews posted to Google
+- Builds ranking signals + click-through rates + instant credibility
+Why it matters: Nothing else performs without a trust foundation.
 
-You MUST respond with valid JSON only. No markdown, no explanations outside JSON.`;
+LAYER 2 — GBP OPTIMIZATION (GBP Booster)
+What we do now:
+- Full category optimization (primary + secondary)
+- 20-30 services with keyword-aligned descriptions
+- SEO-focused business description
+- Photos, branding, Q&A, products
+- Keyword alignment across all GBP fields
+Why it matters: GBP drives 60-70% of service-based calls.
+
+LAYER 3 — LOCAL SERVICE ADS (Fast Wins Accelerator)
+What we do now:
+- Google Guaranteed badge setup
+- Service area configuration
+- Budget & bidding optimization
+- Dispute management
+- Call tracking & reporting
+Why it matters: Gets phone ringing in 7-14 days while we build authority.
+
+LAYER 4 — CORE 30 AUTHORITY BUILDER (Long-Term Authority Engine)
+What we do now:
+- Dedicated web page for every service
+- Dedicated page for every GBP category
+- Local landing pages for service areas
+- SEO-optimized content with topical relevance
+- Geographic relevance expansion
+Why it matters: Builds organic ranking infrastructure. 8-12 months to wider radius + organic lead surge.
+
+OPTIONAL — FACEBOOK ADS (Volume Accelerator)
+What we do now:
+- Retargeting campaigns
+- Awareness campaigns
+- Seasonal promotions
+- Lead gen for specific areas
+
+=== CLIENT CONTEXT ===
+- Clients: landscape, hardscape, outdoor living contractors
+- Services: patios, outdoor kitchens, retaining walls, landscape design, hardscape installation, pool decks, pergolas, fire pits, driveways
+- Target: homeowners with $10K-$100K+ outdoor living projects
+- Goal: maximize qualified, high-ticket lead volume — never leave good leads on the table
+
+=== SOURCE TIER WEIGHTING ===
+- Tier 1 (Google official): Highest authority — confirmed changes
+- Tier 2 (Industry experts: Whitespark, BrightLocal, Sterling Sky, Joy Hawkins, Darren Shaw): High authority
+- Tier 3 (Community: Reddit, forums, blogs): Supporting evidence only
+
+=== CONSENSUS RULES ===
+- 2+ sources on same topic = "verified"
+- 1 source only = "emerging"
+- Tier 1 alone = "verified" (Google's word is sufficient)
+
+You MUST respond with valid JSON only. No markdown code fences, no text outside the JSON object.`;
 
   const articlesSummary = articles.map((a, i) =>
     `[${i}] SOURCE: ${a.sourceName} (${a.sourceTier}) | CATEGORY: ${a.category}\nTITLE: ${a.title}\nURL: ${a.url}\nCONTENT: ${a.content}\n`
   ).join('\n---\n');
 
-  const userPrompt = `Analyze the following ${articles.length} articles from the past month and generate actionable SEO intelligence recommendations for landscape/hardscape contractor clients.
+  const userPrompt = `Analyze these ${articles.length} articles and generate recommendations mapped to our Local Market Domination System layers.
 
 ARTICLES:
 ${articlesSummary}
@@ -137,10 +183,10 @@ Respond with this exact JSON structure:
 {
   "recommendations": [
     {
-      "category": "GBP|Maps|LSA|Meta Ads|Yelp|Nextdoor|Angi|Thumbtack|General SEO|Industry Trends",
+      "category": "Layer 1: Reviews|Layer 2: GBP|Layer 3: LSA|Layer 4: Core 30|Facebook Ads|Cross-Layer",
       "title": "Short actionable title",
-      "summary": "2-3 sentence summary of the change/trend and why it matters",
-      "details": "Detailed explanation with specific actions to take for contractor clients",
+      "summary": "2-3 sentences: what changed and why it matters to our system",
+      "details": "CURRENT APPROACH: What we do now in this layer.\\nWHAT'S CHANGING: The specific change/trend from the source(s).\\nRECOMMENDED ADJUSTMENT: Exactly what to change in our process, with step-by-step actions.",
       "impact": "high|medium|low",
       "confidence": "verified|emerging",
       "citationIndices": [0, 3],
@@ -149,8 +195,8 @@ Respond with this exact JSON structure:
   ],
   "taskDrafts": [
     {
-      "title": "Actionable task title",
-      "description": "What to do, step by step",
+      "title": "Actionable task title (include which layer)",
+      "description": "Step-by-step what to do and for which clients",
       "suggestedPriority": "high|medium|low|urgent",
       "suggestedDueInDays": 7,
       "recommendationIndex": 0
@@ -160,15 +206,21 @@ Respond with this exact JSON structure:
     {
       "sopDocId": "",
       "sopTitle": "Name of SOP that needs updating",
-      "description": "Why this SOP needs updating",
-      "beforeContent": "Current approach (describe what to look for)",
-      "afterContent": "Updated approach based on new intel",
+      "description": "Why this SOP needs updating based on the intelligence",
+      "beforeContent": "Current approach in our SOP",
+      "afterContent": "Updated approach with the new intelligence incorporated",
       "recommendationIndex": 0
     }
   ]
 }
 
-Focus on changes that directly impact lead generation for high-ticket outdoor living services. Every recommendation MUST cite at least one source article by index. Prioritize actionable items over informational ones.`;
+RULES:
+- Every recommendation MUST map to a specific layer (or "Cross-Layer" if it affects multiple)
+- Every recommendation MUST include CURRENT APPROACH, WHAT'S CHANGING, and RECOMMENDED ADJUSTMENT in the details
+- Every recommendation MUST cite at least one source article by index
+- Focus on changes that directly impact lead generation for high-ticket outdoor living contractors
+- Prioritize things that require immediate action over informational items
+- If nothing meaningful changed for a layer, don't force a recommendation — quality over quantity`;
 
   return { systemPrompt, userPrompt };
 }
