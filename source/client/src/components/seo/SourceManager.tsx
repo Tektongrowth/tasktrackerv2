@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Play } from 'lucide-react';
+import { Plus, Pencil, Trash2, Play, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -8,6 +8,7 @@ import {
   useUpdateSeoSource,
   useDeleteSeoSource,
   useTestSeoSource,
+  useSeedSeoSources,
 } from '@/hooks/useSeo';
 import { toast } from '@/components/ui/toaster';
 import type { SeoSource, SourceTier } from '@/lib/types';
@@ -117,6 +118,7 @@ export function SourceManager() {
   const updateSource = useUpdateSeoSource();
   const deleteSource = useDeleteSeoSource();
   const testSource = useTestSeoSource();
+  const seedSources = useSeedSeoSources();
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -126,9 +128,26 @@ export function SourceManager() {
         <h3 className="text-sm font-semibold text-white">
           Sources ({sources.length})
         </h3>
-        <Button size="sm" variant="ghost" onClick={() => setShowAdd(!showAdd)}>
-          <Plus className="h-4 w-4 mr-1" /> Add Source
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => seedSources.mutate(undefined, {
+              onSuccess: (result) => {
+                toast({ title: `Seeded sources (${result.totalSources} total)` });
+              },
+              onError: (err) => {
+                toast({ title: `Seed failed: ${err.message}`, variant: 'destructive' });
+              },
+            })}
+            disabled={seedSources.isPending}
+          >
+            <Download className="h-4 w-4 mr-1" /> {seedSources.isPending ? 'Seeding...' : 'Seed Defaults'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setShowAdd(!showAdd)}>
+            <Plus className="h-4 w-4 mr-1" /> Add Source
+          </Button>
+        </div>
       </div>
 
       {showAdd && (

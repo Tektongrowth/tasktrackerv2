@@ -165,6 +165,16 @@ export function useUpdateSeoSource() {
   });
 }
 
+export function useSeedSeoSources() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => seo.seedSources(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seo', 'sources'] });
+    },
+  });
+}
+
 export function useDeleteSeoSource() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -749,6 +749,8 @@ export const seo = {
     fetchApi<import('./types').ScheduledJobRun[]>(`/api/seo/job-history?limit=${limit}`),
   testSource: (id: string) =>
     fetchApi<{ source: string; method: string; articlesFound: number; articles: { title: string; url: string; contentPreview: string; publishedAt?: string }[] }>(`/api/seo/sources/${id}/test`, { method: 'POST' }),
+  seedSources: () =>
+    fetchApi<{ message: string; totalSources: number }>('/api/seo/sources/seed', { method: 'POST' }),
 };
 
 export { API_BASE, fetchApi };
