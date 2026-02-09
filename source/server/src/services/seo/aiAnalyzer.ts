@@ -67,11 +67,15 @@ export async function analyzeContent(digestId: string): Promise<{
   const settings = await prisma.seoSettings.findFirst();
   const prompt = buildAnalysisPrompt(articles, settings);
 
+  console.log(`[AIAnalyzer] Analyzing ${articles.length} articles for digest ${digestId}`);
   const response = await callClaudeApi(prompt.userPrompt, prompt.systemPrompt);
   const recommendations = parseRecommendations(response, articles);
+  console.log(`[AIAnalyzer] Parsed ${recommendations.length} recommendations`);
 
   const taskDrafts = await generateTaskDrafts(recommendations);
+  console.log(`[AIAnalyzer] Generated ${taskDrafts.length} task drafts`);
   const sopDrafts = await generateSopSuggestions(recommendations);
+  console.log(`[AIAnalyzer] Generated ${sopDrafts.length} SOP drafts`);
 
   return { recommendations, taskDrafts, sopDrafts };
 }
@@ -155,23 +159,44 @@ export async function callClaudeApi(
   userPrompt: string,
   systemPrompt: string
 ): Promise<string> {
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 8192,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
+  console.log(`[AIAnalyzer] Calling Claude API (prompt: ${userPrompt.length} chars)`);
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 8192,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
 
-  const textBlock = message.content.find((block) => block.type === 'text');
-  return textBlock ? textBlock.text : '';
+    const textBlock = message.content.find((block) => block.type === 'text');
+    const result = textBlock ? textBlock.text : '';
+    console.log(`[AIAnalyzer] Claude API response: ${result.length} chars, stop_reason: ${message.stop_reason}`);
+    return result;
+  } catch (error) {
+    console.error('[AIAnalyzer] Claude API call failed:', error);
+    throw error;
+  }
+}
+
+function stripCodeFences(text: string): string {
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '');
+  cleaned = cleaned.replace(/\n?```\s*$/i, '');
+  return cleaned.trim();
 }
 
 export function parseRecommendations(
   response: string,
   articles: ArticleForAnalysis[]
 ): ParsedRecommendation[] {
+  if (!response) {
+    console.error('[AIAnalyzer] Empty response from Claude API');
+    return [];
+  }
+  console.log(`[AIAnalyzer] Response length: ${response.length} chars, first 200: ${response.substring(0, 200)}`);
   try {
-    const parsed = JSON.parse(response);
+    const cleaned = stripCodeFences(response);
+    const parsed = JSON.parse(cleaned);
     if (!parsed.recommendations || !Array.isArray(parsed.recommendations)) {
       console.error('[AIAnalyzer] No recommendations array in response');
       return [];
@@ -228,7 +253,7 @@ Only suggest SOP updates for high-impact, verified recommendations. Return empty
 
   try {
     const response = await callClaudeApi(prompt, 'You are an SOP management assistant. Respond with valid JSON only.');
-    const parsed = JSON.parse(response);
+    const parsed = JSON.parse(stripCodeFences(response));
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     console.error('[AIAnalyzer] Failed to generate SOP suggestions:', error);
@@ -258,7 +283,7 @@ Create 1-2 tasks per high-impact recommendation. Focus on concrete actions. Retu
 
   try {
     const response = await callClaudeApi(prompt, 'You are a task management assistant for an SEO agency. Respond with valid JSON only.');
-    const parsed = JSON.parse(response);
+    const parsed = JSON.parse(stripCodeFences(response));
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     console.error('[AIAnalyzer] Failed to generate task drafts:', error);
