@@ -348,12 +348,12 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 z-[60] animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/20 z-[80] animate-in fade-in duration-200"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-lg shadow-2xl z-[70] flex flex-col animate-in slide-in-from-right duration-300 bg-[rgba(10,10,20,0.92)] backdrop-blur-2xl border-l border-white/[0.08]">
+      <div className="fixed inset-y-0 right-0 w-full max-w-lg shadow-2xl z-[90] flex flex-col animate-in slide-in-from-right duration-300 bg-[rgba(10,10,20,0.92)] backdrop-blur-2xl border-l border-white/[0.08]">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-white/[0.03]">
           <div className="flex items-center gap-3">
             <h2 className="font-semibold text-lg">Task Details</h2>
@@ -437,18 +437,18 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
             >
               <Archive className="h-4 w-4" />
             </Button>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
+              onClick={onClose}
+              onPointerDown={(e) => {
                 e.stopPropagation();
                 onClose();
               }}
-              className="h-8 w-8 hover:bg-white/[0.08] transition-colors"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-[var(--radius)] hover:bg-white/[0.08] transition-colors relative z-10 pointer-events-auto"
+              aria-label="Close task panel"
             >
               <X className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
 
