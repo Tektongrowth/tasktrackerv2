@@ -12,7 +12,8 @@ router.get('/upcoming', isAuthenticated, async (req: Request, res: Response, nex
     const { assigneeId, clientId, tag, limit } = req.query;
 
     const where: Prisma.TaskWhereInput = {
-      status: { not: 'completed' }
+      status: { not: 'completed' },
+      archived: false
     };
 
     // Permission-based filtering
@@ -78,7 +79,8 @@ router.get('/completed', isAuthenticated, async (req: Request, res: Response, ne
 
     const where: Prisma.TaskWhereInput = {
       status: 'completed',
-      completedAt: { gte: startDate }
+      completedAt: { gte: startDate },
+      archived: false
     };
 
     // Permission-based filtering
@@ -230,7 +232,7 @@ router.get('/incomplete', isAuthenticated, async (req: Request, res: Response, n
     }
 
     // Build base filter for project/client
-    const baseWhere: Prisma.TaskWhereInput = {};
+    const baseWhere: Prisma.TaskWhereInput = { archived: false };
     if (projectId) {
       baseWhere.projectId = projectId as string;
     } else if (clientId) {
@@ -371,7 +373,7 @@ router.get('/stats', isAuthenticated, async (req: Request, res: Response, next: 
     const user = req.user as Express.User;
     const { projectId, clientId } = req.query;
 
-    const baseWhere: Prisma.TaskWhereInput = {};
+    const baseWhere: Prisma.TaskWhereInput = { archived: false };
     if (user.role !== 'admin' && user.permissions?.viewOwnTasksOnly !== false) {
       baseWhere.assignees = { some: { userId: user.id } };
     }
@@ -439,6 +441,7 @@ router.get('/leaderboard', isAuthenticated, async (req: Request, res: Response, 
     const incompleteDueTasks = await prisma.task.findMany({
       where: {
         status: { not: 'completed' },
+        archived: false,
         dueDate: { not: null, lte: new Date(now.getFullYear(), now.getMonth() + 1, 0) },
         assignees: { some: {} }
       },
