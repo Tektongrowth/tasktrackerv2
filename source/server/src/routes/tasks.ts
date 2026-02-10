@@ -398,6 +398,10 @@ router.post('/', isAuthenticated, async (req: Request, res: Response, next: Next
     validateStatus(status);
     validateTags(tags);
 
+    if (!dueDate) {
+      throw new AppError('Due date is required', 400);
+    }
+
     // Any authenticated user can create tasks
 
     // Validate roleId if provided

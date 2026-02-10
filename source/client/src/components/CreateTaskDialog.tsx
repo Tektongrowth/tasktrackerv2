@@ -34,6 +34,7 @@ export function CreateTaskDialog({
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState(defaultDescription);
   const [projectId, setProjectId] = useState(defaultProjectId);
+  const [dueDate, setDueDate] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const createTask = useCreateTask();
 
@@ -61,14 +62,15 @@ export function CreateTaskDialog({
       setTitle(defaultTitle);
       setDescription(defaultDescription);
       setProjectId(defaultProjectId);
+      setDueDate('');
       setAssigneeIds([]);
     }
     onOpenChange(newOpen);
   };
 
   const handleCreate = () => {
-    if (!title.trim() || !projectId) {
-      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
+    if (!title.trim() || !projectId || !dueDate) {
+      toast({ title: 'Please enter a title, select a project, and set a due date', variant: 'destructive' });
       return;
     }
 
@@ -79,6 +81,7 @@ export function CreateTaskDialog({
         projectId,
         status: 'todo',
         priority: 'medium',
+        dueDate,
         assigneeIds: assigneeIds.length > 0 ? assigneeIds : undefined,
       },
       {
@@ -88,6 +91,7 @@ export function CreateTaskDialog({
           setTitle('');
           setDescription('');
           setProjectId('');
+          setDueDate('');
           setAssigneeIds([]);
         },
         onError: (error: Error) => {
@@ -130,6 +134,15 @@ export function CreateTaskDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="createTaskDueDate">Due Date</Label>
+            <Input
+              id="createTaskDueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label>Assign To</Label>
@@ -177,7 +190,7 @@ export function CreateTaskDialog({
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={!title.trim() || !projectId || createTask.isPending}
+              disabled={!title.trim() || !projectId || !dueDate || createTask.isPending}
             >
               {createTask.isPending ? 'Creating...' : 'Create Task'}
             </Button>
