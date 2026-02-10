@@ -155,7 +155,7 @@ export function ListPage() {
   if (selectedClientId) params.clientId = selectedClientId;
   if (statusFilter !== 'all') params.status = statusFilter;
 
-  const { data: activeTasks } = useTasks(
+  const { data: activeTasks, isLoading: isLoadingTasks } = useTasks(
     Object.keys(params).length > 0 ? params : undefined,
     { enabled: !!user }
   );
@@ -521,11 +521,17 @@ export function ListPage() {
 
       {/* Task List */}
       <div className="p-6">
-        <TaskListView
-          tasks={filteredTasks}
-          onTaskClick={handleTaskClick}
-          onStatusChange={handleStatusChange}
-        />
+        {isLoadingTasks && !activeTasks ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <TaskListView
+            tasks={filteredTasks}
+            onTaskClick={handleTaskClick}
+            onStatusChange={handleStatusChange}
+          />
+        )}
       </div>
 
       {/* Task Detail Panel */}
