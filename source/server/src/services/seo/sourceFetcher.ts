@@ -22,14 +22,8 @@ export async function fetchAllSources(digestId: string): Promise<number> {
         case 'youtube':
           results = await fetchYouTubeChannel(source);
           break;
-        case 'reddit':
-          results = await fetchRedditSubreddit(source);
-          break;
         case 'webpage':
           results = await fetchWebPage(source);
-          break;
-        case 'podcast':
-          results = await fetchPodcastFeed(source);
           break;
         default:
           console.warn(`[SourceFetcher] Unknown fetch method: ${source.fetchMethod} for source: ${source.name}`);
@@ -72,17 +66,49 @@ export async function fetchAllSources(digestId: string): Promise<number> {
   return fetched;
 }
 
+async function fetchArticleContent(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'TaskTrackerPro/1.0 SEO Intelligence Bot' },
+      signal: AbortSignal.timeout(10000),
+    });
+    const html = await res.text();
+    const dom = new JSDOM(html, { url });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+    return article?.textContent || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchRssSource(
   source: { url: string; name: string; fetchConfig: any }
 ): Promise<{ url: string; title: string; content: string; publishedAt?: Date }[]> {
   try {
     const feed = await rssParser.parseURL(source.url);
-    return (feed.items || []).map((item) => ({
-      url: item.link || source.url,
-      title: item.title || 'Untitled',
-      content: item.contentSnippet || item.content || item.summary || '',
-      publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
-    }));
+    const items = feed.items || [];
+    const results: { url: string; title: string; content: string; publishedAt?: Date }[] = [];
+
+    for (const item of items) {
+      const snippet = item.contentSnippet || item.content || item.summary || '';
+      const link = item.link || source.url;
+
+      let content = snippet;
+      if (link && link !== source.url) {
+        const fullText = await fetchArticleContent(link);
+        if (fullText) content = fullText;
+      }
+
+      results.push({
+        url: link,
+        title: item.title || 'Untitled',
+        content,
+        publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
+      });
+    }
+
+    return results;
   } catch (error) {
     console.error(`[SourceFetcher] RSS fetch failed for ${source.name}:`, error);
     return [];
@@ -143,35 +169,6 @@ export async function fetchYouTubeChannel(
   }
 }
 
-export async function fetchRedditSubreddit(
-  source: { url: string; name: string; fetchConfig: any }
-): Promise<{ url: string; title: string; content: string; publishedAt?: Date }[]> {
-  try {
-    const config = source.fetchConfig as { subreddit?: string };
-    const subreddit = config?.subreddit || source.url.replace(/.*r\//, '').replace(/\/$/, '');
-    const url = `https://www.reddit.com/r/${subreddit}/hot.json?limit=20`;
-
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'TaskTrackerPro/1.0 SEO Intelligence Bot' },
-    });
-    const data = await res.json();
-
-    if (!data?.data?.children) return [];
-
-    return data.data.children
-      .filter((child: any) => !child.data.stickied)
-      .map((child: any) => ({
-        url: `https://www.reddit.com${child.data.permalink}`,
-        title: child.data.title,
-        content: child.data.selftext || child.data.title,
-        publishedAt: new Date(child.data.created_utc * 1000),
-      }));
-  } catch (error) {
-    console.error(`[SourceFetcher] Reddit fetch failed for ${source.name}:`, error);
-    return [];
-  }
-}
-
 export async function fetchWebPage(
   source: { url: string; name: string; fetchConfig: any }
 ): Promise<{ url: string; title: string; content: string; publishedAt?: Date }[]> {
@@ -194,35 +191,6 @@ export async function fetchWebPage(
     }];
   } catch (error) {
     console.error(`[SourceFetcher] Webpage fetch failed for ${source.name}:`, error);
-    return [];
-  }
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-export async function fetchPodcastFeed(
-  source: { url: string; name: string; fetchConfig: any }
-): Promise<{ url: string; title: string; content: string; publishedAt?: Date }[]> {
-  try {
-    const feed = await rssParser.parseURL(source.url);
-    return (feed.items || []).map((item: any) => {
-      const itunesSummary = item.itunes?.summary || '';
-      const encodedContent = item['content:encoded'] ? stripHtml(item['content:encoded']) : '';
-      const fallback = item.contentSnippet || item.content || '';
-
-      const content = encodedContent || itunesSummary || fallback;
-
-      return {
-        url: item.link || source.url,
-        title: item.title || 'Untitled Episode',
-        content,
-        publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
-      };
-    });
-  } catch (error) {
-    console.error(`[SourceFetcher] Podcast fetch failed for ${source.name}:`, error);
     return [];
   }
 }

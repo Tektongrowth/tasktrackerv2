@@ -3,7 +3,7 @@ import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { runSeoIntelligencePipeline, retryDigest } from '../jobs/seoIntelligence.js';
 import { applyDraftSopEdit, createSopDocument, listSopDocuments } from '../services/seo/googleDocs.js';
-import { fetchRssSource, fetchYouTubeChannel, fetchRedditSubreddit, fetchWebPage, fetchPodcastFeed } from '../services/seo/sourceFetcher.js';
+import { fetchRssSource, fetchYouTubeChannel, fetchWebPage } from '../services/seo/sourceFetcher.js';
 import { seedSeoSources } from '../services/seo/seedSeoSources.js';
 import { buildAnalysisPrompt, callClaudeApi, parseRecommendations, truncateContent } from '../services/seo/aiAnalyzer.js';
 
@@ -505,14 +505,8 @@ router.post('/sources/:id/test', async (req: Request, res: Response) => {
       case 'youtube':
         results = await fetchYouTubeChannel(source);
         break;
-      case 'reddit':
-        results = await fetchRedditSubreddit(source);
-        break;
       case 'webpage':
         results = await fetchWebPage(source);
-        break;
-      case 'podcast':
-        results = await fetchPodcastFeed(source);
         break;
       default:
         return res.status(400).json({ error: `Unknown fetch method: ${source.fetchMethod}` });

@@ -66,8 +66,6 @@ function SourceForm({
             onChange={(e) => setForm({ ...form, url: e.target.value })}
             placeholder={
               form.fetchMethod === 'youtube' ? 'https://youtube.com/@channel' :
-              form.fetchMethod === 'reddit' ? 'https://reddit.com/r/subreddit' :
-              form.fetchMethod === 'podcast' ? 'https://feeds.example.com/podcast.xml' :
               'https://...'
             }
             className="h-8 text-xs"
@@ -105,9 +103,7 @@ function SourceForm({
           >
             <option value="rss">RSS</option>
             <option value="youtube">YouTube</option>
-            <option value="reddit">Reddit</option>
             <option value="webpage">Webpage</option>
-            <option value="podcast">Podcast</option>
           </select>
         </div>
       </div>
@@ -118,17 +114,6 @@ function SourceForm({
             value={(form.fetchConfig.channelId as string) || ''}
             onChange={(e) => setForm({ ...form, fetchConfig: { ...form.fetchConfig, channelId: e.target.value } })}
             placeholder="UCxxxxxxxxxxxxxxxxxxxxxxxx"
-            className="h-8 text-xs"
-          />
-        </div>
-      )}
-      {form.fetchMethod === 'reddit' && (
-        <div>
-          <label className="block text-xs text-white/60 mb-1">Subreddit (optional, extracted from URL if blank)</label>
-          <Input
-            value={(form.fetchConfig.subreddit as string) || ''}
-            onChange={(e) => setForm({ ...form, fetchConfig: { ...form.fetchConfig, subreddit: e.target.value } })}
-            placeholder="SEO"
             className="h-8 text-xs"
           />
         </div>
