@@ -62,7 +62,7 @@ export function SeoIntelligencePage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">SEO Intelligence</h1>
+        <h1 className="text-2xl font-bold text-white">SEO Brain</h1>
         <Button
           size="sm"
           onClick={() => runPipeline.mutate(undefined, {
