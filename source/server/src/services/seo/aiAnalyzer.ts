@@ -58,7 +58,7 @@ interface TemplateSetContext {
   }[];
 }
 
-function truncateContent(content: string, maxLength: number): string {
+export function truncateContent(content: string, maxLength: number): string {
   if (content.length <= maxLength) return content;
   const marker = '--- VIDEO TRANSCRIPT ---';
   const idx = content.indexOf(marker);

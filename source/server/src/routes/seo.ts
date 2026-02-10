@@ -5,7 +5,7 @@ import { runSeoIntelligencePipeline, retryDigest } from '../jobs/seoIntelligence
 import { applyDraftSopEdit, createSopDocument, listSopDocuments } from '../services/seo/googleDocs.js';
 import { fetchRssSource, fetchYouTubeChannel, fetchRedditSubreddit, fetchWebPage, fetchPodcastFeed } from '../services/seo/sourceFetcher.js';
 import { seedSeoSources } from '../services/seo/seedSeoSources.js';
-import { buildAnalysisPrompt, callClaudeApi, parseRecommendations } from '../services/seo/aiAnalyzer.js';
+import { buildAnalysisPrompt, callClaudeApi, parseRecommendations, truncateContent } from '../services/seo/aiAnalyzer.js';
 
 const router = Router();
 
@@ -655,7 +655,7 @@ router.get('/debug/test-analysis', async (_req: Request, res: Response) => {
       id: fr.id,
       url: fr.url,
       title: fr.title,
-      content: fr.content.substring(0, 2000),
+      content: truncateContent(fr.content, 6000),
       sourceName: fr.source.name,
       sourceTier: fr.source.tier,
       category: fr.source.category,

@@ -25,6 +25,7 @@ interface SourceFormData {
   tier: SourceTier;
   category: string;
   fetchMethod: string;
+  fetchConfig: Record<string, unknown>;
 }
 
 function SourceForm({
@@ -36,12 +37,14 @@ function SourceForm({
   onSave: (data: SourceFormData) => void;
   onCancel: () => void;
 }) {
+  const initialConfig = (initial as any)?.fetchConfig || {};
   const [form, setForm] = useState<SourceFormData>({
     name: initial?.name || '',
     url: initial?.url || '',
     tier: initial?.tier || 'tier_3',
     category: initial?.category || 'General SEO',
     fetchMethod: initial?.fetchMethod || 'rss',
+    fetchConfig: initialConfig,
   });
 
   return (
@@ -61,7 +64,12 @@ function SourceForm({
           <Input
             value={form.url}
             onChange={(e) => setForm({ ...form, url: e.target.value })}
-            placeholder="https://..."
+            placeholder={
+              form.fetchMethod === 'youtube' ? 'https://youtube.com/@channel' :
+              form.fetchMethod === 'reddit' ? 'https://reddit.com/r/subreddit' :
+              form.fetchMethod === 'podcast' ? 'https://feeds.example.com/podcast.xml' :
+              'https://...'
+            }
             className="h-8 text-xs"
           />
         </div>
@@ -103,9 +111,31 @@ function SourceForm({
           </select>
         </div>
       </div>
+      {form.fetchMethod === 'youtube' && (
+        <div>
+          <label className="block text-xs text-white/60 mb-1">Channel ID</label>
+          <Input
+            value={(form.fetchConfig.channelId as string) || ''}
+            onChange={(e) => setForm({ ...form, fetchConfig: { ...form.fetchConfig, channelId: e.target.value } })}
+            placeholder="UCxxxxxxxxxxxxxxxxxxxxxxxx"
+            className="h-8 text-xs"
+          />
+        </div>
+      )}
+      {form.fetchMethod === 'reddit' && (
+        <div>
+          <label className="block text-xs text-white/60 mb-1">Subreddit (optional, extracted from URL if blank)</label>
+          <Input
+            value={(form.fetchConfig.subreddit as string) || ''}
+            onChange={(e) => setForm({ ...form, fetchConfig: { ...form.fetchConfig, subreddit: e.target.value } })}
+            placeholder="SEO"
+            className="h-8 text-xs"
+          />
+        </div>
+      )}
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={!form.name || !form.url}>
+        <Button size="sm" onClick={() => onSave(form)} disabled={!form.name || !form.url || (form.fetchMethod === 'youtube' && !form.fetchConfig.channelId)}>
           Save
         </Button>
       </div>
