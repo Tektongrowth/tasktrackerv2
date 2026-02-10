@@ -97,6 +97,7 @@ export function ListPage() {
   const [newTaskProjectId, setNewTaskProjectId] = useState('');
   const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
   // Fetch projects and users for create dialog
   const { data: allProjects = [] } = useQuery({
@@ -110,8 +111,8 @@ export function ListPage() {
   });
 
   const handleCreateTask = () => {
-    if (!newTaskTitle.trim() || !newTaskProjectId) {
-      toast({ title: 'Please enter a title and select a project', variant: 'destructive' });
+    if (!newTaskTitle.trim() || !newTaskProjectId || !newTaskDueDate) {
+      toast({ title: 'Please enter a title, select a project, and set a due date', variant: 'destructive' });
       return;
     }
 
@@ -122,6 +123,7 @@ export function ListPage() {
         projectId: newTaskProjectId,
         assigneeIds: newTaskAssigneeId && newTaskAssigneeId !== 'none' ? [newTaskAssigneeId] : undefined,
         priority: newTaskPriority,
+        dueDate: newTaskDueDate,
         status: 'todo',
       },
       {
@@ -133,6 +135,7 @@ export function ListPage() {
           setNewTaskProjectId('');
           setNewTaskAssigneeId('');
           setNewTaskPriority('medium');
+          setNewTaskDueDate('');
         },
       }
     );
@@ -527,13 +530,21 @@ export function ListPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Due Date *</Label>
+                    <Input
+                      type="date"
+                      value={newTaskDueDate}
+                      onChange={(e) => setNewTaskDueDate(e.target.value)}
+                    />
+                  </div>
                   <div className="flex justify-end gap-2 pt-2">
                     <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
                       Cancel
                     </Button>
                     <Button
                       onClick={handleCreateTask}
-                      disabled={!newTaskTitle.trim() || !newTaskProjectId || createTask.isPending}
+                      disabled={!newTaskTitle.trim() || !newTaskProjectId || !newTaskDueDate || createTask.isPending}
                     >
                       {createTask.isPending ? 'Creating...' : 'Create Task'}
                     </Button>

@@ -176,6 +176,10 @@ export function KanbanPage() {
       toast({ title: 'Please select a project', variant: 'destructive' });
       return;
     }
+    if (!newTaskDueDate) {
+      toast({ title: 'Please set a due date', variant: 'destructive' });
+      return;
+    }
 
     createTask.mutate(
       {
@@ -749,7 +753,7 @@ export function KanbanPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Due Date</Label>
+                    <Label>Due Date *</Label>
                     <Input
                       type="date"
                       value={newTaskDueDate}
@@ -784,7 +788,7 @@ export function KanbanPage() {
                   <Button
                     onClick={handleCreateTask}
                     className="w-full"
-                    disabled={createTask.isPending}
+                    disabled={!newTaskTitle.trim() || !newTaskProjectId || !newTaskDueDate || createTask.isPending}
                   >
                     {createTask.isPending ? 'Creating...' : 'Create Task'}
                   </Button>
