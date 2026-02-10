@@ -1,6 +1,7 @@
 import Parser from 'rss-parser';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
+import { YoutubeTranscript } from 'youtube-transcript';
 import crypto from 'crypto';
 import { prisma } from '../../db/client.js';
 
@@ -26,6 +27,9 @@ export async function fetchAllSources(digestId: string): Promise<number> {
           break;
         case 'webpage':
           results = await fetchWebPage(source);
+          break;
+        case 'podcast':
+          results = await fetchPodcastFeed(source);
           break;
         default:
           console.warn(`[SourceFetcher] Unknown fetch method: ${source.fetchMethod} for source: ${source.name}`);
@@ -108,12 +112,31 @@ export async function fetchYouTubeChannel(
 
     if (!data.items) return [];
 
-    return data.items.map((item: any) => ({
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      title: item.snippet.title,
-      content: item.snippet.description || '',
-      publishedAt: new Date(item.snippet.publishedAt),
-    }));
+    const results: { url: string; title: string; content: string; publishedAt?: Date }[] = [];
+    for (const item of data.items) {
+      const videoId = item.id.videoId;
+      const description = item.snippet.description || '';
+
+      let transcript = '';
+      try {
+        const transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
+        transcript = transcriptData.map((t: any) => t.text).join(' ');
+      } catch {
+        /* transcript unavailable */
+      }
+
+      let content = description;
+      if (transcript) content += '\n\n--- VIDEO TRANSCRIPT ---\n' + transcript;
+
+      results.push({
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        title: item.snippet.title,
+        content,
+        publishedAt: new Date(item.snippet.publishedAt),
+      });
+    }
+
+    return results;
   } catch (error) {
     console.error(`[SourceFetcher] YouTube fetch failed for ${source.name}:`, error);
     return [];
@@ -171,6 +194,35 @@ export async function fetchWebPage(
     }];
   } catch (error) {
     console.error(`[SourceFetcher] Webpage fetch failed for ${source.name}:`, error);
+    return [];
+  }
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export async function fetchPodcastFeed(
+  source: { url: string; name: string; fetchConfig: any }
+): Promise<{ url: string; title: string; content: string; publishedAt?: Date }[]> {
+  try {
+    const feed = await rssParser.parseURL(source.url);
+    return (feed.items || []).map((item: any) => {
+      const itunesSummary = item.itunes?.summary || '';
+      const encodedContent = item['content:encoded'] ? stripHtml(item['content:encoded']) : '';
+      const fallback = item.contentSnippet || item.content || '';
+
+      const content = encodedContent || itunesSummary || fallback;
+
+      return {
+        url: item.link || source.url,
+        title: item.title || 'Untitled Episode',
+        content,
+        publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
+      };
+    });
+  } catch (error) {
+    console.error(`[SourceFetcher] Podcast fetch failed for ${source.name}:`, error);
     return [];
   }
 }

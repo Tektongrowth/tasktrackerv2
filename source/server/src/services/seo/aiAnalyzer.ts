@@ -58,6 +58,17 @@ interface TemplateSetContext {
   }[];
 }
 
+function truncateContent(content: string, maxLength: number): string {
+  if (content.length <= maxLength) return content;
+  const marker = '--- VIDEO TRANSCRIPT ---';
+  const idx = content.indexOf(marker);
+  if (idx === -1) return content.substring(0, maxLength);
+  const desc = content.substring(0, idx);
+  const remaining = maxLength - desc.length;
+  if (remaining <= 100) return desc.trim();
+  return desc + content.substring(idx, idx + remaining);
+}
+
 export async function analyzeContent(digestId: string): Promise<{
   recommendations: ParsedRecommendation[];
   taskDrafts: ParsedTaskDraft[];
@@ -76,7 +87,7 @@ export async function analyzeContent(digestId: string): Promise<{
     id: fr.id,
     url: fr.url,
     title: fr.title,
-    content: fr.content.substring(0, 2000),
+    content: truncateContent(fr.content, 6000),
     sourceName: fr.source.name,
     sourceTier: fr.source.tier,
     category: fr.source.category,

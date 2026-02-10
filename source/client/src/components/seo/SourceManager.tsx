@@ -99,6 +99,7 @@ function SourceForm({
             <option value="youtube">YouTube</option>
             <option value="reddit">Reddit</option>
             <option value="webpage">Webpage</option>
+            <option value="podcast">Podcast</option>
           </select>
         </div>
       </div>
