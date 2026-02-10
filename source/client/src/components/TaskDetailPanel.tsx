@@ -364,40 +364,35 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             {/* Timer Button */}
             <Button
-              variant={isTimerRunningForTask ? 'default' : 'outline'}
-              size="sm"
+              variant={isTimerRunningForTask ? 'default' : 'ghost'}
+              size="icon"
               className={cn(
-                'h-9 px-3 gap-2 font-medium transition-all',
+                'h-8 w-8 transition-all',
                 isTimerRunningForTask
                   ? 'bg-[var(--theme-accent)] hover:bg-[var(--theme-primary)] text-white shadow-md'
-                  : 'hover:bg-white/[0.06] hover:border-[var(--theme-primary)]/30'
+                  : 'hover:bg-white/[0.08]'
               )}
               onClick={handleTimerToggle}
+              title={isTimerRunningForTask ? `Stop timer (${formatDuration(timerDuration)})` : 'Start timer'}
             >
               {isTimerRunningForTask ? (
-                <>
-                  <Square className="h-3.5 w-3.5" />
-                  <span className="tabular-nums">{formatDuration(timerDuration)}</span>
-                </>
+                <Square className="h-4 w-4" />
               ) : (
-                <>
-                  <Play className="h-3.5 w-3.5" />
-                  <span>Start Timer</span>
-                </>
+                <Play className="h-4 w-4" />
               )}
             </Button>
             {/* Watch/Unwatch Button */}
             <Button
-              variant={isWatching ? 'default' : 'outline'}
-              size="sm"
+              variant="ghost"
+              size="icon"
               className={cn(
-                'h-9 px-3 gap-2 font-medium transition-all',
+                'h-8 w-8 transition-all',
                 isWatching
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                  : 'hover:bg-white/[0.06]'
+                  ? 'text-blue-400 hover:bg-blue-500/10'
+                  : 'hover:bg-white/[0.08]'
               )}
               onClick={() => {
                 if (isWatching) {
@@ -409,17 +404,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
               disabled={addWatcher.isPending || removeWatcher.isPending}
               title={isWatching ? 'Stop watching this task' : 'Watch this task for updates'}
             >
-              {isWatching ? (
-                <>
-                  <EyeOff className="h-3.5 w-3.5" />
-                  <span>Unwatch</span>
-                </>
-              ) : (
-                <>
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>Watch</span>
-                </>
-              )}
+              {isWatching ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
             {/* Mute Button (only when watching) */}
             {isWatching && (
@@ -429,7 +414,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 onClick={() => toggleMute.mutate(!isMuted)}
                 disabled={toggleMute.isPending}
                 className={cn(
-                  'hover:bg-white/[0.08] rounded-full transition-colors',
+                  'h-8 w-8 hover:bg-white/[0.08] transition-colors',
                   isMuted && 'text-orange-500'
                 )}
                 title={isMuted ? 'Unmute notifications' : 'Mute notifications'}
@@ -447,7 +432,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 }
               }}
               disabled={archiveTask.isPending}
-              className="hover:bg-white/[0.08] rounded-full transition-colors"
+              className="h-8 w-8 hover:bg-white/[0.08] transition-colors"
               title="Archive task"
             >
               <Archive className="h-4 w-4" />
@@ -460,7 +445,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                 e.stopPropagation();
                 onClose();
               }}
-              className="hover:bg-white/[0.08] rounded-full transition-colors"
+              className="h-8 w-8 hover:bg-white/[0.08] transition-colors"
             >
               <X className="h-4 w-4" />
             </Button>
