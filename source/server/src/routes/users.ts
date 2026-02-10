@@ -108,6 +108,8 @@ router.get('/', isAuthenticated, async (req: Request, res: Response, next: NextF
         email: true,
         avatarUrl: true,
         role: true,
+        active: true,
+        archived: true,
         jobRoleId: true,
         jobRole: true
       }
