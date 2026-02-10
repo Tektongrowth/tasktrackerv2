@@ -9,6 +9,7 @@ interface FilterState {
   selectedStatuses: string[];
   searchQuery: string;
   dueDateRange: { start: string | null; end: string | null };
+  showMyTasks: boolean;
 
   setSelectedProject: (id: string | null) => void;
   setSelectedClient: (id: string | null) => void;
@@ -20,6 +21,8 @@ interface FilterState {
   toggleStatus: (status: string) => void;
   setSearchQuery: (query: string) => void;
   setDueDateRange: (range: { start: string | null; end: string | null }) => void;
+  setShowMyTasks: (show: boolean) => void;
+  toggleMyTasks: () => void;
   clearFilters: () => void;
 }
 
@@ -31,6 +34,7 @@ export const useFilters = create<FilterState>()(persist((set) => ({
   selectedStatuses: [],
   searchQuery: '',
   dueDateRange: { start: null, end: null },
+  showMyTasks: false,
 
   setSelectedProject: (id) => set({ selectedProjectId: id, selectedClientId: null }),
   setSelectedClient: (id) => set({ selectedClientId: id, selectedProjectId: null }),
@@ -54,6 +58,8 @@ export const useFilters = create<FilterState>()(persist((set) => ({
   })),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setDueDateRange: (range) => set({ dueDateRange: range }),
+  setShowMyTasks: (show) => set({ showMyTasks: show }),
+  toggleMyTasks: () => set((state) => ({ showMyTasks: !state.showMyTasks })),
   clearFilters: () => set({
     selectedProjectId: null,
     selectedClientId: null,
@@ -61,7 +67,8 @@ export const useFilters = create<FilterState>()(persist((set) => ({
     selectedTags: [],
     selectedStatuses: [],
     searchQuery: '',
-    dueDateRange: { start: null, end: null }
+    dueDateRange: { start: null, end: null },
+    showMyTasks: false
   }),
 }), {
   name: 'task-filters',

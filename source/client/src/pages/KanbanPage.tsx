@@ -58,7 +58,7 @@ const columns: { id: TaskStatus; title: string; color: string }[] = [
 export function KanbanPage() {
   const { isAdmin, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showMyTasks, setShowMyTasks] = useState(false);
+  const { showMyTasks, toggleMyTasks, setShowMyTasks } = useFilters();
   const [showArchived, setShowArchived] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeOverColumn, setActiveOverColumn] = useState<TaskStatus | null>(null);
@@ -304,7 +304,7 @@ export function KanbanPage() {
       // 'm' - Toggle My Tasks filter
       if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
-        setShowMyTasks((prev) => !prev);
+        toggleMyTasks();
       }
     };
 
@@ -470,7 +470,7 @@ export function KanbanPage() {
                 <DropdownMenuCheckboxItem
                   checked={showMyTasks}
                   onCheckedChange={() => {
-                    setShowMyTasks((prev) => !prev);
+                    toggleMyTasks();
                     setShowArchived(false);
                   }}
                 >
@@ -527,7 +527,7 @@ export function KanbanPage() {
             {/* Desktop Filters */}
             <button
               onClick={() => {
-                setShowMyTasks((prev) => !prev);
+                toggleMyTasks();
                 setShowArchived(false);
               }}
               data-guide="filter-my-tasks"
