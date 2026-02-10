@@ -499,16 +499,18 @@ router.patch('/:id', isAuthenticated, async (req: Request, res: Response, next: 
     }
 
     // Allow any user to assign themselves (even without full edit permission)
+    // They can also edit other fields in the same request - the guard only checks
+    // that they aren't adding/removing other users from the assignee list
     const existingAssigneeIds = existingTask.assignees.map(a => a.userId);
     const newAssigneeIds: string[] = assigneeIds || existingAssigneeIds;
     const isSelfAssignOnly = !canEdit &&
       assigneeIds !== undefined &&
       newAssigneeIds.includes(user.id) &&
       newAssigneeIds.filter(id => !existingAssigneeIds.includes(id)).every(id => id === user.id) &&
-      existingAssigneeIds.filter(id => !newAssigneeIds.includes(id)).length === 0 &&
-      title === undefined && description === undefined && status === undefined &&
-      priority === undefined && dueDate === undefined && tags === undefined && roleId === undefined;
+      existingAssigneeIds.filter(id => !newAssigneeIds.includes(id)).length === 0;
 
+    // If user can't edit AND isn't just self-assigning, also allow if they're already
+    // assigned (which means canEdit should have been true via editOwnTasks)
     if (!canEdit && !isSelfAssignOnly) {
       throw new AppError('Permission denied', 403);
     }
