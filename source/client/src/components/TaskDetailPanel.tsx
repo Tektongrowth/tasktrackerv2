@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUpdateTask } from '@/hooks/useTasks';
 import { useRunningTimer, useStartTimer, useStopTimer, useCreateTimeEntry, useDeleteTimeEntry } from '@/hooks/useTimeEntries';
@@ -89,6 +89,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const attachedFilesRef = useRef<File[]>([]);
   const [showGifPicker, setShowGifPicker] = useState(false);
 
   // Create task from comment state
@@ -252,6 +253,7 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
   const { createComment, deleteComment, toggleReaction } = useCommentMutations(task.id, {
     onCommentCreated: () => {
       setNewComment('');
+      attachedFilesRef.current = [];
       setAttachedFiles([]);
     },
   });
@@ -1112,7 +1114,10 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                      onClick={() => {
+                        attachedFilesRef.current = attachedFilesRef.current.filter((_, i) => i !== index);
+                        setAttachedFiles([...attachedFilesRef.current]);
+                      }}
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -1130,13 +1135,17 @@ export function TaskDetailPanel({ task: initialTask, onClose }: TaskDetailPanelP
                     multiple
                     onChange={(e) => {
                       const newFiles = Array.from(e.target.files || []);
-                      for (const file of newFiles) {
+                      const validFiles = newFiles.filter(file => {
                         if (file.size > 10 * 1024 * 1024) {
                           toast({ title: 'File too large', description: `${file.name} exceeds 10MB limit`, variant: 'destructive' });
-                          return;
+                          return false;
                         }
+                        return true;
+                      });
+                      if (validFiles.length > 0) {
+                        attachedFilesRef.current = [...attachedFilesRef.current, ...validFiles].slice(0, 10);
+                        setAttachedFiles([...attachedFilesRef.current]);
                       }
-                      setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 10));
                       e.target.value = '';
                     }}
                     disabled={createComment.isPending}
