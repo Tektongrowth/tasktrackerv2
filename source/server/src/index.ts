@@ -155,6 +155,25 @@ const sessionStore: import('express-session').Store = isProduction
     })
   : new session.MemoryStore();
 
+// Fix duplicate connect.sid cookies: when multiple exist (from domain mismatch),
+// clear all of them so express-session starts fresh with a single cookie
+app.use((req, res, next) => {
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const sidCookies = cookieHeader.split(';').filter(c => c.trim().startsWith('connect.sid='));
+    if (sidCookies.length > 1) {
+      // Clear cookies on various possible domains/paths to eliminate duplicates
+      res.clearCookie('connect.sid');
+      res.clearCookie('connect.sid', { domain: '.tektongrowth.com', path: '/' });
+      res.clearCookie('connect.sid', { domain: 'api.tektongrowth.com', path: '/' });
+      res.clearCookie('connect.sid', { domain: 'tasks.tektongrowth.com', path: '/' });
+      // Remove the cookie header so express-session doesn't try to parse stale SIDs
+      delete req.headers.cookie;
+    }
+  }
+  next();
+});
+
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'development-secret-change-in-production',
@@ -235,42 +254,16 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-// Temporary debug endpoint - remove after fixing login loop
-const authDebugLog: any[] = [];
+// Temporary debug endpoint - remove after login loop is fixed
 app.get('/auth/debug-session', (req, res) => {
   res.json({
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasCookie: !!req.headers.cookie,
-    cookieHeader: req.headers.cookie?.substring(0, 100),
-    isAuthenticated: req.isAuthenticated(),
-    hasUser: !!req.user,
-    userId: (req.user as any)?.id,
-    sessionPassport: (req.session as any)?.passport,
-    origin: req.headers.origin,
-    referer: req.headers.referer,
-    xForwardedProto: req.headers['x-forwarded-proto'],
-    xForwardedFor: req.headers['x-forwarded-for'],
-    reqSecure: req.secure,
-    nodeEnv: process.env.NODE_ENV,
-    isProductionFlag: isProduction,
-    recentAuthMeLogs: authDebugLog.slice(-5),
-  });
-});
-// Log /auth/me requests for debugging
-app.use('/auth/me', (req, _res, next) => {
-  authDebugLog.push({
-    ts: new Date().toISOString(),
-    hasCookie: !!req.headers.cookie,
-    cookieKeys: req.headers.cookie?.split(';').map((c: string) => c.trim().split('=')[0]),
-    sessionID: req.sessionID?.substring(0, 10),
     isAuthenticated: req.isAuthenticated(),
     hasUser: !!req.user,
     sessionPassport: (req.session as any)?.passport,
-    xForwardedProto: req.headers['x-forwarded-proto'],
   });
-  if (authDebugLog.length > 20) authDebugLog.shift();
-  next();
 });
 
 // Deploy status endpoint - returns whether we're in the post-deploy window
