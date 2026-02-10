@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserX, AlertTriangle, Square, Archive, Filter, Plus, Flag } from 'lucide-react';
+import { UserX, AlertTriangle, Square, Archive, Filter, Plus, Flag, User as UserIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -82,7 +82,7 @@ function RunningTimer() {
 export function ListPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { selectedProjectId, selectedClientId } = useFilters();
+  const { selectedProjectId, selectedClientId, showMyTasks, toggleMyTasks } = useFilters();
   const updateTaskStatus = useUpdateTaskStatus();
   const createTask = useCreateTask();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -179,6 +179,11 @@ export function ListPage() {
   const filteredTasks = useMemo(() => {
     let tasks = [...allTasks];
 
+    // My Tasks filter
+    if (showMyTasks && user) {
+      tasks = tasks.filter(t => t.assignees?.some(a => a.userId === user.id));
+    }
+
     // Apply quick filter
     if (quickFilter === 'unassigned') {
       tasks = tasks.filter(t => (!t.assignees || t.assignees.length === 0) && t.status !== 'completed');
@@ -196,7 +201,7 @@ export function ListPage() {
     });
 
     return tasks;
-  }, [allTasks, quickFilter]);
+  }, [allTasks, quickFilter, showMyTasks, user]);
 
   const handleStatusChange = (taskId: string, status: TaskStatus) => {
     updateTaskStatus.mutate({ id: taskId, status });
@@ -237,14 +242,14 @@ export function ListPage() {
                 <button
                   className={cn(
                     "h-8 px-3 text-sm border rounded-md transition-colors flex md:hidden items-center gap-1.5",
-                    (quickFilter !== 'all' || showArchived || statusFilter !== 'all')
+                    (quickFilter !== 'all' || showArchived || statusFilter !== 'all' || showMyTasks)
                       ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                       : "bg-white/[0.06] text-white border-white/10"
                   )}
                 >
                   <Filter className="h-4 w-4" />
                   Filters
-                  {(quickFilter !== 'all' || showArchived || statusFilter !== 'all') && (
+                  {(quickFilter !== 'all' || showArchived || statusFilter !== 'all' || showMyTasks) && (
                     <span className="ml-1 w-2 h-2 bg-white rounded-full" />
                   )}
                 </button>
@@ -253,13 +258,21 @@ export function ListPage() {
                 <DropdownMenuLabel>Quick Filters</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuCheckboxItem
-                  checked={quickFilter === 'all' && !showArchived}
+                  checked={quickFilter === 'all' && !showArchived && !showMyTasks}
                   onCheckedChange={() => {
                     setQuickFilter('all');
                     setShowArchived(false);
+                    if (showMyTasks) toggleMyTasks();
                   }}
                 >
                   All Tasks
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={showMyTasks}
+                  onCheckedChange={() => toggleMyTasks()}
+                >
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  My Tasks
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={quickFilter === 'unassigned' && !showArchived}
@@ -326,15 +339,28 @@ export function ListPage() {
               onClick={() => {
                 setQuickFilter('all');
                 setShowArchived(false);
+                if (showMyTasks) toggleMyTasks();
               }}
               className={cn(
                 "h-8 px-3 text-sm border rounded transition-colors hidden md:block",
-                quickFilter === 'all' && !showArchived
+                quickFilter === 'all' && !showArchived && !showMyTasks
                   ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
                   : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
               )}
             >
               All Tasks
+            </button>
+            <button
+              onClick={() => toggleMyTasks()}
+              className={cn(
+                "h-8 px-3 text-sm border rounded transition-colors hidden md:flex items-center gap-1.5",
+                showMyTasks
+                  ? "bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]"
+                  : "bg-white/[0.06] text-white border-white/10 hover:bg-[var(--theme-accent)] hover:border-[var(--theme-accent)]"
+              )}
+            >
+              <UserIcon className="h-4 w-4" />
+              My Tasks
             </button>
             <button
               onClick={() => {
