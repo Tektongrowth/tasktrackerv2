@@ -235,6 +235,22 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+// Temporary debug endpoint - remove after fixing login loop
+app.get('/auth/debug-session', (req, res) => {
+  res.json({
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasCookie: !!req.headers.cookie,
+    cookieHeader: req.headers.cookie?.substring(0, 100),
+    isAuthenticated: req.isAuthenticated(),
+    hasUser: !!req.user,
+    userId: (req.user as any)?.id,
+    sessionPassport: (req.session as any)?.passport,
+    origin: req.headers.origin,
+    referer: req.headers.referer,
+  });
+});
+
 // Deploy status endpoint - returns whether we're in the post-deploy window
 app.get('/api/deploy-status', (_req, res) => {
   const uptime = Date.now() - SERVER_START_TIME;
