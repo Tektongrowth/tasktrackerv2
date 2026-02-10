@@ -156,17 +156,17 @@ const sessionStore: import('express-session').Store = isProduction
   : new session.MemoryStore();
 
 // Fix duplicate connect.sid cookies: when multiple exist (from domain mismatch),
-// clear all of them so express-session starts fresh with a single cookie
+// clear all of them so express-session starts fresh with a single cookie.
+// Needs secure+sameSite attrs for cross-site Set-Cookie to be accepted by browsers.
 app.use((req, res, next) => {
   const cookieHeader = req.headers.cookie;
   if (cookieHeader) {
     const sidCookies = cookieHeader.split(';').filter(c => c.trim().startsWith('connect.sid='));
     if (sidCookies.length > 1) {
-      // Clear cookies on various possible domains/paths to eliminate duplicates
-      res.clearCookie('connect.sid');
-      res.clearCookie('connect.sid', { domain: '.tektongrowth.com', path: '/' });
-      res.clearCookie('connect.sid', { domain: 'api.tektongrowth.com', path: '/' });
-      res.clearCookie('connect.sid', { domain: 'tasks.tektongrowth.com', path: '/' });
+      const clearOpts = { httpOnly: true, secure: true, sameSite: 'none' as const };
+      res.clearCookie('connect.sid', { ...clearOpts, path: '/' });
+      res.clearCookie('connect.sid', { ...clearOpts, domain: '.tektongrowth.com', path: '/' });
+      res.clearCookie('connect.sid', { ...clearOpts, domain: 'api.tektongrowth.com', path: '/' });
       // Remove the cookie header so express-session doesn't try to parse stale SIDs
       delete req.headers.cookie;
     }
