@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Rocket, Sparkles } from 'lucide-react';
+import { API_BASE } from '@/lib/api';
 
 const SILLY_MESSAGES = [
   "Sprinkling magic deployment dust...",
@@ -22,7 +23,7 @@ export function DeployBanner() {
   useEffect(() => {
     const checkDeployStatus = async () => {
       try {
-        const response = await fetch('/api/deploy-status');
+        const response = await fetch(`${API_BASE}/api/deploy-status`, { credentials: 'include' });
         const data = await response.json();
 
         if (data.isDeploying) {
