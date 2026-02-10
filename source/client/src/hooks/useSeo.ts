@@ -118,6 +118,17 @@ export function useDismissSopDraft() {
   });
 }
 
+export function useEditSopDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, afterContent }: { id: string; afterContent: string }) =>
+      seo.editSopDraft(id, afterContent),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seo'] });
+    },
+  });
+}
+
 export function useSeoSettings() {
   return useQuery({
     queryKey: ['seo', 'settings'],

@@ -111,6 +111,8 @@ export async function runSeoIntelligencePipeline(options?: { force?: boolean }):
       await prisma.seoSopDraft.create({
         data: {
           digestId: digest.id,
+          templateSetId: sop.templateSetId || null,
+          draftType: sop.draftType || 'update',
           sopDocId: sop.sopDocId,
           sopTitle: sop.sopTitle,
           description: sop.description,
@@ -304,6 +306,8 @@ export async function retryDigest(digestId: string): Promise<void> {
         await prisma.seoSopDraft.create({
           data: {
             digestId,
+            templateSetId: sop.templateSetId || null,
+            draftType: sop.draftType || 'update',
             sopDocId: sop.sopDocId,
             sopTitle: sop.sopTitle,
             description: sop.description,

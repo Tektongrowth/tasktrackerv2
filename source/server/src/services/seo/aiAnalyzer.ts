@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '../../db/client.js';
+import { getSopContent } from './googleDocs.js';
 
 const anthropic = new Anthropic();
 
@@ -32,12 +33,29 @@ interface ParsedTaskDraft {
 }
 
 interface ParsedSopDraft {
+  templateSetId?: string;
+  draftType: 'update' | 'new';
   sopDocId: string;
   sopTitle: string;
   description: string;
   beforeContent: string;
   afterContent: string;
   recommendationIndex: number;
+}
+
+interface TemplateSetContext {
+  id: string;
+  name: string;
+  description: string | null;
+  strategyDocId: string | null;
+  strategyDocContent: string | null;
+  templates: {
+    title: string;
+    description: string | null;
+    dueInDays: number | null;
+    sortOrder: number;
+    subtasks: { title: string; sortOrder: number }[];
+  }[];
 }
 
 export async function analyzeContent(digestId: string): Promise<{
@@ -92,7 +110,9 @@ export async function analyzeContent(digestId: string): Promise<{
 
   const taskDrafts = await generateTaskDrafts(recommendations);
   console.log(`[AIAnalyzer] Generated ${taskDrafts.length} task drafts`);
-  const sopDrafts = await generateSopSuggestions(recommendations);
+  const templateSetContexts = await loadTemplateSetContext();
+  console.log(`[AIAnalyzer] Loaded ${templateSetContexts.length} template set contexts`);
+  const sopDrafts = await generateSopSuggestions(recommendations, templateSetContexts);
   console.log(`[AIAnalyzer] Generated ${sopDrafts.length} SOP drafts`);
 
   return { recommendations, taskDrafts, sopDrafts };
@@ -300,31 +320,146 @@ export function parseRecommendations(
   }
 }
 
+function extractDocIdFromUrl(url: string): string | null {
+  const match = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+export async function loadTemplateSetContext(): Promise<TemplateSetContext[]> {
+  const templateSets = await prisma.templateSet.findMany({
+    where: { active: true },
+    include: {
+      templates: {
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          subtasks: {
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      },
+    },
+  });
+
+  const contexts: TemplateSetContext[] = [];
+
+  for (const ts of templateSets) {
+    let strategyDocId: string | null = null;
+    let strategyDocContent: string | null = null;
+
+    if (ts.strategyDocUrl) {
+      strategyDocId = extractDocIdFromUrl(ts.strategyDocUrl);
+      if (strategyDocId) {
+        try {
+          strategyDocContent = await getSopContent(strategyDocId);
+        } catch (error) {
+          console.warn(`[AIAnalyzer] Failed to fetch strategy doc for "${ts.name}":`, error);
+        }
+      }
+    }
+
+    contexts.push({
+      id: ts.id,
+      name: ts.name,
+      description: ts.description,
+      strategyDocId,
+      strategyDocContent,
+      templates: ts.templates.map((t) => ({
+        title: t.title,
+        description: t.description,
+        dueInDays: t.dueInDays,
+        sortOrder: t.sortOrder,
+        subtasks: t.subtasks.map((s) => ({
+          title: s.title,
+          sortOrder: s.sortOrder,
+        })),
+      })),
+    });
+  }
+
+  return contexts;
+}
+
 export async function generateSopSuggestions(
-  recommendations: ParsedRecommendation[]
+  recommendations: ParsedRecommendation[],
+  templateSetContexts: TemplateSetContext[]
 ): Promise<ParsedSopDraft[]> {
-  if (recommendations.length === 0) return [];
+  if (templateSetContexts.length === 0) return [];
 
-  const prompt = `Based on these SEO recommendations, suggest SOP updates needed:
+  const recsText = recommendations.map((r, i) =>
+    `[${i}] ${r.title} (${r.impact} impact, ${r.confidence}): ${r.summary}`
+  ).join('\n');
 
-${recommendations.map((r, i) => `[${i}] ${r.title}: ${r.summary}`).join('\n')}
+  const templateSetSections = templateSetContexts.map((ts) => {
+    const templateList = ts.templates.map((t) => {
+      const subtaskList = t.subtasks.length > 0
+        ? t.subtasks.map((s) => `      - ${s.title}`).join('\n')
+        : '';
+      return `    ${t.sortOrder + 1}. ${t.title}${t.description ? ` — ${t.description}` : ''}${t.dueInDays ? ` (due in ${t.dueInDays} days)` : ''}${subtaskList ? '\n' + subtaskList : ''}`;
+    }).join('\n');
 
-Respond with JSON array:
+    if (ts.strategyDocContent) {
+      return `TEMPLATE SET: "${ts.name}" (ID: ${ts.id})
+${ts.description ? `Description: ${ts.description}\n` : ''}Templates in this set:
+${templateList}
+
+CURRENT STRATEGY DOCUMENT:
+${ts.strategyDocContent}
+
+INSTRUCTION: Based on the recommendations below, suggest specific updates to this strategy document. Show what sections to change and why.`;
+    } else {
+      return `TEMPLATE SET: "${ts.name}" (ID: ${ts.id})
+${ts.description ? `Description: ${ts.description}\n` : ''}Templates in this set:
+${templateList}
+
+INSTRUCTION: No strategy document exists for this set. Generate a complete strategy document with:
+1. STRATEGY OVERVIEW: What this strategy accomplishes and why it matters for high-ticket outdoor living contractors
+2. HOW IT WORKS: High-level approach based on the templates listed above
+3. KEY IMPLEMENTATION DETAILS: For each major template, explain what to do and why
+4. SUCCESS METRICS: How to measure if the strategy is working`;
+    }
+  }).join('\n\n---\n\n');
+
+  const prompt = `You are creating/updating strategy documents for template sets in a task management system used by an SEO agency serving high-ticket outdoor living contractors.
+
+TEMPLATE SETS TO PROCESS:
+${templateSetSections}
+
+RECENT SEO RECOMMENDATIONS:
+${recsText || 'No new recommendations this cycle.'}
+
+For each template set, generate a strategy document entry. Respond with a JSON array:
 [{
-  "sopDocId": "",
-  "sopTitle": "Name of SOP",
-  "description": "Why update is needed",
-  "beforeContent": "Current approach",
-  "afterContent": "Updated approach",
-  "recommendationIndex": 0
+  "templateSetId": "the template set UUID",
+  "draftType": "new" or "update",
+  "sopDocId": "google-doc-id if updating existing, empty string if new",
+  "sopTitle": "Strategy document title",
+  "description": "Why this draft was generated",
+  "beforeContent": "Current relevant section (for updates only, empty string for new)",
+  "afterContent": "Full strategy document content (for new) or updated section (for updates)",
+  "recommendationIndex": -1
 }]
 
-Only suggest SOP updates for high-impact, verified recommendations. Return empty array [] if none needed.`;
+RULES:
+- For "new" docs: afterContent should be a complete, well-structured strategy document. beforeContent should be empty string.
+- For "update" docs: only include changes relevant to the new recommendations. beforeContent should quote the current text being changed. recommendationIndex should reference the most relevant recommendation.
+- If a template set with an existing strategy doc has no relevant recommendations, skip it entirely.
+- Every template set WITHOUT a strategy doc should get a "new" draft.
+- Write in a professional but practical tone. Focus on actionable guidance.`;
 
   try {
-    const response = await callClaudeApi(prompt, 'You are an SOP management assistant. Respond with valid JSON only.');
+    const response = await callClaudeApi(prompt, 'You are a strategy document writer for an SEO agency. Respond with valid JSON only.');
     const parsed = JSON.parse(stripCodeFences(response));
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((draft: any) => ({
+      templateSetId: draft.templateSetId || undefined,
+      draftType: draft.draftType === 'new' ? 'new' : 'update',
+      sopDocId: draft.sopDocId || '',
+      sopTitle: draft.sopTitle || 'Strategy Document',
+      description: draft.description || '',
+      beforeContent: draft.beforeContent || '',
+      afterContent: draft.afterContent || '',
+      recommendationIndex: draft.recommendationIndex ?? -1,
+    }));
   } catch (error) {
     console.error('[AIAnalyzer] Failed to generate SOP suggestions:', error);
     return [];

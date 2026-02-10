@@ -18,6 +18,7 @@ import {
   useSeoSopDrafts,
   useApplySopDraft,
   useDismissSopDraft,
+  useEditSopDraft,
   useSeoSettings,
   useUpdateSeoSettings,
   useSeoJobHistory,
@@ -48,6 +49,7 @@ export function SeoIntelligencePage() {
   const { data: sopDrafts = [] } = useSeoSopDrafts(selectedDigestId);
   const applySop = useApplySopDraft();
   const dismissSop = useDismissSopDraft();
+  const editSop = useEditSopDraft();
   const { data: settings } = useSeoSettings();
   const updateSettings = useUpdateSeoSettings();
   const { data: jobHistory = [] } = useSeoJobHistory();
@@ -226,6 +228,7 @@ export function SeoIntelligencePage() {
                 draft={draft}
                 onApply={(id) => applySop.mutate(id)}
                 onDismiss={(id) => dismissSop.mutate(id)}
+                onEdit={(id, afterContent) => editSop.mutate({ id, afterContent })}
               />
             ))
           ) : (

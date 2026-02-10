@@ -91,18 +91,20 @@ enum SeoTaskDraftStatus {
 }
 
 model TemplateSet {
-  id           String      @id @default(uuid())
-  name         String
-  description  String?
-  triggerType  TriggerType @default(manual) @map("trigger_type")
-  triggerRules Json        @default("{}") @map("trigger_rules")
-  planTypes    PlanType[]  @map("plan_types")
-  active       Boolean     @default(true)
-  isSystem     Boolean     @default(false) @map("is_system")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  triggerType     TriggerType @default(manual) @map("trigger_type")
+  triggerRules    Json        @default("{}") @map("trigger_rules")
+  planTypes       PlanType[]  @map("plan_types")
+  active          Boolean     @default(true)
+  isSystem        Boolean     @default(false) @map("is_system")
+  strategyDocUrl  String?     @map("strategy_doc_url")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
 
-  templates TaskTemplate[]
+  templates    TaskTemplate[]
+  seoSopDrafts SeoSopDraft[]
 
   @@map("template_sets")
 }
@@ -884,20 +886,23 @@ model SeoTaskDraft {
 }
 
 model SeoSopDraft {
-  id               String   @id @default(uuid())
-  digestId         String   @map("digest_id")
-  recommendationId String?  @map("recommendation_id")
-  sopDocId         String   @map("sop_doc_id")
-  sopTitle         String   @map("sop_title")
+  id               String    @id @default(uuid())
+  digestId         String    @map("digest_id")
+  recommendationId String?   @map("recommendation_id")
+  templateSetId    String?   @map("template_set_id")
+  sopDocId         String    @map("sop_doc_id")
+  sopTitle         String    @map("sop_title")
   description      String
-  beforeContent    String   @map("before_content")
-  afterContent     String   @map("after_content")
-  status           String   @default("pending")
+  draftType        String    @default("update") @map("draft_type")
+  beforeContent    String    @map("before_content")
+  afterContent     String    @map("after_content")
+  status           String    @default("pending")
   appliedAt        DateTime? @map("applied_at")
-  createdAt        DateTime @default(now()) @map("created_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
 
   digest         SeoDigest          @relation(fields: [digestId], references: [id], onDelete: Cascade)
   recommendation SeoRecommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
+  templateSet    TemplateSet?       @relation(fields: [templateSetId], references: [id], onDelete: SetNull)
 
   @@index([digestId])
   @@map("seo_sop_drafts")

@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../db/client.js';
 import { isAuthenticated } from '../middleware/auth.js';
 import { runSeoIntelligencePipeline, retryDigest } from '../jobs/seoIntelligence.js';
-import { applyDraftSopEdit, listSopDocuments } from '../services/seo/googleDocs.js';
+import { applyDraftSopEdit, createSopDocument, listSopDocuments } from '../services/seo/googleDocs.js';
 import { fetchRssSource, fetchYouTubeChannel, fetchRedditSubreddit, fetchWebPage } from '../services/seo/sourceFetcher.js';
 import { seedSeoSources } from '../services/seo/seedSeoSources.js';
 import { buildAnalysisPrompt, callClaudeApi, parseRecommendations } from '../services/seo/aiAnalyzer.js';
@@ -253,7 +253,17 @@ router.get('/digests/:id/sop-drafts', async (req: Request, res: Response) => {
     const digestId = req.params.id as string;
     const drafts = await prisma.seoSopDraft.findMany({
       where: { digestId },
-      include: { recommendation: true },
+      include: {
+        recommendation: true,
+        templateSet: {
+          include: {
+            templates: {
+              orderBy: { sortOrder: 'asc' },
+              select: { id: true, title: true, sortOrder: true },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -277,14 +287,37 @@ router.post('/sop-drafts/:id/apply', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'SOP draft already processed' });
     }
 
-    await applyDraftSopEdit(draft.sopDocId, draft.afterContent, draft.description);
+    if (draft.draftType === 'new') {
+      const settings = await prisma.seoSettings.findFirst();
+      if (!settings?.sopFolderId) {
+        return res.status(400).json({ error: 'SOP folder not configured in settings' });
+      }
 
-    const updated = await prisma.seoSopDraft.update({
-      where: { id },
-      data: { status: 'applied', appliedAt: new Date() },
-    });
+      const docUrl = await createSopDocument(draft.sopTitle, draft.afterContent, settings.sopFolderId);
 
-    res.json(updated);
+      if (draft.templateSetId) {
+        await prisma.templateSet.update({
+          where: { id: draft.templateSetId },
+          data: { strategyDocUrl: docUrl },
+        });
+      }
+
+      const updated = await prisma.seoSopDraft.update({
+        where: { id },
+        data: { status: 'applied', appliedAt: new Date(), sopDocId: docUrl },
+      });
+
+      res.json(updated);
+    } else {
+      await applyDraftSopEdit(draft.sopDocId, draft.afterContent, draft.description);
+
+      const updated = await prisma.seoSopDraft.update({
+        where: { id },
+        data: { status: 'applied', appliedAt: new Date() },
+      });
+
+      res.json(updated);
+    }
   } catch (error) {
     console.error('[SEO Routes] Failed to apply SOP draft:', error);
     res.status(500).json({ error: 'Failed to apply SOP draft' });
@@ -303,6 +336,36 @@ router.post('/sop-drafts/:id/dismiss', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[SEO Routes] Failed to dismiss SOP draft:', error);
     res.status(500).json({ error: 'Failed to dismiss SOP draft' });
+  }
+});
+
+router.post('/sop-drafts/:id/edit', async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { afterContent } = req.body;
+
+    if (!afterContent || typeof afterContent !== 'string') {
+      return res.status(400).json({ error: 'afterContent is required' });
+    }
+
+    const draft = await prisma.seoSopDraft.findUnique({ where: { id } });
+    if (!draft) {
+      return res.status(404).json({ error: 'SOP draft not found' });
+    }
+
+    if (draft.status !== 'pending') {
+      return res.status(400).json({ error: 'Can only edit pending drafts' });
+    }
+
+    const updated = await prisma.seoSopDraft.update({
+      where: { id },
+      data: { afterContent },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('[SEO Routes] Failed to edit SOP draft:', error);
+    res.status(500).json({ error: 'Failed to edit SOP draft' });
   }
 });
 

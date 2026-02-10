@@ -724,6 +724,11 @@ export const seo = {
     fetchApi<import('./types').SeoSopDraft>(`/api/seo/sop-drafts/${id}/apply`, { method: 'POST' }),
   dismissSopDraft: (id: string) =>
     fetchApi<import('./types').SeoSopDraft>(`/api/seo/sop-drafts/${id}/dismiss`, { method: 'POST' }),
+  editSopDraft: (id: string, afterContent: string) =>
+    fetchApi<import('./types').SeoSopDraft>(`/api/seo/sop-drafts/${id}/edit`, {
+      method: 'POST',
+      body: JSON.stringify({ afterContent }),
+    }),
   getSettings: () =>
     fetchApi<import('./types').SeoSettings>('/api/seo/settings'),
   updateSettings: (data: Partial<import('./types').SeoSettings>) =>

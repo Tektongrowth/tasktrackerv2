@@ -121,6 +121,7 @@ export interface TemplateSet {
   planTypes: PlanType[];
   active: boolean;
   isSystem: boolean;
+  strategyDocUrl?: string;
   templates?: TaskTemplate[];
   _count?: { templates: number };
   createdAt: string;
@@ -686,6 +687,8 @@ export interface SeoSopDraft {
   id: string;
   digestId: string;
   recommendationId?: string;
+  templateSetId?: string;
+  draftType: 'update' | 'new';
   sopDocId: string;
   sopTitle: string;
   description: string;
@@ -695,6 +698,12 @@ export interface SeoSopDraft {
   appliedAt?: string;
   createdAt: string;
   recommendation?: SeoRecommendation;
+  templateSet?: {
+    id: string;
+    name: string;
+    description?: string;
+    templates?: { id: string; title: string; sortOrder: number }[];
+  };
 }
 
 export interface SeoClientInsight {

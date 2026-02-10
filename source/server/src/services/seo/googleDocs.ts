@@ -176,6 +176,80 @@ export async function getSopContent(docId: string): Promise<string> {
   return text;
 }
 
+export async function createSopDocument(
+  title: string,
+  content: string,
+  folderId: string
+): Promise<string> {
+  const auth = getGoogleAuth();
+  const docs = google.docs({ version: 'v1', auth });
+  const drive = google.drive({ version: 'v3', auth });
+
+  const createRes = await docs.documents.create({
+    requestBody: { title },
+  });
+
+  const docId = createRes.data.documentId!;
+
+  try {
+    await drive.files.update({
+      fileId: docId,
+      addParents: folderId,
+      fields: 'id, parents',
+    });
+  } catch (error) {
+    console.warn('[GoogleDocs] Failed to move strategy doc to folder:', error);
+  }
+
+  const requests: any[] = [];
+  let insertIndex = 1;
+
+  const addText = (text: string, style?: string) => {
+    const endIndex = insertIndex + text.length;
+    requests.push({
+      insertText: { location: { index: insertIndex }, text },
+    });
+    if (style === 'HEADING_1' || style === 'HEADING_2' || style === 'HEADING_3') {
+      requests.push({
+        updateParagraphStyle: {
+          range: { startIndex: insertIndex, endIndex },
+          paragraphStyle: { namedStyleType: style },
+          fields: 'namedStyleType',
+        },
+      });
+    }
+    insertIndex = endIndex;
+  };
+
+  addText(`${title}\n`, 'HEADING_1');
+
+  const sections = content.split(/\n(?=#{1,3}\s)/);
+  for (const section of sections) {
+    const headingMatch = section.match(/^(#{1,3})\s+(.+)\n/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const headingText = headingMatch[2];
+      const style = level === 1 ? 'HEADING_1' : level === 2 ? 'HEADING_2' : 'HEADING_3';
+      addText(`${headingText}\n`, style);
+      const body = section.slice(headingMatch[0].length);
+      if (body.trim()) {
+        addText(`${body.trim()}\n\n`);
+      }
+    } else if (section.trim()) {
+      addText(`${section.trim()}\n\n`);
+    }
+  }
+
+  if (requests.length > 0) {
+    await docs.documents.batchUpdate({
+      documentId: docId,
+      requestBody: { requests },
+    });
+  }
+
+  return `https://docs.google.com/document/d/${docId}/edit`;
+}
+
 export async function applyDraftSopEdit(
   sopDocId: string,
   afterContent: string,
