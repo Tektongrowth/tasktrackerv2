@@ -236,6 +236,7 @@ app.get('/health', async (_req, res) => {
 });
 
 // Temporary debug endpoint - remove after fixing login loop
+const authDebugLog: any[] = [];
 app.get('/auth/debug-session', (req, res) => {
   res.json({
     sessionID: req.sessionID,
@@ -248,7 +249,28 @@ app.get('/auth/debug-session', (req, res) => {
     sessionPassport: (req.session as any)?.passport,
     origin: req.headers.origin,
     referer: req.headers.referer,
+    xForwardedProto: req.headers['x-forwarded-proto'],
+    xForwardedFor: req.headers['x-forwarded-for'],
+    reqSecure: req.secure,
+    nodeEnv: process.env.NODE_ENV,
+    isProductionFlag: isProduction,
+    recentAuthMeLogs: authDebugLog.slice(-5),
   });
+});
+// Log /auth/me requests for debugging
+app.use('/auth/me', (req, _res, next) => {
+  authDebugLog.push({
+    ts: new Date().toISOString(),
+    hasCookie: !!req.headers.cookie,
+    cookieKeys: req.headers.cookie?.split(';').map((c: string) => c.trim().split('=')[0]),
+    sessionID: req.sessionID?.substring(0, 10),
+    isAuthenticated: req.isAuthenticated(),
+    hasUser: !!req.user,
+    sessionPassport: (req.session as any)?.passport,
+    xForwardedProto: req.headers['x-forwarded-proto'],
+  });
+  if (authDebugLog.length > 20) authDebugLog.shift();
+  next();
 });
 
 // Deploy status endpoint - returns whether we're in the post-deploy window
