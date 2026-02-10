@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface FilterState {
   selectedProjectId: string | null;
@@ -22,7 +23,7 @@ interface FilterState {
   clearFilters: () => void;
 }
 
-export const useFilters = create<FilterState>((set) => ({
+export const useFilters = create<FilterState>()(persist((set) => ({
   selectedProjectId: null,
   selectedClientId: null,
   selectedAssignees: [],
@@ -62,4 +63,14 @@ export const useFilters = create<FilterState>((set) => ({
     searchQuery: '',
     dueDateRange: { start: null, end: null }
   }),
+}), {
+  name: 'task-filters',
+  storage: {
+    getItem: (name) => {
+      const str = sessionStorage.getItem(name);
+      return str ? JSON.parse(str) : null;
+    },
+    setItem: (name, value) => sessionStorage.setItem(name, JSON.stringify(value)),
+    removeItem: (name) => sessionStorage.removeItem(name),
+  },
 }));
