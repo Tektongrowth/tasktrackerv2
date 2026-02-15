@@ -135,7 +135,8 @@ export async function createClientDriveFolder(
   projectId: string,
   planType: string,
   clientData: ClientData,
-  projectName: string
+  projectName: string,
+  addOns: string[] = []
 ): Promise<CreateDriveFolderResult> {
   if (!CLIENTS_FOLDER_ID) {
     throw new Error('DRIVE_CLIENTS_FOLDER_ID environment variable not set');
@@ -146,7 +147,13 @@ export async function createClientDriveFolder(
   const sheetsApi = google.sheets({ version: 'v4', auth });
 
   const clientName = clientData.name;
-  const includes = PLAN_INCLUDES[planType] || PLAN_INCLUDES.package_one;
+  // Merge categories from main plan type + all add-ons
+  const includes = new Set(PLAN_INCLUDES[planType] || PLAN_INCLUDES.package_one);
+  for (const addon of addOns) {
+    for (const cat of (PLAN_INCLUDES[addon] || [])) {
+      includes.add(cat);
+    }
+  }
 
   console.log(`[DriveClientFolder] Creating folder structure for "${clientName}" (${planType})`);
 
@@ -182,7 +189,7 @@ export async function createClientDriveFolder(
   const createdDocs: { folder: string; name: string; url: string }[] = [];
 
   for (const spec of folderSpecs) {
-    if (!includes.includes(spec.category)) continue;
+    if (!includes.has(spec.category)) continue;
 
     const subFolder = await drive.files.create({
       requestBody: {

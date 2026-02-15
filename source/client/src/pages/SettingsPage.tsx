@@ -762,6 +762,7 @@ export function SettingsPage() {
   const [projectName, setProjectName] = useState('');
   const [projectClientId, setProjectClientId] = useState('');
   const [projectPlanType, setPlanType] = useState('package_one');
+  const [projectAddOns, setProjectAddOns] = useState<string[]>([]);
   const [projectStatus, setProjectStatus] = useState('active');
 
   // Upgrade state
@@ -1022,7 +1023,7 @@ export function SettingsPage() {
   });
 
   const updateProject = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string; planType?: string; subscriptionStatus?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof projectsApi.update>[1] }) =>
       projectsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -1278,6 +1279,7 @@ export function SettingsPage() {
     setProjectName('');
     setProjectClientId('');
     setPlanType('package_one');
+    setProjectAddOns([]);
     setProjectStatus('active');
   };
 
@@ -1286,18 +1288,19 @@ export function SettingsPage() {
     setProjectName(project.name);
     setProjectClientId(project.clientId);
     setPlanType(project.planType || 'package_one');
+    setProjectAddOns((project as any).addOns || []);
     setProjectStatus(project.subscriptionStatus || 'active');
   };
 
   const handleProjectSave = () => {
     if (editingProject) {
-      updateProject.mutate({ id: editingProject.id, data: { name: projectName, planType: projectPlanType, subscriptionStatus: projectStatus } });
+      updateProject.mutate({ id: editingProject.id, data: { name: projectName, planType: projectPlanType, addOns: projectAddOns, subscriptionStatus: projectStatus } });
     } else {
       if (!projectName || !projectClientId) {
         toast({ title: 'Please enter project name and select a client', variant: 'destructive' });
         return;
       }
-      createProject.mutate({ clientId: projectClientId, name: projectName, planType: projectPlanType });
+      createProject.mutate({ clientId: projectClientId, name: projectName, planType: projectPlanType, addOns: projectAddOns });
     }
   };
 
@@ -2454,19 +2457,48 @@ export function SettingsPage() {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Label>Plan Type</Label>
+                    <Label>Package</Label>
                     <select
                       value={projectPlanType}
                       onChange={(e) => setPlanType(e.target.value)}
                       className="w-full rounded-md border border-input bg-white/[0.04] px-3 py-2 text-sm"
                     >
-                      <option value="package_one">Package One</option>
-                      <option value="package_two">Package Two</option>
-                      <option value="package_three">Package Three</option>
-                      <option value="package_four">Package Four</option>
-                      <option value="facebook_ads_addon">Facebook Ads Add-on</option>
-                      <option value="custom_website_addon">Custom Website Add-on</option>
+                      <option value="package_one">Package 1 - GBP Setup</option>
+                      <option value="package_two">Package 2 - GBP Management</option>
+                      <option value="package_three">Package 3 - GBP + Website</option>
+                      <option value="package_four">Package 4 - Core 30 SEO</option>
                     </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Add-ons</Label>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={projectAddOns.includes('facebook_ads_addon')}
+                          onCheckedChange={(checked) => {
+                            setProjectAddOns(prev =>
+                              checked
+                                ? [...prev, 'facebook_ads_addon']
+                                : prev.filter(a => a !== 'facebook_ads_addon')
+                            );
+                          }}
+                        />
+                        <span className="text-sm">Facebook Ads</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={projectAddOns.includes('custom_website_addon')}
+                          onCheckedChange={(checked) => {
+                            setProjectAddOns(prev =>
+                              checked
+                                ? [...prev, 'custom_website_addon']
+                                : prev.filter(a => a !== 'custom_website_addon')
+                            );
+                          }}
+                        />
+                        <span className="text-sm">Custom Website</span>
+                      </label>
+                    </div>
                   </div>
                   {editingProject && (
                     <div className="space-y-2">
@@ -2503,6 +2535,9 @@ export function SettingsPage() {
                       <CardTitle className="text-base">{project.name}</CardTitle>
                       <CardDescription>
                         {project.client?.name} • {project.planType?.replace('_', ' ')}
+                        {(project as any).addOns?.length > 0 && (
+                          <> + {(project as any).addOns.map((a: string) => a === 'facebook_ads_addon' ? 'FB Ads' : a === 'custom_website_addon' ? 'Website' : a).join(', ')}</>
+                        )}
                         {(project as any).cosmoSheetUrl && (
                           <>
                             {' • '}

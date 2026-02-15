@@ -116,12 +116,12 @@ export const clients = {
 export const projects = {
   list: () => fetchApi<import('./types').Project[]>('/api/projects'),
   get: (id: string) => fetchApi<import('./types').Project>(`/api/projects/${id}`),
-  create: (data: { clientId: string; name: string; planType?: string }) =>
+  create: (data: { clientId: string; name: string; planType?: string; addOns?: string[] }) =>
     fetchApi<import('./types').Project>('/api/projects', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: { name?: string; planType?: string; subscriptionStatus?: string }) =>
+  update: (id: string, data: { name?: string; planType?: string; addOns?: string[]; subscriptionStatus?: string }) =>
     fetchApi<import('./types').Project>(`/api/projects/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),

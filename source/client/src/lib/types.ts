@@ -55,6 +55,7 @@ export interface Project {
   clientId: string;
   name: string;
   planType?: PlanType;
+  addOns?: PlanType[];
   stripeSubscriptionId?: string;
   subscriptionStatus: 'active' | 'canceled' | 'past_due';
   billingDate?: string;

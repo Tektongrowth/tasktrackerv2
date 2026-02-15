@@ -63,16 +63,18 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response, next: Ne
 // Create project (for manual hosting plans)
 router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { clientId, name, planType } = req.body;
+    const { clientId, name, planType, addOns } = req.body;
 
     // Validate inputs
     const validName = validateName(name, true);
+    const validAddOns = Array.isArray(addOns) ? addOns : [];
 
     const project = await prisma.project.create({
       data: {
         clientId,
         name: validName!,
         planType,
+        addOns: validAddOns,
         subscriptionStatus: 'active'
       },
       include: {
@@ -85,6 +87,12 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
     if (planType) {
       templatesApplied = await applyNewProjectTemplates(project.id, planType);
     }
+    // Also apply templates for each add-on
+    for (const addon of validAddOns) {
+      const addonResult = await applyNewProjectTemplates(project.id, addon);
+      templatesApplied.totalTasksCreated += addonResult.totalTasksCreated;
+      templatesApplied.templateSetsApplied += addonResult.templateSetsApplied;
+    }
 
     // Auto-create Google Drive folder structure (non-blocking — don't fail project creation)
     let driveResult: { driveFolderUrl: string; cosmoSheetUrl: string } | null = null;
@@ -94,7 +102,8 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
           project.id,
           planType,
           project.client,
-          project.name
+          project.name,
+          validAddOns
         );
       } catch (err) {
         console.error('[Projects] Drive folder creation failed:', err);
@@ -115,7 +124,7 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
 router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { name, planType, subscriptionStatus, billingDate } = req.body;
+    const { name, planType, subscriptionStatus, billingDate, addOns } = req.body;
 
     // Validate name if provided
     const validName = name !== undefined ? validateName(name, true) : undefined;
@@ -125,6 +134,7 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
       data: {
         ...(validName && { name: validName }),
         ...(planType && { planType }),
+        ...(addOns !== undefined && { addOns: Array.isArray(addOns) ? addOns : [] }),
         ...(subscriptionStatus && { subscriptionStatus }),
         ...(billingDate && { billingDate: new Date(billingDate) })
       },
@@ -229,7 +239,8 @@ router.post('/:id/create-drive-folder', isAuthenticated, isAdmin, async (req: Re
       project.id,
       project.planType,
       project.client,
-      project.name
+      project.name,
+      (project as any).addOns || []
     );
 
     res.json(result);

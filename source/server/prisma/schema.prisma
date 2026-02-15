@@ -212,6 +212,7 @@ model Project {
   clientId             String             @map("client_id")
   name                 String
   planType             PlanType?          @map("plan_type")
+  addOns               PlanType[]         @default([]) @map("add_ons")
   stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
   subscriptionStatus   SubscriptionStatus @default(active) @map("subscription_status")
   billingDate          DateTime?          @map("billing_date")
