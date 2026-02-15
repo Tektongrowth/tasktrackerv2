@@ -336,6 +336,15 @@ app.set('io', io);
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 
+  // Log service account email for setup (remove after Drive folder sharing is configured)
+  try {
+    const saKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+    if (saKey) {
+      const parsed = JSON.parse(Buffer.from(saKey, 'base64').toString('utf-8'));
+      console.log(`[Setup] Service account email: ${parsed.client_email}`);
+    }
+  } catch { /* ignore */ }
+
   // Initialize scheduled jobs
   initializeScheduler();
 });
