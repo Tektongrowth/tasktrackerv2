@@ -191,8 +191,18 @@ model Client {
   taskSubmissions TaskSubmission[]
   seoInsights     SeoClientInsight[]
 
-  gbpLocationId      String? @map("gbp_location_id")
-  googleAdsCustomerId String? @map("google_ads_customer_id")
+  gbpLocationId       String?  @map("gbp_location_id")
+  googleAdsCustomerId String?  @map("google_ads_customer_id")
+
+  // Business details (for Drive folder automation + Cosmo Sheet pre-fill)
+  contactName     String?  @map("contact_name")
+  address         String?
+  city            String?
+  state           String?
+  zip             String?
+  websiteUrl      String?  @map("website_url")
+  serviceArea     String?  @map("service_area")
+  primaryServices String[] @default([]) @map("primary_services")
 
   @@map("clients")
 }
@@ -205,6 +215,8 @@ model Project {
   stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
   subscriptionStatus   SubscriptionStatus @default(active) @map("subscription_status")
   billingDate          DateTime?          @map("billing_date")
+  driveFolderUrl       String?            @map("drive_folder_url")
+  cosmoSheetUrl        String?            @map("cosmo_sheet_url")
   createdAt            DateTime           @default(now()) @map("created_at")
   updatedAt            DateTime           @updatedAt @map("updated_at")
 

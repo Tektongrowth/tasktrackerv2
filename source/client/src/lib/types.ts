@@ -37,6 +37,14 @@ export interface Client {
   stripeCustomerId?: string;
   gbpLocationId?: string;
   googleAdsCustomerId?: string;
+  contactName?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  websiteUrl?: string;
+  serviceArea?: string;
+  primaryServices?: string[];
   projects?: Project[];
   createdAt: string;
   updatedAt: string;
@@ -50,6 +58,8 @@ export interface Project {
   stripeSubscriptionId?: string;
   subscriptionStatus: 'active' | 'canceled' | 'past_due';
   billingDate?: string;
+  driveFolderUrl?: string;
+  cosmoSheetUrl?: string;
   client?: Client;
   tasks?: Task[];
   createdAt: string;
