@@ -76,12 +76,22 @@ export const users = {
 export const clients = {
   list: () => fetchApi<import('./types').Client[]>('/api/clients'),
   get: (id: string) => fetchApi<import('./types').Client>(`/api/clients/${id}`),
-  create: (data: { name: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string }) =>
+  create: (data: {
+    name: string; email?: string; phone?: string;
+    ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string;
+    contactName?: string; address?: string; city?: string; state?: string; zip?: string;
+    websiteUrl?: string; serviceArea?: string; primaryServices?: string[];
+  }) =>
     fetchApi<import('./types').Client>('/api/clients', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: { name?: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string }) =>
+  update: (id: string, data: {
+    name?: string; email?: string; phone?: string;
+    ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string;
+    contactName?: string; address?: string; city?: string; state?: string; zip?: string;
+    websiteUrl?: string; serviceArea?: string; primaryServices?: string[];
+  }) =>
     fetchApi<import('./types').Client>(`/api/clients/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -139,6 +149,10 @@ export const projects = {
       skippedDuplicates: number;
       templateSetsProcessed: number;
     }>(`/api/projects/${id}/offboard`, {
+      method: 'POST',
+    }),
+  createDriveFolder: (id: string) =>
+    fetchApi<{ driveFolderUrl: string; cosmoSheetUrl: string }>(`/api/projects/${id}/create-drive-folder`, {
       method: 'POST',
     }),
 };

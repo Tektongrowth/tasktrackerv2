@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, UserPlus, Mail, Trash2, Pencil, Shield, Eye, Edit2, History, Database, RefreshCw, Copy, Code, ExternalLink, Users, Archive, RotateCcw, ChevronDown, ChevronRight, Send, Palette, RotateCw, Image, ImagePlus, X, Upload, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
+import { Plus, UserPlus, Mail, Trash2, Pencil, Shield, Eye, Edit2, History, Database, RefreshCw, Copy, Code, ExternalLink, Users, Archive, RotateCcw, ChevronDown, ChevronRight, Send, Palette, RotateCw, Image, ImagePlus, X, Upload, CheckCircle, AlertCircle, CreditCard, FolderOpen, Loader2 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { ThemeSettings, availableFonts, defaultTheme } from '@/lib/theme';
 import { toast } from '@/components/ui/toaster';
@@ -740,6 +740,14 @@ export function SettingsPage() {
   const [clientGhlLocationId, setClientGhlLocationId] = useState('');
   const [clientGbpLocationId, setClientGbpLocationId] = useState('');
   const [clientGoogleAdsCustomerId, setClientGoogleAdsCustomerId] = useState('');
+  const [clientContactName, setClientContactName] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
+  const [clientCity, setClientCity] = useState('');
+  const [clientState, setClientState] = useState('');
+  const [clientZip, setClientZip] = useState('');
+  const [clientWebsiteUrl, setClientWebsiteUrl] = useState('');
+  const [clientServiceArea, setClientServiceArea] = useState('');
+  const [clientPrimaryServices, setClientPrimaryServices] = useState('');
 
   // Viewer state
   const [showViewersDialog, setShowViewersDialog] = useState(false);
@@ -944,7 +952,7 @@ export function SettingsPage() {
   });
 
   const updateClient = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof clientsApi.update>[1] }) =>
       clientsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -1048,6 +1056,17 @@ export function SettingsPage() {
     },
     onError: (error: Error) => {
       toast({ title: 'Upgrade failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const createDriveFolder = useMutation({
+    mutationFn: (id: string) => projectsApi.createDriveFolder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast({ title: 'Drive folder created', description: 'Google Drive folder and Cosmo Sheet have been created.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to create Drive folder', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -1183,9 +1202,17 @@ export function SettingsPage() {
     setClientGhlLocationId('');
     setClientGbpLocationId('');
     setClientGoogleAdsCustomerId('');
+    setClientContactName('');
+    setClientAddress('');
+    setClientCity('');
+    setClientState('');
+    setClientZip('');
+    setClientWebsiteUrl('');
+    setClientServiceArea('');
+    setClientPrimaryServices('');
   };
 
-  const openClientEditDialog = (client: { id: string; name: string; email?: string; phone?: string; ghlLocationId?: string; gbpLocationId?: string; googleAdsCustomerId?: string }) => {
+  const openClientEditDialog = (client: any) => {
     setEditingClient(client);
     setClientName(client.name);
     setClientEmail(client.email || '');
@@ -1193,17 +1220,42 @@ export function SettingsPage() {
     setClientGhlLocationId(client.ghlLocationId || '');
     setClientGbpLocationId(client.gbpLocationId || '');
     setClientGoogleAdsCustomerId(client.googleAdsCustomerId || '');
+    setClientContactName(client.contactName || '');
+    setClientAddress(client.address || '');
+    setClientCity(client.city || '');
+    setClientState(client.state || '');
+    setClientZip(client.zip || '');
+    setClientWebsiteUrl(client.websiteUrl || '');
+    setClientServiceArea(client.serviceArea || '');
+    setClientPrimaryServices((client.primaryServices || []).join(', '));
   };
 
   const handleClientSave = () => {
+    const services = clientPrimaryServices ? clientPrimaryServices.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+    const data = {
+      name: clientName,
+      email: clientEmail || undefined,
+      phone: clientPhone || undefined,
+      ghlLocationId: clientGhlLocationId || undefined,
+      gbpLocationId: clientGbpLocationId || undefined,
+      googleAdsCustomerId: clientGoogleAdsCustomerId || undefined,
+      contactName: clientContactName || undefined,
+      address: clientAddress || undefined,
+      city: clientCity || undefined,
+      state: clientState || undefined,
+      zip: clientZip || undefined,
+      websiteUrl: clientWebsiteUrl || undefined,
+      serviceArea: clientServiceArea || undefined,
+      primaryServices: services,
+    };
     if (editingClient) {
-      updateClient.mutate({ id: editingClient.id, data: { name: clientName, email: clientEmail || undefined, phone: clientPhone || undefined, ghlLocationId: clientGhlLocationId || undefined, gbpLocationId: clientGbpLocationId || undefined, googleAdsCustomerId: clientGoogleAdsCustomerId || undefined } });
+      updateClient.mutate({ id: editingClient.id, data });
     } else {
       if (!clientName) {
         toast({ title: 'Please enter a client name', variant: 'destructive' });
         return;
       }
-      createClient.mutate({ name: clientName, email: clientEmail || undefined, phone: clientPhone || undefined, ghlLocationId: clientGhlLocationId || undefined, gbpLocationId: clientGbpLocationId || undefined, googleAdsCustomerId: clientGoogleAdsCustomerId || undefined });
+      createClient.mutate(data);
     }
   };
 
@@ -2029,6 +2081,78 @@ export function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label>Contact Name</Label>
+                    <Input
+                      value={clientContactName}
+                      onChange={(e) => setClientContactName(e.target.value)}
+                      placeholder="John Smith"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Website URL</Label>
+                    <Input
+                      value={clientWebsiteUrl}
+                      onChange={(e) => setClientWebsiteUrl(e.target.value)}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Address</Label>
+                    <Input
+                      value={clientAddress}
+                      onChange={(e) => setClientAddress(e.target.value)}
+                      placeholder="123 Main St"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-2">
+                      <Label>City</Label>
+                      <Input
+                        value={clientCity}
+                        onChange={(e) => setClientCity(e.target.value)}
+                        placeholder="Houston"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>State</Label>
+                      <Input
+                        value={clientState}
+                        onChange={(e) => setClientState(e.target.value)}
+                        placeholder="TX"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>ZIP</Label>
+                      <Input
+                        value={clientZip}
+                        onChange={(e) => setClientZip(e.target.value)}
+                        placeholder="77001"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Service Area</Label>
+                    <Input
+                      value={clientServiceArea}
+                      onChange={(e) => setClientServiceArea(e.target.value)}
+                      placeholder="Greater Houston Area"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Primary Services</Label>
+                    <Input
+                      value={clientPrimaryServices}
+                      onChange={(e) => setClientPrimaryServices(e.target.value)}
+                      placeholder="Landscaping, Lawn Care, Hardscaping"
+                    />
+                    <p className="text-xs text-white/60">
+                      Comma-separated list of services
+                    </p>
+                  </div>
+                  <div className="border-t border-white/10 pt-4 mt-4">
+                    <p className="text-sm font-medium text-white/80 mb-3">Integration IDs</p>
+                  </div>
+                  <div className="space-y-2">
                     <Label>GHL Location ID</Label>
                     <Input
                       value={clientGhlLocationId}
@@ -2379,12 +2503,42 @@ export function SettingsPage() {
                       <CardTitle className="text-base">{project.name}</CardTitle>
                       <CardDescription>
                         {project.client?.name} • {project.planType?.replace('_', ' ')}
+                        {(project as any).cosmoSheetUrl && (
+                          <>
+                            {' • '}
+                            <a href={(project as any).cosmoSheetUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--theme-primary)] hover:underline">
+                              Cosmo Sheet
+                            </a>
+                          </>
+                        )}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={project.subscriptionStatus === 'active' ? 'default' : 'secondary'}>
                         {project.subscriptionStatus}
                       </Badge>
+                      {(project as any).driveFolderUrl ? (
+                        <a
+                          href={(project as any).driveFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 h-8 px-2 text-xs rounded-md border border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
+                        >
+                          <FolderOpen className="h-3.5 w-3.5" />
+                          Drive
+                        </a>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          disabled={createDriveFolder.isPending}
+                          onClick={() => createDriveFolder.mutate(project.id)}
+                        >
+                          {createDriveFolder.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderOpen className="h-3.5 w-3.5 mr-1" />}
+                          Create Drive
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
