@@ -93,7 +93,10 @@ router.get('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response,
 // Create client (admin only, for manual creation)
 router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, phone, ghlLocationId, gbpLocationId, googleAdsCustomerId } = req.body;
+    const {
+      name, email, phone, ghlLocationId, gbpLocationId, googleAdsCustomerId,
+      contactName, address, city, state, zip, websiteUrl, serviceArea, primaryServices
+    } = req.body;
 
     // Validate inputs
     const validName = validateName(name, true);
@@ -111,7 +114,15 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
         embedToken,
         ghlLocationId: ghlLocationId || null,
         gbpLocationId: gbpLocationId || null,
-        googleAdsCustomerId: googleAdsCustomerId || null
+        googleAdsCustomerId: googleAdsCustomerId || null,
+        contactName: contactName || null,
+        address: address || null,
+        city: city || null,
+        state: state || null,
+        zip: zip || null,
+        websiteUrl: websiteUrl || null,
+        serviceArea: serviceArea || null,
+        primaryServices: primaryServices || []
       }
     });
 
@@ -125,7 +136,10 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
 router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { name, email, phone, ghlLocationId, gbpLocationId, googleAdsCustomerId } = req.body;
+    const {
+      name, email, phone, ghlLocationId, gbpLocationId, googleAdsCustomerId,
+      contactName, address, city, state, zip, websiteUrl, serviceArea, primaryServices
+    } = req.body;
 
     // Validate inputs if provided
     const validName = name !== undefined ? validateName(name, true) : undefined;
@@ -140,7 +154,15 @@ router.patch('/:id', isAuthenticated, isAdmin, async (req: Request, res: Respons
         ...(validPhone !== undefined && { phone: validPhone }),
         ...(ghlLocationId !== undefined && { ghlLocationId: ghlLocationId || null }),
         ...(gbpLocationId !== undefined && { gbpLocationId: gbpLocationId || null }),
-        ...(googleAdsCustomerId !== undefined && { googleAdsCustomerId: googleAdsCustomerId || null })
+        ...(googleAdsCustomerId !== undefined && { googleAdsCustomerId: googleAdsCustomerId || null }),
+        ...(contactName !== undefined && { contactName: contactName || null }),
+        ...(address !== undefined && { address: address || null }),
+        ...(city !== undefined && { city: city || null }),
+        ...(state !== undefined && { state: state || null }),
+        ...(zip !== undefined && { zip: zip || null }),
+        ...(websiteUrl !== undefined && { websiteUrl: websiteUrl || null }),
+        ...(serviceArea !== undefined && { serviceArea: serviceArea || null }),
+        ...(primaryServices !== undefined && { primaryServices: primaryServices || [] })
       }
     });
 
