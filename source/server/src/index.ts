@@ -339,15 +339,17 @@ httpServer.listen(PORT, () => {
   // Log service account email for setup (remove after Drive folder sharing is configured)
   try {
     const saKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-    console.log(`[Setup] GOOGLE_SERVICE_ACCOUNT_KEY present: ${!!saKey}`);
     if (saKey) {
+      console.log(`[Setup] Key length: ${saKey.length} chars`);
       const decoded = Buffer.from(saKey, 'base64').toString('utf-8');
-      const parsed = JSON.parse(decoded);
-      console.log(`[Setup] Service account email: ${parsed.client_email}`);
-      console.log(`[Setup] Project ID: ${parsed.project_id}`);
+      console.log(`[Setup] Decoded length: ${decoded.length} chars`);
+      const emailMatch = decoded.match(/"client_email"\s*:\s*"([^"]+)"/);
+      const projectMatch = decoded.match(/"project_id"\s*:\s*"([^"]+)"/);
+      console.log(`[Setup] Service account email: ${emailMatch?.[1] || 'NOT FOUND'}`);
+      console.log(`[Setup] Project ID: ${projectMatch?.[1] || 'NOT FOUND'}`);
     }
   } catch (err: any) {
-    console.log(`[Setup] Failed to decode service account key: ${err.message}`);
+    console.log(`[Setup] Error: ${err.message}`);
   }
 
   // Initialize scheduled jobs
