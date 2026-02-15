@@ -4,6 +4,7 @@ import { prisma } from '../db/client.js';
 import { isAuthenticated, isAdmin } from '../middleware/auth.js';
 import { validateName } from '../utils/validation.js';
 import { applyNewProjectTemplates, upgradeProjectPlanType, offboardProject } from '../services/templateService.js';
+import { createClientDriveFolder } from '../services/driveClientFolder.js';
 
 const router = Router();
 
@@ -85,8 +86,24 @@ router.post('/', isAuthenticated, isAdmin, async (req: Request, res: Response, n
       templatesApplied = await applyNewProjectTemplates(project.id, planType);
     }
 
+    // Auto-create Google Drive folder structure (non-blocking — don't fail project creation)
+    let driveResult: { driveFolderUrl: string; cosmoSheetUrl: string } | null = null;
+    if (planType && process.env.DRIVE_CLIENTS_FOLDER_ID) {
+      try {
+        driveResult = await createClientDriveFolder(
+          project.id,
+          planType,
+          project.client,
+          project.name
+        );
+      } catch (err) {
+        console.error('[Projects] Drive folder creation failed:', err);
+      }
+    }
+
     res.status(201).json({
       ...project,
+      ...(driveResult && { driveFolderUrl: driveResult.driveFolderUrl, cosmoSheetUrl: driveResult.cosmoSheetUrl }),
       _templatesApplied: templatesApplied
     });
   } catch (error) {
@@ -181,6 +198,41 @@ router.post('/:id/offboard', isAuthenticated, isAdmin, async (req: Request, res:
       skippedDuplicates: result.skippedDuplicates,
       templateSetsProcessed: result.templateSetsProcessed
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create (or recreate) Google Drive folder for a project
+router.post('/:id/create-drive-folder', isAuthenticated, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: { client: true }
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    if (!project.planType) {
+      return res.status(400).json({ error: 'Project has no plan type — cannot create folder structure' });
+    }
+
+    if (!process.env.DRIVE_CLIENTS_FOLDER_ID) {
+      return res.status(500).json({ error: 'DRIVE_CLIENTS_FOLDER_ID not configured' });
+    }
+
+    const result = await createClientDriveFolder(
+      project.id,
+      project.planType,
+      project.client,
+      project.name
+    );
+
+    res.json(result);
   } catch (error) {
     next(error);
   }
