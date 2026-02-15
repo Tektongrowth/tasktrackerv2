@@ -244,8 +244,9 @@ router.post('/:id/create-drive-folder', isAuthenticated, isAdmin, async (req: Re
     );
 
     res.json(result);
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('[Projects] create-drive-folder failed:', error?.message, error?.response?.data || error?.stack);
+    res.status(500).json({ error: `Failed to create Drive folder: ${error?.message || 'Unknown error'}` });
   }
 });
 
