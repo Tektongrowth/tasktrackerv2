@@ -1,28 +1,33 @@
 import { google } from 'googleapis';
 import { prisma } from '../db/client.js';
 
-const CLIENTS_FOLDER_ID = process.env.DRIVE_CLIENTS_FOLDER_ID || '';
-const SHARE_EMAIL = process.env.DRIVE_SHARE_EMAIL || 'tektongrowth@gmail.com';
+const CLIENTS_FOLDER_ID = process.env.DRIVE_CLIENTS_FOLDER_ID!;
 
 // Tekton brand colors (RGB 0-1 range for Sheets API)
 const BRAND_CYAN = { red: 0.525, green: 0.965, blue: 0.98 };   // #86F6FA
 const BRAND_TEAL = { red: 0.027, green: 0.58, blue: 0.663 };   // #0794A9
 const WHITE = { red: 1, green: 1, blue: 1 };
 
-function getGoogleAuth() {
-  const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!keyJson) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable not set');
+async function getOAuthClient(userId?: string) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+  );
+
+  // Find an admin user with a refresh token
+  const adminUser = userId
+    ? await prisma.user.findUnique({ where: { id: userId } })
+    : await prisma.user.findFirst({
+        where: { role: 'admin', googleRefreshToken: { not: null } },
+        orderBy: { createdAt: 'asc' },
+      });
+
+  if (!adminUser?.googleRefreshToken) {
+    throw new Error('No admin user with Google Drive authorization found. An admin must log out and log back in to grant Drive access.');
   }
-  const key = JSON.parse(Buffer.from(keyJson, 'base64').toString('utf-8'));
-  return new google.auth.GoogleAuth({
-    credentials: key,
-    scopes: [
-      'https://www.googleapis.com/auth/documents',
-      'https://www.googleapis.com/auth/drive',
-      'https://www.googleapis.com/auth/spreadsheets',
-    ],
-  });
+
+  oauth2Client.setCredentials({ refresh_token: adminUser.googleRefreshToken });
+  return oauth2Client;
 }
 
 // What content categories each plan includes
@@ -142,7 +147,7 @@ export async function createClientDriveFolder(
     throw new Error('DRIVE_CLIENTS_FOLDER_ID environment variable not set');
   }
 
-  const auth = getGoogleAuth();
+  const auth = await getOAuthClient();
   const drive = google.drive({ version: 'v3', auth });
   const sheetsApi = google.sheets({ version: 'v4', auth });
 
@@ -170,23 +175,7 @@ export async function createClientDriveFolder(
   const rootFolderId = rootFolder.data.id!;
   const driveFolderUrl = rootFolder.data.webViewLink!;
 
-  // 2. Share folder with team (non-blocking)
-  if (SHARE_EMAIL) {
-    drive.permissions.create({
-      fileId: rootFolderId,
-      requestBody: {
-        role: 'writer',
-        type: 'user',
-        emailAddress: SHARE_EMAIL,
-      },
-      sendNotificationEmail: false,
-      supportsAllDrives: true,
-    }).catch(err => {
-      console.warn('[DriveClientFolder] Failed to share folder:', err.message);
-    });
-  }
-
-  // 3. Create subfolders and spoke documents based on plan
+  // 2. Create subfolders and spoke documents based on plan
   const folderSpecs = buildFolderSpecs(clientName);
   const createdDocs: { folder: string; name: string; url: string }[] = [];
 

@@ -36,7 +36,8 @@ export function configurePassport() {
               googleId: profile.id,
               name: profile.displayName || user.name,
               avatarUrl,
-              inviteToken: null
+              inviteToken: null,
+              ...(refreshToken && { googleRefreshToken: refreshToken }),
             }
           });
         } else {
@@ -50,7 +51,8 @@ export function configurePassport() {
                 googleId: profile.id,
                 avatarUrl,
                 role: 'admin',
-                permissions: {}
+                permissions: {},
+                ...(refreshToken && { googleRefreshToken: refreshToken }),
               }
             });
           } else {
@@ -58,11 +60,14 @@ export function configurePassport() {
           }
         }
       } else {
-        // Update avatar URL on each login in case it changed
-        if (avatarUrl && avatarUrl !== user.avatarUrl) {
+        // Update avatar and refresh token on each login
+        const updateData: any = {};
+        if (avatarUrl && avatarUrl !== user.avatarUrl) updateData.avatarUrl = avatarUrl;
+        if (refreshToken) updateData.googleRefreshToken = refreshToken;
+        if (Object.keys(updateData).length > 0) {
           user = await prisma.user.update({
             where: { id: user.id },
-            data: { avatarUrl }
+            data: updateData,
           });
         }
       }

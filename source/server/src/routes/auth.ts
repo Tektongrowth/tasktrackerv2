@@ -6,8 +6,15 @@ const router = Router();
 
 // Initiate Google OAuth
 router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
+  scope: [
+    'profile',
+    'email',
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets',
+  ],
+  accessType: 'offline',
+  prompt: 'consent',
+} as any));
 
 // Google OAuth callback
 router.get('/google/callback', (req: Request, res: Response, next: NextFunction) => {
