@@ -2567,10 +2567,10 @@ export function SettingsPage() {
                           variant="outline"
                           size="sm"
                           className="h-8 text-xs"
-                          disabled={createDriveFolder.isPending}
+                          disabled={createDriveFolder.isPending && createDriveFolder.variables === project.id}
                           onClick={() => createDriveFolder.mutate(project.id)}
                         >
-                          {createDriveFolder.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderOpen className="h-3.5 w-3.5 mr-1" />}
+                          {(createDriveFolder.isPending && createDriveFolder.variables === project.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderOpen className="h-3.5 w-3.5 mr-1" />}
                           Create Drive
                         </Button>
                       )}
