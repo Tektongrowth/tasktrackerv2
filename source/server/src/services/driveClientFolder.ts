@@ -165,6 +165,7 @@ export async function createClientDriveFolder(
       parents: [CLIENTS_FOLDER_ID],
     },
     fields: 'id, webViewLink',
+    supportsAllDrives: true,
   });
   const rootFolderId = rootFolder.data.id!;
   const driveFolderUrl = rootFolder.data.webViewLink!;
@@ -179,6 +180,7 @@ export async function createClientDriveFolder(
         emailAddress: SHARE_EMAIL,
       },
       sendNotificationEmail: false,
+      supportsAllDrives: true,
     }).catch(err => {
       console.warn('[DriveClientFolder] Failed to share folder:', err.message);
     });
@@ -198,6 +200,7 @@ export async function createClientDriveFolder(
         parents: [rootFolderId],
       },
       fields: 'id',
+      supportsAllDrives: true,
     });
     const subFolderId = subFolder.data.id!;
 
@@ -209,6 +212,7 @@ export async function createClientDriveFolder(
           mimeType: 'application/vnd.google-apps.folder',
           parents: [subFolderId],
         },
+        supportsAllDrives: true,
       })
     );
 
@@ -225,6 +229,7 @@ export async function createClientDriveFolder(
           parents: [subFolderId],
         },
         fields: 'id, webViewLink',
+        supportsAllDrives: true,
       });
 
       createdDocs.push({
@@ -282,13 +287,14 @@ async function createCosmoSheet(
   const cosmoUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
 
   // Move from service account root to client folder
-  const fileInfo = await drive.files.get({ fileId: spreadsheetId, fields: 'parents' });
+  const fileInfo = await drive.files.get({ fileId: spreadsheetId, fields: 'parents', supportsAllDrives: true });
   const previousParents = (fileInfo.data.parents || []).join(',');
   await drive.files.update({
     fileId: spreadsheetId,
     addParents: parentFolderId,
     removeParents: previousParents,
     fields: 'id, parents',
+    supportsAllDrives: true,
   });
 
   // --- Tab 1: Client Overview ---
